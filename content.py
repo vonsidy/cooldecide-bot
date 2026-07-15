@@ -208,18 +208,38 @@ def _save_used(fmt: str, keys: set[str]) -> None:
 
 
 def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool = True) -> list[Item]:
-    """n distinct items of one format, and never the same question twice until the
-    whole pool has been used — so every post is different. Cycles when exhausted."""
+    """n distinct items of one format. Prefers freshly AI-generated questions (so
+    every post is brand-new); falls back to the curated pool so the bot always
+    works. Never repeats a question until everything's been used."""
+    import generate
     pool = FORMATS[fmt][2]
     n = min(n, len(pool))
     used = _load_used(fmt) if avoid_repeats else set()
-    available = [row for row in pool if _key(row) not in used]
-    if len(available) < n:                       # pool exhausted -> start a fresh cycle
-        used, available = set(), list(pool)
-    rng = random.Random()                        # fresh randomness on every run
-    chosen = rng.sample(available, n)
+    rng = random.Random()
+    chosen: list[tuple] = []
+    picked_keys: set[str] = set()
+
+    # 1) brand-new questions from Claude, skipping anything already used
+    for row in generate.generate(fmt, n, avoid=sorted(used)):
+        k = _key(row)
+        if k not in used and k not in picked_keys:
+            chosen.append(row)
+            picked_keys.add(k)
+            if len(chosen) >= n:
+                break
+
+    # 2) top up from the curated pool if generation was unavailable or short
+    if len(chosen) < n:
+        avail = [r for r in pool if _key(r) not in used and _key(r) not in picked_keys]
+        if len(avail) < n - len(chosen):         # pool exhausted -> fresh cycle
+            used = set(picked_keys)
+            avail = [r for r in pool if _key(r) not in picked_keys]
+        for row in rng.sample(avail, n - len(chosen)):
+            chosen.append(row)
+            picked_keys.add(_key(row))
+
     if avoid_repeats:
-        _save_used(fmt, used | {_key(row) for row in chosen})
+        _save_used(fmt, used | picked_keys)
     return [_build(fmt, row, random.Random()) for row in chosen]
 
 

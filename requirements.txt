@@ -1,0 +1,4 @@
+pillow
+numpy
+edge-tts
+anthropic

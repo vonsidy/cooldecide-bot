@@ -15,6 +15,13 @@ Five formats rotate so every day is fresh:
 - **Which is Bigger** — factual, correct answer marked ✅
 - **Guess the Answer** — trivia, correct answer marked ✅
 
+## Fresh questions every time
+With an `ANTHROPIC_API_KEY` set (env or a local `.env`), the bot **generates
+brand-new questions with Claude** on every run, so it never runs out and no post
+repeats. Without a key it falls back to the built-in pool of 60+ — so it always
+works. Either way, used questions are remembered (`output/used_<fmt>.json`) and
+never repeat until everything has cycled.
+
 ## Pipeline (built + verified)
 - `content.py` — the five pools + `daily_item(fmt, date)` (stable per day, fresh
   each day). Opinion formats use a made-up % split; factual ones mark the correct
