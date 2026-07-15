@@ -45,6 +45,21 @@ def _gradient(top: tuple, bottom: tuple) -> Image.Image:
     return base.convert("RGBA")
 
 
+def _wrap(draw, text, font, max_w):
+    words, lines, cur = text.split(), [], ""
+    for w in words:
+        trial = f"{cur} {w}".strip()
+        if draw.textlength(trial, font=font) <= max_w:
+            cur = trial
+        else:
+            if cur:
+                lines.append(cur)
+            cur = w
+    if cur:
+        lines.append(cur)
+    return lines
+
+
 def _text_c(draw, cx, y, text, font, fill, max_w=None):
     if max_w:
         while draw.textlength(text, font=font) > max_w and font.size > 20:
@@ -84,23 +99,39 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     fill = tuple(int(c + (255 - c) * 0.45) for c in color) if dim else color
     draw.rounded_rectangle((60, top_y, W - 60, top_y + height), radius=52, fill=WHITE)
     draw.rounded_rectangle((72, top_y + 12, W - 72, top_y + height - 12), radius=44, fill=fill + (255,))
-    # emoji + option text (white text with a soft dark edge for pop)
-    _emoji_c(canvas, cx, top_y + 34, emoji, 150)
-    tf = _shadow_text(draw, cx, top_y + 200, text.upper(), _font("Anton-Regular.ttf", 66), WHITE, off=4, max_w=W - 210)
-    # percentage number + progress bar (revealed only)
+
+    has_em = bool(emoji)
+    em = 200 if has_em else 0                  # the "picture" — big and centred
+    gap = 18 if has_em else 0
+    tsize = 66 if has_em else 92               # answer-only options (trivia) read bigger
+    tf = _font("Anton-Regular.ttf", tsize)
+    while draw.textlength(text.upper(), font=tf) > W - 210 and tf.size > 30:
+        tf = _font("Anton-Regular.ttf", tf.size - 2)
+    # vertically centre the whole content block inside the panel
     if reveal:
-        num_y = top_y + 200 + tf.size + 8
+        block = em + gap + tf.size + 14 + 100 + 20 + 40
+    else:
+        block = em + gap + tf.size
+    y = top_y + (height - block) // 2
+
+    if has_em:
+        _emoji_c(canvas, cx, y, emoji, em)
+    _shadow_text(draw, cx, y + em + gap, text.upper(), tf, WHITE, off=4, max_w=W - 210)
+
+    if reveal:
+        num_y = y + em + gap + tf.size + 14
         _shadow_text(draw, cx, num_y, f"{pct}%", _font("Anton-Regular.ttf", 100), WHITE, off=5)
-        by0 = num_y + 116
-        by1 = by0 + 36
-        draw.rounded_rectangle((130, by0, W - 130, by1), radius=18, fill=(255, 255, 255, 120))
-        fillw = int((W - 260) * pct / 100)
+        by0 = num_y + 118
+        by1 = by0 + 40
+        draw.rounded_rectangle((140, by0, W - 140, by1), radius=20, fill=(255, 255, 255, 120))
+        fillw = int((W - 280) * pct / 100)
         bar_col = GREEN if (factual and is_correct) else GOLD
-        draw.rounded_rectangle((130, by0, 130 + max(fillw, 36), by1), radius=18, fill=bar_col + (255,))
-        if factual and is_correct:
-            _emoji_c(canvas, W - 168, top_y + 26, "✅", 78)
-        if not factual and winner:
-            _emoji_c(canvas, W - 168, top_y + 26, "👑", 78)
+        draw.rounded_rectangle((140, by0, 140 + max(fillw, 40), by1), radius=20, fill=bar_col + (255,))
+    # winner crown / correct check pinned to the panel corner
+    if reveal and factual and is_correct:
+        _emoji_c(canvas, W - 172, top_y + 30, "✅", 80)
+    if reveal and not factual and winner:
+        _emoji_c(canvas, W - 172, top_y + 30, "👑", 80)
 
 
 def render(item, out_path: str, countdown: int | None = None, reveal: bool = False) -> str:
@@ -110,9 +141,17 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
     factual = item.correct is not None
     a_win = item.a_pct >= item.b_pct
 
-    # header — white with a navy shadow so it pops on the bright sky
+    # header — the format label, except trivia shows the actual question so the
+    # two answer options make sense.
     import content
-    _shadow_text(draw, cx, 56, content.format_label(item.fmt), _font("Anton-Regular.ttf", 84), WHITE, off=6, max_w=W - 50)
+    if item.fmt == "trivia":
+        _shadow_text(draw, cx, 40, "QUIZ TIME", _font("Anton-Regular.ttf", 46), GOLD, off=4)
+        qfont = _font("Anton-Regular.ttf", 62)
+        lines = _wrap(draw, item.prompt.upper(), qfont, W - 90)[:2]
+        for i, ln in enumerate(lines):
+            _shadow_text(draw, cx, 104 + i * 66, ln, qfont, WHITE, off=4)
+    else:
+        _shadow_text(draw, cx, 56, content.format_label(item.fmt), _font("Anton-Regular.ttf", 84), WHITE, off=6, max_w=W - 50)
 
     _panel(canvas, 250, 560, A_COLOR, item.a, item.a_emoji, item.a_pct,
            reveal, a_win, item.correct == 0, factual)

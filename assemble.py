@@ -57,47 +57,52 @@ def _spoken(item: content.Item) -> tuple[str, str]:
     return q, r
 
 
-def build(item: content.Item, out_path: str, background: str | None = None) -> str:
+def build(items, out_path: str, background: str | None = None) -> str:
+    if isinstance(items, content.Item):
+        items = [items]
     work = tempfile.mkdtemp(prefix="short_")
-    # frames
-    f_vote = card.render(item, os.path.join(work, "vote.png"), countdown=None)
-    f3 = card.render(item, os.path.join(work, "c3.png"), countdown=3)
-    f2 = card.render(item, os.path.join(work, "c2.png"), countdown=2)
-    f1 = card.render(item, os.path.join(work, "c1.png"), countdown=1)
-    f_reveal = card.render(item, os.path.join(work, "reveal.png"), reveal=True)
 
-    # narration
-    q_text, r_text = _spoken(item)
-    q_mp3 = voice.say(q_text, os.path.join(work, "q.mp3"))
-    r_mp3 = voice.say(r_text, os.path.join(work, "r.mp3"))
-    q_len = max(_dur(q_mp3), 1.5)
-    r_len = max(_dur(r_mp3), 2.0)
-
-    intro = round(q_len + 0.4, 2)     # question over the vote screen
-    reveal_len = round(r_len + 0.8, 2)
-
-    # audio: question, then 3s of silence for the countdown, then the result
     silence = os.path.join(work, "sil.mp3")
     subprocess.run([FF, "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
                     "-t", "3.0", silence], capture_output=True)
-    a_list = os.path.join(work, "audio.txt")
-    with open(a_list, "w") as f:
-        for p in (q_mp3, silence, r_mp3):
-            f.write(f"file '{p.replace(os.sep, '/')}'\n")
-    voice_track = os.path.join(work, "voice.mp3")
-    subprocess.run([FF, "-y", "-f", "concat", "-safe", "0", "-i", a_list, "-c", "copy", voice_track],
-                   capture_output=True)
 
-    total = round(intro + 3.0 + reveal_len, 2)
+    seg_specs = []          # (image_path, duration) in play order
+    audio_pieces = []       # mp3s concatenated into the voice track
+    cues = []               # (sfx_path, global_time)
+    sfx = os.path.join(os.path.dirname(__file__), "assets")
+    tick, ding = os.path.join(sfx, "tick.wav"), os.path.join(sfx, "ding.wav")
+    has_sfx = os.path.exists(tick) and os.path.exists(ding)
+    clock = 0.0             # running start time of the current round
+
+    for n, item in enumerate(items):
+        f_vote = card.render(item, os.path.join(work, f"{n}_vote.png"), countdown=None)
+        f3 = card.render(item, os.path.join(work, f"{n}_c3.png"), countdown=3)
+        f2 = card.render(item, os.path.join(work, f"{n}_c2.png"), countdown=2)
+        f1 = card.render(item, os.path.join(work, f"{n}_c1.png"), countdown=1)
+        f_reveal = card.render(item, os.path.join(work, f"{n}_reveal.png"), reveal=True)
+
+        q_text, r_text = _spoken(item)
+        q_mp3 = voice.say(q_text, os.path.join(work, f"{n}_q.mp3"))
+        r_mp3 = voice.say(r_text, os.path.join(work, f"{n}_r.mp3"))
+        intro = round(max(_dur(q_mp3), 1.5) + 0.4, 2)
+        reveal_len = round(max(_dur(r_mp3), 2.0) + 0.9, 2)
+
+        seg_specs += [(f_vote, intro), (f3, 1.0), (f2, 1.0), (f1, 1.0), (f_reveal, reveal_len)]
+        audio_pieces += [q_mp3, silence, r_mp3]
+        if has_sfx:
+            cues += [(tick, clock + intro), (tick, clock + intro + 1), (tick, clock + intro + 2),
+                     (ding, clock + intro + 3)]
+        clock += intro + 3.0 + reveal_len
+
+    total = round(clock, 2)
 
     # Each frame becomes its own short clip, then the CLIPS are concatenated. The
     # concat *demuxer* handles videos correctly (it silently drops an image's
     # duration, and -loop image inputs into a concat *filter* only emitted the
     # first frame — both dead ends, hence per-segment clips).
-    frames = [(f_vote, intro), (f3, 1.0), (f2, 1.0), (f1, 1.0), (f_reveal, reveal_len)]
     seg_list = os.path.join(work, "segs.txt")
     with open(seg_list, "w") as lst:
-        for i, (path, d) in enumerate(frames):
+        for i, (path, d) in enumerate(seg_specs):
             seg = os.path.join(work, f"seg{i}.mp4")
             r = subprocess.run([FF, "-y", "-loop", "1", "-i", path, "-t", f"{d}", "-r", "30",
                                 "-vf", f"scale={W}:{H},setsar=1", "-pix_fmt", "yuv420p",
@@ -107,12 +112,15 @@ def build(item: content.Item, out_path: str, background: str | None = None) -> s
                 raise RuntimeError(f"segment {i} failed:\n{r.stderr[-800:]}")
             lst.write(f"file '{seg.replace(os.sep, '/')}'\n")
 
-    # audio track: voice + SFX cues mixed
-    sfx = os.path.join(os.path.dirname(__file__), "assets")
-    tick, ding = os.path.join(sfx, "tick.wav"), os.path.join(sfx, "ding.wav")
-    cues = ([(tick, intro), (tick, intro + 1), (tick, intro + 2), (ding, intro + 3)]
-            if os.path.exists(tick) and os.path.exists(ding) else [])
+    a_list = os.path.join(work, "audio.txt")
+    with open(a_list, "w") as f:
+        for p in audio_pieces:
+            f.write(f"file '{p.replace(os.sep, '/')}'\n")
+    voice_track = os.path.join(work, "voice.mp3")
+    subprocess.run([FF, "-y", "-f", "concat", "-safe", "0", "-i", a_list, "-c", "copy", voice_track],
+                   capture_output=True)
 
+    # audio track: voice + SFX cues mixed
     cmd = [FF, "-y", "-f", "concat", "-safe", "0", "-i", seg_list, "-i", voice_track]
     for path, _ in cues:
         cmd += ["-i", path]
@@ -136,7 +144,7 @@ def build(item: content.Item, out_path: str, background: str | None = None) -> s
 
 
 if __name__ == "__main__":
-    it = content.daily_item("wyr", "2026-07-16")
+    items = content.several("wyr", "2026-07-16", 3)   # 3 rounds in one video
     out = os.path.join(os.path.dirname(__file__), "output", "short.mp4")
-    build(it, out)
-    print("built", out, f"({os.path.getsize(out)//1024} KB)")
+    build(items, out)
+    print("built", out, f"({os.path.getsize(out)//1024} KB) with {len(items)} rounds")

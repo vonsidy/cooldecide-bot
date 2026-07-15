@@ -64,9 +64,11 @@ TRIVIA = [  # (question, correct, wrong)
     ("Which planet is the biggest?", "Jupiter", "Mars"),
     ("How many legs does a spider have?", "8", "6"),
     ("What is the fastest land animal?", "Cheetah", "Lion"),
-    ("Which is heavier?", "A ton of bricks", "A ton of feathers... same!"),
-    ("What color do you get mixing blue and yellow?", "Green", "Purple"),
+    ("What color do blue and yellow make?", "Green", "Purple"),
     ("How many continents are there?", "7", "5"),
+    ("What is the biggest ocean?", "Pacific", "Atlantic"),
+    ("How many hearts does an octopus have?", "3", "1"),
+    ("What is the tallest animal?", "Giraffe", "Elephant"),
 ]
 
 HIGHER_LOWER = [  # first option is always the bigger (correct) one; position is shuffled later
@@ -109,13 +111,9 @@ def _split(rng: random.Random) -> tuple[int, int]:
     return (a, 100 - a) if rng.random() < 0.5 else (100 - a, a)
 
 
-def daily_item(fmt: str | None = None, date: str = "today") -> Item:
-    if fmt is None:
-        fmt = FORMAT_ROTATION[_rng("fmt", date).randrange(len(FORMAT_ROTATION))]
+def _build(fmt: str, seed: str, row: tuple) -> Item:
     label, prompt, pool, mode = FORMATS[fmt]
-    rng = _rng(fmt, date)
-    row = pool[rng.randrange(len(pool))]
-
+    rng = _rng(fmt, seed)
     if mode == "factual":
         if fmt == "trivia":                       # (question, correct, wrong)
             prompt, correct_text, wrong_text = row[0], row[1], row[2]
@@ -133,8 +131,24 @@ def daily_item(fmt: str | None = None, date: str = "today") -> Item:
         return Item(prompt=prompt, a=a, b=b, a_emoji=a_e, b_emoji=b_e, a_pct=a_pct, b_pct=b_pct, fmt=fmt, correct=correct)
 
     a, b, ae, be = (row + ("", ""))[:4]
-    a_pct, b_pct = _split(_rng(fmt, date, a, b))
+    a_pct, b_pct = _split(_rng(fmt, seed, a, b))
     return Item(prompt=prompt, a=a, b=b, a_emoji=ae, b_emoji=be, a_pct=a_pct, b_pct=b_pct, fmt=fmt, correct=None)
+
+
+def daily_item(fmt: str | None = None, date: str = "today") -> Item:
+    if fmt is None:
+        fmt = FORMAT_ROTATION[_rng("fmt", date).randrange(len(FORMAT_ROTATION))]
+    pool = FORMATS[fmt][2]
+    row = pool[_rng(fmt, date).randrange(len(pool))]
+    return _build(fmt, date, row)
+
+
+def several(fmt: str, date: str, n: int = 3) -> list[Item]:
+    """n distinct items of one format for a multi-round video."""
+    pool = FORMATS[fmt][2]
+    rng = _rng("several", fmt, date)
+    idxs = rng.sample(range(len(pool)), min(n, len(pool)))
+    return [_build(fmt, f"{date}#{k}", pool[i]) for k, i in enumerate(idxs)]
 
 
 def format_label(fmt: str) -> str:
