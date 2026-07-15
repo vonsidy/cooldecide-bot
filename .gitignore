@@ -8,3 +8,4 @@ assets/images/*.png
 assets/images/*.jpg
 assets/images/*.jpeg
 assets/images/*.webp
+output/used_*.json

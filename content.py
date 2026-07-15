@@ -7,6 +7,8 @@ day's video doesn't change between renders.
 """
 from __future__ import annotations
 import hashlib
+import json
+import os
 import random
 from dataclasses import dataclass
 
@@ -47,6 +49,45 @@ WYR = [
     ("breathe underwater", "walk through walls", "🌊", "🧱"),
     ("have super speed", "read minds", "💨", "🧠"),
     ("own a private island", "own a private jet", "🏝️", "✈️"),
+    ("have a lightsaber", "have a magic wand", "⚔️", "🪄"),
+    ("be a superhero", "be a wizard", "🦸", "🧙"),
+    ("have night vision", "have x-ray vision", "🌙", "🦴"),
+    ("live on the moon", "live underwater", "🌕", "🐠"),
+    ("have a robot butler", "have a flying car", "🤖", "🚗"),
+    ("turn invisible", "turn into any animal", "🫥", "🐯"),
+    ("have unlimited pizza", "have unlimited tacos", "🍕", "🌮"),
+    ("be best at soccer", "be best at basketball", "⚽", "🏀"),
+    ("have a pet penguin", "have a pet monkey", "🐧", "🐵"),
+    ("get a puppy", "get a kitten", "🐕", "🐈"),
+    ("have a treehouse", "have a secret underground base", "🌳", "🕳️"),
+    ("have wings", "have a tail", "🪽", "🦎"),
+    ("time travel to the past", "time travel to the future", "⏪", "⏩"),
+    ("have a chocolate river", "have a candy mountain", "🍫", "🍭"),
+    ("be super lucky", "be super smart", "🍀", "🧠"),
+    ("have a pet unicorn", "have a pet phoenix", "🦄", "🔥"),
+    ("never have to sleep", "never have to eat", "😴", "🍽️"),
+    ("have a magic carpet", "have a hoverboard", "🧞", "🛹"),
+    ("swim like a fish", "run like a cheetah", "🐟", "🐆"),
+    ("have a giant water slide", "have a giant trampoline", "🛝", "🤸"),
+    ("own a candy store", "own a toy store", "🍬", "🧸"),
+    ("be able to teleport", "be able to freeze time", "🌀", "⏱️"),
+    ("have a dinosaur as a pet", "ride a dragon to school", "🦕", "🐉"),
+    ("have a pool full of jelly", "a pool full of slime", "🟢", "🫧"),
+    ("be a famous singer", "be a famous actor", "🎤", "🎬"),
+    ("have super strength", "have super hearing", "💪", "👂"),
+    ("live in a candy house", "live in a giant treehouse", "🏠", "🌲"),
+    ("have a magic backpack", "have magic shoes", "🎒", "👟"),
+    ("be able to talk to animals", "speak every language", "🐾", "🗣️"),
+    ("have a pet shark", "have a pet whale", "🦈", "🐋"),
+    ("get every LEGO set", "get every Nerf gun", "🧱", "🔫"),
+    ("have a jetpack to school", "a slide from your room", "🚀", "🛝"),
+    ("be in your favorite movie", "be in your favorite game", "🎬", "🕹️"),
+    ("have endless ice cream", "endless donuts", "🍦", "🍩"),
+    ("control the weather", "control gravity", "🌦️", "🪐"),
+    ("have a clone of yourself", "have a robot twin", "👥", "🤖"),
+    ("be able to fly a plane", "drive a race car", "✈️", "🏎️"),
+    ("have glow-in-the-dark skin", "color-changing hair", "✨", "🌈"),
+    ("find $500 on the ground", "win a giant teddy bear", "💵", "🧸"),
 ]
 
 THIS_OR_THAT = [
@@ -111,9 +152,8 @@ def _split(rng: random.Random) -> tuple[int, int]:
     return (a, 100 - a) if rng.random() < 0.5 else (100 - a, a)
 
 
-def _build(fmt: str, seed: str, row: tuple) -> Item:
+def _build(fmt: str, row: tuple, rng: random.Random) -> Item:
     label, prompt, pool, mode = FORMATS[fmt]
-    rng = _rng(fmt, seed)
     if mode == "factual":
         if fmt == "trivia":                       # (question, correct, wrong)
             prompt, correct_text, wrong_text = row[0], row[1], row[2]
@@ -131,7 +171,7 @@ def _build(fmt: str, seed: str, row: tuple) -> Item:
         return Item(prompt=prompt, a=a, b=b, a_emoji=a_e, b_emoji=b_e, a_pct=a_pct, b_pct=b_pct, fmt=fmt, correct=correct)
 
     a, b, ae, be = (row + ("", ""))[:4]
-    a_pct, b_pct = _split(_rng(fmt, seed, a, b))
+    a_pct, b_pct = _split(rng)
     return Item(prompt=prompt, a=a, b=b, a_emoji=ae, b_emoji=be, a_pct=a_pct, b_pct=b_pct, fmt=fmt, correct=None)
 
 
@@ -140,15 +180,47 @@ def daily_item(fmt: str | None = None, date: str = "today") -> Item:
         fmt = FORMAT_ROTATION[_rng("fmt", date).randrange(len(FORMAT_ROTATION))]
     pool = FORMATS[fmt][2]
     row = pool[_rng(fmt, date).randrange(len(pool))]
-    return _build(fmt, date, row)
+    return _build(fmt, row, _rng(fmt, date))
 
 
-def several(fmt: str, date: str, n: int = 3) -> list[Item]:
-    """n distinct items of one format for a multi-round video."""
+# --- No-repeat picking: remember what's been used so every post is different ----
+
+def _key(row: tuple) -> str:
+    return f"{row[0]}|{row[1]}"
+
+
+def _used_path(fmt: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "output", f"used_{fmt}.json")
+
+
+def _load_used(fmt: str) -> set[str]:
+    try:
+        with open(_used_path(fmt)) as f:
+            return set(json.load(f))
+    except (OSError, ValueError):
+        return set()
+
+
+def _save_used(fmt: str, keys: set[str]) -> None:
+    os.makedirs(os.path.dirname(_used_path(fmt)), exist_ok=True)
+    with open(_used_path(fmt), "w") as f:
+        json.dump(sorted(keys), f)
+
+
+def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool = True) -> list[Item]:
+    """n distinct items of one format, and never the same question twice until the
+    whole pool has been used — so every post is different. Cycles when exhausted."""
     pool = FORMATS[fmt][2]
-    rng = _rng("several", fmt, date)
-    idxs = rng.sample(range(len(pool)), min(n, len(pool)))
-    return [_build(fmt, f"{date}#{k}", pool[i]) for k, i in enumerate(idxs)]
+    n = min(n, len(pool))
+    used = _load_used(fmt) if avoid_repeats else set()
+    available = [row for row in pool if _key(row) not in used]
+    if len(available) < n:                       # pool exhausted -> start a fresh cycle
+        used, available = set(), list(pool)
+    rng = random.Random()                        # fresh randomness on every run
+    chosen = rng.sample(available, n)
+    if avoid_repeats:
+        _save_used(fmt, used | {_key(row) for row in chosen})
+    return [_build(fmt, row, random.Random()) for row in chosen]
 
 
 def format_label(fmt: str) -> str:
