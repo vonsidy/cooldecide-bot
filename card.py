@@ -91,6 +91,42 @@ def _shadow_text(draw, cx, y, text, font, fill, shadow=NAVY, max_w=None, off=5):
     return font
 
 
+# Drop real images (game logos, etc.) into assets/images/ named by the stem below;
+# an option whose text contains the keyword uses that picture instead of the emoji.
+IMAGES = os.path.join(os.path.dirname(__file__), "assets", "images")
+IMAGE_KEYS = [
+    ("minecraft", "minecraft"), ("roblox", "roblox"), ("fortnite", "fortnite"),
+    ("v-bucks", "vbucks"), ("robux", "robux"), ("youtube", "youtube"), ("tiktok", "tiktok"),
+    ("playstation", "playstation"), ("xbox", "xbox"), ("marvel", "marvel"), ("dc", "dc"),
+]
+
+
+def _image_for(option_text: str):
+    t = option_text.lower()
+    for sub, stem in IMAGE_KEYS:
+        if sub in t:
+            for ext in ("png", "jpg", "jpeg", "webp"):
+                p = os.path.join(IMAGES, f"{stem}.{ext}")
+                if os.path.exists(p):
+                    return p
+    return None
+
+
+def _picture(canvas, cx, y, size, option_text, emoji):
+    """A real image for the option if one is provided, otherwise the emoji.
+    Logos are usually wide wordmarks, so the box is wider than tall."""
+    path = _image_for(option_text)
+    if path:
+        try:
+            im = Image.open(path).convert("RGBA")
+            im.thumbnail((min(W - 240, int(size * 2.8)), size), Image.LANCZOS)
+            canvas.alpha_composite(im, (int(cx - im.width / 2), int(y + (size - im.height) / 2)))
+            return
+        except Exception:
+            pass
+    _emoji_c(canvas, cx, y, emoji, size)
+
+
 def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_correct, factual):
     draw = ImageDraw.Draw(canvas)
     cx = W // 2
@@ -100,33 +136,31 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     draw.rounded_rectangle((60, top_y, W - 60, top_y + height), radius=52, fill=WHITE)
     draw.rounded_rectangle((72, top_y + 12, W - 72, top_y + height - 12), radius=44, fill=fill + (255,))
 
-    has_em = bool(emoji)
-    em = 200 if has_em else 0                  # the "picture" — big and centred
-    gap = 18 if has_em else 0
-    tsize = 66 if has_em else 92               # answer-only options (trivia) read bigger
+    has_pic = bool(emoji)
+    em = (150 if reveal else 200) if has_pic else 0   # the "picture" — big and centred
+    gap = 16 if has_pic else 0
+    tsize = 62 if has_pic else 88                      # answer-only options (trivia) read bigger
     tf = _font("Anton-Regular.ttf", tsize)
     while draw.textlength(text.upper(), font=tf) > W - 210 and tf.size > 30:
         tf = _font("Anton-Regular.ttf", tf.size - 2)
+    num_sz, num_gap, bar_h, bar_gap = 92, 34, 38, 30    # generous gaps so nothing overlaps
     # vertically centre the whole content block inside the panel
-    if reveal:
-        block = em + gap + tf.size + 14 + 100 + 20 + 40
-    else:
-        block = em + gap + tf.size
+    block = em + gap + tf.size + (num_gap + num_sz + bar_gap + bar_h if reveal else 0)
     y = top_y + (height - block) // 2
 
-    if has_em:
-        _emoji_c(canvas, cx, y, emoji, em)
+    if has_pic:
+        _picture(canvas, cx, y, em, text, emoji)
     _shadow_text(draw, cx, y + em + gap, text.upper(), tf, WHITE, off=4, max_w=W - 210)
 
     if reveal:
-        num_y = y + em + gap + tf.size + 14
-        _shadow_text(draw, cx, num_y, f"{pct}%", _font("Anton-Regular.ttf", 100), WHITE, off=5)
-        by0 = num_y + 118
-        by1 = by0 + 40
-        draw.rounded_rectangle((140, by0, W - 140, by1), radius=20, fill=(255, 255, 255, 120))
+        num_y = y + em + gap + tf.size + num_gap
+        _shadow_text(draw, cx, num_y, f"{pct}%", _font("Anton-Regular.ttf", num_sz), WHITE, off=5)
+        by0 = num_y + num_sz + bar_gap
+        by1 = by0 + bar_h
+        draw.rounded_rectangle((140, by0, W - 140, by1), radius=bar_h // 2, fill=(255, 255, 255, 120))
         fillw = int((W - 280) * pct / 100)
         bar_col = GREEN if (factual and is_correct) else GOLD
-        draw.rounded_rectangle((140, by0, 140 + max(fillw, 40), by1), radius=20, fill=bar_col + (255,))
+        draw.rounded_rectangle((140, by0, 140 + max(fillw, bar_h), by1), radius=bar_h // 2, fill=bar_col + (255,))
     # winner crown / correct check pinned to the panel corner
     if reveal and factual and is_correct:
         _emoji_c(canvas, W - 172, top_y + 30, "✅", 80)

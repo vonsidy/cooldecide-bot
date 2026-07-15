@@ -4,3 +4,7 @@ output/used_matchups.json
 __pycache__/
 *.pyc
 .env
+assets/images/*.png
+assets/images/*.jpg
+assets/images/*.jpeg
+assets/images/*.webp
