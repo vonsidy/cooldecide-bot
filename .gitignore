@@ -1,0 +1,6 @@
+output/*.mp4
+output/*.png
+output/used_matchups.json
+__pycache__/
+*.pyc
+.env
