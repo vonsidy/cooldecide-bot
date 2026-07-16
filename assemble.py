@@ -102,6 +102,17 @@ def _spoken(item: content.Item, idx: int = 0, total: int = 1) -> tuple[str, str]
     return q, r
 
 
+# One spoken line at the very start, naming the game. Everything after it is
+# silent — the point is to orient a scroller in the first second, not to narrate.
+_INTRO_LINE = {
+    "wyr": "Would you rather?",
+    "this_or_that": "This, or that?",
+    "rank": "Who would win?",
+    "higher_lower": "Which one is bigger?",
+    "trivia": "Quiz time!",
+}
+
+
 def _read_seconds(item: content.Item) -> float:
     """How long to hold the vote card, sized to how much there is to READ.
 
@@ -131,6 +142,20 @@ def build(items, out_path: str, background: str | None = None) -> str:
         silence = os.path.join(work, "sil.mp3")
         subprocess.run([FF, "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
                         "-t", "3.0", silence], capture_output=True)
+
+    # Spoken title at t=0 ("Would you rather?"). Kept OUT of `cues` because it
+    # needs its own treatment: edge-tts comes out quiet (~-24dB mean), so at SFX
+    # gain it sits level with the music bed and is effectively inaudible.
+    intro_voice, intro_len = None, 0.0
+    if config.ENABLE_INTRO_VOICE and not config.ENABLE_VOICE and items:
+        line = _INTRO_LINE.get(items[0].fmt)
+        if line:
+            try:
+                intro_voice = voice.say(line, os.path.join(work, "intro.mp3"))
+                intro_len = _dur(intro_voice)
+            except Exception as e:  # noqa: BLE001 - a missing voice must not kill the render
+                print("  (intro voice skipped:", e, ")")
+                intro_voice = None
 
     for n, item in enumerate(items):
         f_vote = card.render(item, os.path.join(work, f"{n}_vote.png"), countdown=None)
@@ -183,8 +208,24 @@ def build(items, out_path: str, background: str | None = None) -> str:
     if config.ENABLE_MUSIC and os.path.exists(music):
         # -stream_loop repeats the ~18s loop to cover any length; -t below cuts it.
         cmd += ["-stream_loop", "-1", "-i", music]
-        parts.append(f"[{idx}:a]volume={config.MUSIC_VOLUME}[m]")
+        if intro_voice:
+            # Duck under the spoken title, then come back up. Without this the
+            # music and the (quiet) TTS sit at the same level and neither wins.
+            duck_until = round(intro_len + 0.35, 2)
+            parts.append(
+                f"[{idx}:a]volume='if(lt(t,{duck_until}),{config.MUSIC_DUCK},"
+                f"{config.MUSIC_VOLUME})':eval=frame[m]")
+        else:
+            parts.append(f"[{idx}:a]volume={config.MUSIC_VOLUME}[m]")
         labels.append("[m]")
+        idx += 1
+
+    if intro_voice:
+        # aresample: edge-tts is 24kHz mono and everything else is 44.1k — amix
+        # wants them matched. Gain lifts the quiet TTS clear of the bed.
+        cmd += ["-i", intro_voice]
+        parts.append(f"[{idx}:a]aresample=44100,volume={config.INTRO_VOICE_GAIN}[iv]")
+        labels.append("[iv]")
         idx += 1
 
     if config.ENABLE_VOICE and audio_pieces:
