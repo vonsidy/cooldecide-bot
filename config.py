@@ -49,9 +49,13 @@ UPLOAD = get("UPLOAD", "0") == "1"
 # reads as a game rather than a lecture. Audio is a music bed + countdown ticks +
 # the reveal ding. Flip to 1 to bring the voice-over back.
 ENABLE_VOICE = get("ENABLE_VOICE", "0") == "1"
-# ...but ONE spoken line at t=0 announcing the format ("Would you rather?"). It
-# tells a scroller what game they just landed in without narrating the whole video.
-ENABLE_INTRO_VOICE = get("ENABLE_INTRO_VOICE", "1") == "1"
+# The QUESTION is read aloud every round ("Would you rather a pet shark, or a pet
+# penguin?") — but nothing else is. The countdown and the reveal stay silent, so
+# the voice sets up the choice and then gets out of the way.
+ENABLE_QUESTION_VOICE = get("ENABLE_QUESTION_VOICE", "1") == "1"
+# Kids' Shorts are read fast; the default TTS pace drags badly against a 3s timer.
+EDGE_RATE = get("EDGE_RATE", "+25%")
+EDGE_VOICE = get("EDGE_VOICE", "en-US-AndrewMultilingualNeural")
 ENABLE_MUSIC = get("ENABLE_MUSIC", "1") == "1"
 # Music is the whole audio bed now (no voice competing), so it can sit up front —
 # but under the ticks/ding, which carry the timing.

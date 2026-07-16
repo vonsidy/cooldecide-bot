@@ -89,16 +89,21 @@ def _spoken(item: content.Item, idx: int = 0, total: int = 1) -> tuple[str, str]
         bigger = item.a if item.correct == 0 else item.b
         r = f"{bigger} is bigger! Did you get it?"
     else:
-        q = f"{item.prompt} {item.a}, or {item.b}?"
+        # "Would you rather X" runs straight on, but "Which do you pick X" /
+        # "Who would win X" need the comma or the TTS gabbles them together.
+        join = " " if fmt == "wyr" else ", "
+        q = f"{item.prompt}{join}{item.a}, or {item.b}?"
         winner, wp = (item.a, item.a_pct) if item.a_pct >= item.b_pct else (item.b, item.b_pct)
         r = f"{wp} percent said {winner}."
 
-    if idx == 0:
-        q = f"{rng.choice(_HOOKS_FACTUAL if factual else _HOOKS_OPINION)} {q}"
-    else:
-        q = f"{q} Three seconds!"
-    if idx == total - 1:
-        r = f"{r} {rng.choice(_CTA_FACTUAL if factual else _CTA_OPINION)}"
+    # The hook/CTA scaffolding belongs to the fully-narrated mode. In question-only
+    # mode the voice reads the choice and stops — bolting "The last one is brutal"
+    # onto every round just makes the line long and the timer late.
+    if config.ENABLE_VOICE:
+        if idx == 0:
+            q = f"{rng.choice(_HOOKS_FACTUAL if factual else _HOOKS_OPINION)} {q}"
+        if idx == total - 1:
+            r = f"{r} {rng.choice(_CTA_FACTUAL if factual else _CTA_OPINION)}"
     return q, r
 
 
@@ -143,19 +148,11 @@ def build(items, out_path: str, background: str | None = None) -> str:
         subprocess.run([FF, "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
                         "-t", "3.0", silence], capture_output=True)
 
-    # Spoken title at t=0 ("Would you rather?"). Kept OUT of `cues` because it
-    # needs its own treatment: edge-tts comes out quiet (~-24dB mean), so at SFX
-    # gain it sits level with the music bed and is effectively inaudible.
-    intro_voice, intro_len = None, 0.0
-    if config.ENABLE_INTRO_VOICE and not config.ENABLE_VOICE and items:
-        line = _INTRO_LINE.get(items[0].fmt)
-        if line:
-            try:
-                intro_voice = voice.say(line, os.path.join(work, "intro.mp3"))
-                intro_len = _dur(intro_voice)
-            except Exception as e:  # noqa: BLE001 - a missing voice must not kill the render
-                print("  (intro voice skipped:", e, ")")
-                intro_voice = None
+    # Spoken questions are kept OUT of `cues` because they need their own
+    # treatment: edge-tts comes out quiet (~-24dB mean), so at SFX gain a line
+    # sits level with the music bed and is effectively inaudible.
+    voice_cues: list[tuple[str, float]] = []   # (mp3, start time)
+    ducks: list[tuple[float, float]] = []      # windows where the music drops
 
     for n, item in enumerate(items):
         f_vote = card.render(item, os.path.join(work, f"{n}_vote.png"), countdown=None)
@@ -171,6 +168,21 @@ def build(items, out_path: str, background: str | None = None) -> str:
             intro = round(max(_dur(q_mp3), 1.5) + 0.4, 2)
             reveal_len = round(max(_dur(r_mp3), 2.0) + 0.9, 2)
             audio_pieces += [q_mp3, silence, r_mp3]
+        elif config.ENABLE_QUESTION_VOICE:
+            # Read the question, then shut up: the card is held exactly as long as
+            # the line takes (plus a beat), so the timer starts the moment the
+            # choice has landed.
+            q_text, _ = _spoken(item, n, len(items))
+            try:
+                q_mp3 = voice.say(q_text, os.path.join(work, f"{n}_q.mp3"))
+                qlen = _dur(q_mp3)
+                intro = round(max(qlen + 0.5, config.READ_MIN), 2)
+                voice_cues.append((q_mp3, clock))
+                ducks.append((clock, clock + qlen + 0.3))
+            except Exception as e:  # noqa: BLE001 - never fail a render over TTS
+                print("  (question voice skipped:", e, ")")
+                intro = _read_seconds(item)
+            reveal_len = config.REVEAL_SECONDS
         else:
             intro = _read_seconds(item)
             reveal_len = config.REVEAL_SECONDS
@@ -208,24 +220,27 @@ def build(items, out_path: str, background: str | None = None) -> str:
     if config.ENABLE_MUSIC and os.path.exists(music):
         # -stream_loop repeats the ~18s loop to cover any length; -t below cuts it.
         cmd += ["-stream_loop", "-1", "-i", music]
-        if intro_voice:
-            # Duck under the spoken title, then come back up. Without this the
-            # music and the (quiet) TTS sit at the same level and neither wins.
-            duck_until = round(intro_len + 0.35, 2)
+        if ducks:
+            # Drop the bed under every spoken question, then bring it back. Without
+            # this the music and the (quiet) TTS sit at the same level and neither
+            # wins — measured at 0.9dB apart, i.e. inaudible.
+            windows = "+".join(f"between(t,{a:.2f},{b:.2f})" for a, b in ducks)
             parts.append(
-                f"[{idx}:a]volume='if(lt(t,{duck_until}),{config.MUSIC_DUCK},"
+                f"[{idx}:a]volume='if(gt({windows},0),{config.MUSIC_DUCK},"
                 f"{config.MUSIC_VOLUME})':eval=frame[m]")
         else:
             parts.append(f"[{idx}:a]volume={config.MUSIC_VOLUME}[m]")
         labels.append("[m]")
         idx += 1
 
-    if intro_voice:
+    for vpath, at in voice_cues:
         # aresample: edge-tts is 24kHz mono and everything else is 44.1k — amix
         # wants them matched. Gain lifts the quiet TTS clear of the bed.
-        cmd += ["-i", intro_voice]
-        parts.append(f"[{idx}:a]aresample=44100,volume={config.INTRO_VOICE_GAIN}[iv]")
-        labels.append("[iv]")
+        cmd += ["-i", vpath]
+        d = int(at * 1000)
+        parts.append(f"[{idx}:a]aresample=44100,volume={config.INTRO_VOICE_GAIN},"
+                     f"adelay={d}|{d}[v{idx}]")
+        labels.append(f"[v{idx}]")
         idx += 1
 
     if config.ENABLE_VOICE and audio_pieces:

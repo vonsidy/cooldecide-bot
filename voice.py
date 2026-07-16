@@ -1,14 +1,14 @@
 """Text-to-speech via edge-tts (free). Returns an mp3 path."""
 from __future__ import annotations
 import asyncio
+
 import edge_tts
 
-VOICE = "en-US-AndrewMultilingualNeural"   # upbeat, works well for kids content
-RATE = "+8%"
+import config
 
 
 async def _run(text: str, out_path: str) -> None:
-    comm = edge_tts.Communicate(text, VOICE, rate=RATE)
+    comm = edge_tts.Communicate(text, config.EDGE_VOICE, rate=config.EDGE_RATE)
     await comm.save(out_path)
 
 

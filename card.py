@@ -178,7 +178,9 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     draw.rounded_rectangle((60, top_y, W - 60, top_y + height), radius=52, fill=WHITE)
     draw.rounded_rectangle((72, top_y + 12, W - 72, top_y + height - 12), radius=44, fill=fill + (255,))
 
-    has_pic = bool(emoji)
+    # A photo counts as art even with no emoji — trivia rows carry no emoji at all
+    # ("Cheetah"/"Lion"), so keying this off the emoji alone left quiz cards bare.
+    has_pic = bool(emoji) or bool(photo)
     # The picture is the thing you scroll past or stop for, so it gets the room:
     # at 200px it floated in a 560px panel looking like an afterthought. Shrinks
     # on the reveal to make way for the % and the bar.
