@@ -225,8 +225,11 @@ def _picture(canvas, cx, y, size, option_text, emoji, path=None):
                 im = _chip(im)
             else:
                 im.thumbnail((min(W - 260, int(size * 2.4)), size), Image.LANCZOS)
-                if parent == "auto":                   # stock photo
-                    im = _rounded(im)
+                # Photos and generated art both arrive as hard rectangles (the art
+                # comes on its own white background), which reads as a box stuck on
+                # the panel. Rounding makes it a sticker.
+                if parent in ("auto", "art"):
+                    im = _rounded(im, radius=34)
             canvas.alpha_composite(im, (int(cx - im.width / 2),
                                         int(y + (size - im.height) / 2)))
             return
@@ -293,6 +296,41 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
         _emoji_c(canvas, W - 172, top_y + 30, "✅", 80)
     if reveal and not factual and winner:
         _emoji_c(canvas, W - 172, top_y + 30, "👑", 80)
+
+
+def outro(item, out_path: str) -> str:
+    """The end card.
+
+    The video used to just stop on the last reveal, leaving a dead beat with the
+    answer sitting there. That second is the most valuable one in the video — the
+    viewer has just been proven right or wrong and actually has something to say —
+    so it asks for the comment instead of wasting it.
+    """
+    canvas = _gradient(BG_TOP, BG_BOT)
+    draw = ImageDraw.Draw(canvas)
+    cx = W // 2
+    factual = item.correct is not None
+
+    head = "HOW MANY" if factual else "WHICH ONE"
+    line2 = "DID YOU GET?" if factual else "DID YOU PICK?"
+
+    # big playful headline
+    _shadow_text(draw, cx, 470, head, _font("Anton-Regular.ttf", 138), WHITE, off=7, max_w=W - 90)
+    _shadow_text(draw, cx, 620, line2, _font("Anton-Regular.ttf", 138), GOLD, off=7, max_w=W - 90)
+
+    # the ask, in a fat pill
+    draw.rounded_rectangle((cx - 470, 880, cx + 470, 1050), radius=54, fill=WHITE)
+    draw.rounded_rectangle((cx - 456, 894, cx + 456, 1036), radius=46, fill=A_COLOR + (255,))
+    _text_c(draw, cx, 928, "COMMENT BELOW!", _font("Anton-Regular.ttf", 84), WHITE, max_w=860)
+
+    _emoji_c(canvas, cx, 1120, "👇", 210)
+
+    draw.rounded_rectangle((cx - 400, 1420, cx + 400, 1560), radius=44, fill=WHITE)
+    draw.rounded_rectangle((cx - 388, 1432, cx + 388, 1548), radius=38, fill=GOLD)
+    _text_c(draw, cx, 1454, "FOLLOW FOR MORE", _font("Anton-Regular.ttf", 66), NAVY, max_w=740)
+
+    canvas.convert("RGB").save(out_path, "PNG")
+    return out_path
 
 
 def render(item, out_path: str, countdown: int | None = None, reveal: bool = False) -> str:

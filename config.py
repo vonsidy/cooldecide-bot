@@ -70,3 +70,7 @@ MUSIC_DUCK = float(get("MUSIC_DUCK", "0.16"))
 # there's no voice to set the pace.
 READ_MIN, READ_MAX = 2.3, 4.3
 REVEAL_SECONDS = float(get("REVEAL_SECONDS", "2.9"))
+# End card. The video used to just stop on the last reveal — a dead beat exactly
+# when the viewer has an opinion and nothing to do with it.
+ENABLE_OUTRO = get("ENABLE_OUTRO", "1") == "1"
+OUTRO_SECONDS = float(get("OUTRO_SECONDS", "2.8"))

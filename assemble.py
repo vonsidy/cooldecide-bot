@@ -193,6 +193,26 @@ def build(items, out_path: str, background: str | None = None) -> str:
                      (ding, clock + intro + 3)]
         clock += intro + 3.0 + reveal_len
 
+    # ---- end card: ask for the comment while they still care ------------------
+    if config.ENABLE_OUTRO and items:
+        last = items[-1]
+        factual = last.correct is not None
+        f_out = card.outro(last, os.path.join(work, "outro.png"))
+        line = ("Comment how many you got right!" if factual
+                else "Comment which ones you picked!")
+        olen = 0.0
+        if config.ENABLE_QUESTION_VOICE or config.ENABLE_VOICE:
+            try:
+                o_mp3 = voice.say(line, os.path.join(work, "outro.mp3"))
+                olen = _dur(o_mp3)
+                voice_cues.append((o_mp3, clock + 0.15))
+                ducks.append((clock, clock + olen + 0.45))
+            except Exception as e:  # noqa: BLE001
+                print("  (outro voice skipped:", e, ")")
+        outro_len = round(max(olen + 0.9, config.OUTRO_SECONDS), 2)
+        seg_specs.append((f_out, outro_len))
+        clock += outro_len
+
     total = round(clock, 2)
 
     # Each frame becomes its own short clip, then the CLIPS are concatenated. The
