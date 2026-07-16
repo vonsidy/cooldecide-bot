@@ -195,30 +195,91 @@ THIS_OR_THAT = [
     ("Marvel", "DC", "🦸", "🦇"),
 ]
 
-TRIVIA = [  # (question, correct, wrong)
+# (question, correct, wrong). These are stated to children as FACT, so every one
+# must be settled and checkable — no records, no "currently", no trick questions.
+TRIVIA = [
+    # space
     ("Which planet is the biggest?", "Jupiter", "Mars"),
+    ("Which planet is closest to the Sun?", "Mercury", "Venus"),
+    ("Which planet is known as the Red Planet?", "Mars", "Jupiter"),
+    ("What do we call a star that explodes?", "Supernova", "Black hole"),
+    # animals
     ("How many legs does a spider have?", "8", "6"),
     ("What is the fastest land animal?", "Cheetah", "Lion"),
-    ("What color do blue and yellow make?", "Green", "Purple"),
-    ("How many continents are there?", "7", "5"),
-    ("What is the biggest ocean?", "Pacific", "Atlantic"),
     ("How many hearts does an octopus have?", "3", "1"),
     ("What is the tallest animal?", "Giraffe", "Elephant"),
+    ("Which animal is the largest on Earth?", "Blue whale", "Elephant"),
+    ("What is a baby kangaroo called?", "Joey", "Cub"),
+    ("Which bird cannot fly?", "Penguin", "Eagle"),
+    ("How many legs does an insect have?", "6", "8"),
+    # earth / nature
+    ("How many continents are there?", "7", "5"),
+    ("What is the biggest ocean?", "Pacific", "Atlantic"),
+    ("What is the largest desert on Earth?", "Antarctica", "Sahara"),
+    ("What gas do plants breathe in?", "Carbon dioxide", "Oxygen"),
+    ("How many days are in a leap year?", "366", "365"),
+    # colours / basics
+    ("What color do blue and yellow make?", "Green", "Purple"),
+    ("What color do red and blue make?", "Purple", "Orange"),
+    ("How many sides does a hexagon have?", "6", "8"),
+    ("How many minutes are in an hour?", "60", "100"),
+    ("What is H2O better known as?", "Water", "Salt"),
 ]
 
-HIGHER_LOWER = [  # first option is always the bigger (correct) one; position is shuffled later
+# FIRST option is always the bigger (correct) one; the side is shuffled at build
+# time. Every pair here must be UNAMBIGUOUSLY true — a kid gets told they were
+# wrong, so "arguably bigger" isn't good enough.
+HIGHER_LOWER = [
+    # animals
     ("A blue whale", "A school bus", "🐋", "🚌"),
-    ("Mount Everest", "The Eiffel Tower", "🏔️", "🗼"),
-    ("A T-Rex", "An elephant", "🦖", "🐘"),
-    ("The Sun", "The Earth", "☀️", "🌍"),
     ("A blue whale", "A T-Rex", "🐋", "🦖"),
+    ("A T-Rex", "An elephant", "🦖", "🐘"),
+    ("An elephant", "A horse", "🐘", "🐴"),
+    ("A giraffe", "A polar bear", "🦒", "🐻‍❄️"),
+    ("An ostrich", "A penguin", "🦤", "🐧"),
+    ("A great white shark", "A dolphin", "🦈", "🐬"),
+    # space
+    ("The Sun", "The Earth", "☀️", "🌍"),
+    ("Jupiter", "The Earth", "🪐", "🌍"),
+    ("The Earth", "The Moon", "🌍", "🌕"),
+    ("The Sun", "Jupiter", "☀️", "🪐"),
+    # places / things
+    ("Mount Everest", "The Eiffel Tower", "🏔️", "🗼"),
+    ("The Pacific Ocean", "The Atlantic Ocean", "🌊", "🌎"),
+    ("Russia", "Australia", "🇷🇺", "🇦🇺"),
+    ("A football pitch", "A tennis court", "⚽", "🎾"),
+    ("A jumbo jet", "A school bus", "✈️", "🚌"),
+    ("A skyscraper", "A house", "🏢", "🏠"),
 ]
 
 RANK = [  # a fun "which is better" pair, same reveal mechanic
+    # animals
+    ("Sharks", "Dinosaurs", "🦈", "🦖"),
+    ("A lion", "A gorilla", "🦁", "🦍"),
+    ("A T-Rex", "A giant squid", "🦖", "🦑"),
+    ("A cheetah", "An eagle", "🐆", "🦅"),
+    ("A grizzly bear", "A crocodile", "🐻", "🐊"),
+    ("An elephant", "A rhino", "🐘", "🦏"),
+    # magic / fantasy
+    ("A dragon", "A phoenix", "🐉", "🔥"),
+    ("A wizard", "A knight", "🧙", "🗡️"),
+    ("A unicorn", "A griffin", "🦄", "🦅"),
+    ("A giant", "A dragon", "🦍", "🐉"),
+    ("A ninja", "A pirate", "🥷", "🏴‍☠️"),
+    ("A werewolf", "A vampire", "🐺", "🧛"),
+    # powers
+    ("Super speed", "Super strength", "⚡", "💪"),
+    ("Ice powers", "Fire powers", "❄️", "🔥"),
+    ("Invisibility", "Flying", "👻", "🦅"),
+    ("Mind reading", "Time freezing", "🧠", "⏱️"),
+    # gaming / heroes
     ("Fortnite", "Minecraft", "🎮", "🟫"),
     ("Superman", "Batman", "🦸", "🦇"),
     ("Spider-Man", "Iron Man", "🕷️", "🤖"),
-    ("Sharks", "Dinosaurs", "🦈", "🦖"),
+    ("A robot army", "A dinosaur army", "🤖", "🦖"),
+    # space
+    ("A rocket", "A spaceship", "🚀", "🛸"),
+    ("An alien", "A robot", "👽", "🤖"),
 ]
 
 # label, spoken prompt, pool, mode ("opinion" = made-up % split, no wrong answer;
@@ -309,22 +370,30 @@ def _split(rng: random.Random) -> tuple[int, int]:
 def _build(fmt: str, row: tuple, rng: random.Random) -> Item:
     label, prompt, pool, mode = FORMATS[fmt]
     if mode == "factual":
-        if fmt == "trivia":                       # (question, correct, wrong)
-            prompt, correct_text, wrong_text = row[0], row[1], row[2]
-            ae = be = ""
-        else:                                     # (bigger, smaller, emojis) — first is correct
-            correct_text, wrong_text, ae, be = (row + ("", ""))[:4]
+        # Padded because pool rows are short (no art) while generated rows carry
+        # emoji + art descriptions. The CORRECT option is always first in the row.
+        r = tuple(row) + ("",) * 4
+        if fmt == "trivia":                       # (question, correct, wrong, ...)
+            prompt, correct_text, wrong_text = r[0], r[1], r[2]
+            ae, be, a_art_c, b_art_w = r[3], r[4], r[5], r[6]
+        else:                                     # (bigger, smaller, ...) — first is correct
+            correct_text, wrong_text = r[0], r[1]
+            ae, be, a_art_c, b_art_w = r[2], r[3], r[4], r[5]
         # Shuffle which side the correct answer sits on.
         if rng.random() < 0.5:
-            a, b, a_e, b_e, correct = correct_text, wrong_text, ae, be, 0
+            a, b, a_e, b_e, a_art, b_art, correct = (correct_text, wrong_text, ae, be,
+                                                     a_art_c, b_art_w, 0)
         else:
-            a, b, a_e, b_e, correct = wrong_text, correct_text, be, ae, 1
+            a, b, a_e, b_e, a_art, b_art, correct = (wrong_text, correct_text, be, ae,
+                                                     b_art_w, a_art_c, 1)
         # "% who got it right" — deliberately skewed LOW. "Only 23% got this"
         # makes a viewer who got it feel smart (and want to say so); "72% got it"
         # is a shrug. The hard ones are the ones people brag about in comments.
         win = rng.choice([17, 23, 29, 34, 41, 48, 56])
         a_pct, b_pct = (win, 100 - win) if correct == 0 else (100 - win, win)
-        return Item(prompt=prompt, a=a, b=b, a_emoji=a_e, b_emoji=b_e, a_pct=a_pct, b_pct=b_pct, fmt=fmt, correct=correct)
+        return Item(prompt=prompt, a=a, b=b, a_emoji=a_e, b_emoji=b_e,
+                    a_art=a_art, b_art=b_art, a_pct=a_pct, b_pct=b_pct,
+                    fmt=fmt, correct=correct)
 
     # Generated rows carry two extra fields (the art descriptions); pool rows don't.
     a, b, ae, be, a_art, b_art = (tuple(row) + ("", "", "", ""))[:6]

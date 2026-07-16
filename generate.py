@@ -38,7 +38,30 @@ _PROMPTS = {
     "rank": ("'who would win' or 'which is cooler' matchups between two fun things",
              '{"a":"Sharks","a_emoji":"\\ud83e\\udd88","a_art":"a great white shark",'
              '"b":"Dinosaurs","b_emoji":"\\ud83e\\udd96","b_art":"a t-rex dinosaur"}'),
+    # Factual formats — a different JSON shape, because one answer is RIGHT.
+    "trivia": ("fun general-knowledge quiz questions kids would enjoy guessing",
+               '{"question":"Which planet is the biggest?","correct":"Jupiter",'
+               '"wrong":"Mars","correct_emoji":"\\ud83e\\ude90","wrong_emoji":"\\ud83d\\udd34",'
+               '"correct_art":"the planet Jupiter","wrong_art":"the planet Mars"}'),
+    "higher_lower": ("'which is bigger' comparisons between two well-known things",
+                     '{"bigger":"A blue whale","smaller":"A school bus",'
+                     '"bigger_emoji":"\\ud83d\\udc0b","smaller_emoji":"\\ud83d\\ude8c",'
+                     '"bigger_art":"a blue whale","smaller_art":"a yellow school bus"}'),
 }
+
+# Formats where one answer is genuinely RIGHT. These are the only ones where the
+# bot can state something false, so the brief is much stricter than for opinions.
+FACTUAL = {"trivia", "higher_lower"}
+
+_FACT_RULE = (
+    "\nCRITICAL: this is a QUIZ, so the answer must be genuinely, checkably TRUE — "
+    "a kid will be told they were wrong, and a parent will see it. Only use "
+    "well-established facts that don't change over time (no records, no 'current' "
+    "anything, no populations, no prices). No trick questions and no ambiguity: the "
+    "wrong option must be CLEARLY wrong, not arguable. Prefer facts a curious "
+    "10-year-old could look up in seconds. If you are not certain it is true, pick a "
+    "different question."
+)
 
 # Each option also needs a drawable description. An image model can't interpret an
 # abstract option: prompted with "never do homework again" it draws a kid DOING
@@ -69,15 +92,30 @@ def _api_key() -> str | None:
     return None
 
 
-def _rows_from_json(text: str, factual: bool) -> list[tuple]:
+def _rows_from_json(text: str, fmt: str) -> list[tuple]:
+    """Parse Claude's JSON into the row shape content.py expects for this format.
+
+    The three shapes differ because the formats do: opinion rounds have two equal
+    options, trivia has a question plus a right/wrong answer, and which-is-bigger
+    has an ordered pair. Row order matters — content._build reads them positionally
+    and puts the CORRECT one first for factual formats.
+    """
     match = re.search(r"\[.*\]", text, re.DOTALL)
     data = json.loads(match.group(0) if match else text)
     rows = []
     for d in data:
-        if factual:
+        if fmt == "trivia":
             q, c, w = d.get("question"), d.get("correct"), d.get("wrong")
             if q and c and w:
-                rows.append((str(q), str(c), str(w)))
+                rows.append((str(q), str(c), str(w),
+                             str(d.get("correct_emoji", "")), str(d.get("wrong_emoji", "")),
+                             str(d.get("correct_art", "")), str(d.get("wrong_art", ""))))
+        elif fmt == "higher_lower":
+            b_, s_ = d.get("bigger"), d.get("smaller")
+            if b_ and s_:
+                rows.append((str(b_), str(s_),
+                             str(d.get("bigger_emoji", "")), str(d.get("smaller_emoji", "")),
+                             str(d.get("bigger_art", "")), str(d.get("smaller_art", ""))))
         else:
             a, b = d.get("a"), d.get("b")
             if a and b:
@@ -111,16 +149,20 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
             f"Each needs two short options (2-6 words) and one fitting emoji per option. "
             f"Use clear object emojis, never plain colored squares/circles. Be creative and varied."
             f"{_IMAGINATIVE if fmt in ('wyr', 'this_or_that') else ''}"
+            f"{_FACT_RULE if fmt in FACTUAL else ''}"
             f"{_ART_RULE}"
             f"{avoid_txt}\n\n"
             f'Return ONLY a JSON array of objects like: {example}'
         )
         msg = client.messages.create(
-            model=MODEL, max_tokens=1000, temperature=1.0,
+            model=MODEL, max_tokens=1400,
+            # Facts don't benefit from creativity — turn the temperature down so it
+            # reaches for the well-known answer instead of an interesting one.
+            temperature=0.4 if fmt in FACTUAL else 1.0,
             messages=[{"role": "user", "content": prompt}],
         )
         text = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
-        return _rows_from_json(text, factual=False)
+        return _rows_from_json(text, fmt)
     except Exception:
         return []
 
