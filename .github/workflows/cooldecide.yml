@@ -1,0 +1,123 @@
+name: CoolDecide bot
+
+# Fully automated — no PC needed. Checks in hourly; a CHEAP gate step decides
+# whether now is one of today's randomly-chosen posting slots, and only then does
+# the expensive work of rendering + uploading. Credentials come from repo Secrets.
+#
+# The gate exists to protect the free Actions minutes: GitHub bills every job
+# rounded up to a whole minute, so an idle check-in must stay tiny.
+
+on:
+  schedule:
+    # Hourly, 8am–11pm Eastern only. Nothing to do overnight, and skipping the
+    # dead hours saves ~200 billed minutes a month.
+    # Times are UTC. 8am ET = 12:00 UTC, 11pm ET = 03:00 UTC (EDT, UTC-4).
+    # NOTE: pinned to EDT. When the clocks go back this window shifts an hour
+    # earlier; harmless, adjust then if it matters.
+    - cron: "23 12-23,0-3 * * *"
+  repository_dispatch:
+    types: [cron-tick]        # a reliable external ping (GitHub's own cron skips)
+  workflow_dispatch:
+    inputs:
+      privacy:
+        description: "Privacy for this manual post"
+        default: "unlisted"
+        type: choice
+        options: [unlisted, public, private]
+
+concurrency:
+  group: cooldecide-bot       # never two uploads at once
+  cancel-in-progress: false
+
+permissions:
+  contents: write             # commit the updated dashboard data back
+
+env:
+  MAX_UPLOADS_PER_DAY: "2"
+  PYTHONIOENCODING: "utf-8"
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # ---- cheap gate -----------------------------------------------------
+      # Only the scheduler + its tiny deps. Everything heavy is skipped when it
+      # isn't time, so an idle check-in costs ~1 billed minute.
+      - name: Decide whether to post now
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "post=true" >> "$GITHUB_OUTPUT"
+            echo "manual run -> posting"
+          else
+            # Single line on purpose: an indented heredoc into `python -c` sends
+            # the leading whitespace to Python and dies with IndentationError.
+            post=$(python -c "import scheduler; print('true' if scheduler.should_post() else 'false')")
+            echo "post=$post" >> "$GITHUB_OUTPUT"
+            python scheduler.py || true
+          fi
+
+      # ---- everything below only runs when it's actually time --------------
+      - name: Install ffmpeg
+        if: steps.gate.outputs.post == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Install deps
+        if: steps.gate.outputs.post == 'true'
+        run: pip install -q -r requirements.txt
+
+      - name: Restore credentials
+        if: steps.gate.outputs.post == 'true'
+        env:
+          YT_CLIENT_SECRET_B64: ${{ secrets.YT_CLIENT_SECRET_B64 }}
+          YT_TOKEN_B64: ${{ secrets.YT_TOKEN_B64 }}
+        run: |
+          echo "$YT_CLIENT_SECRET_B64" | base64 -d > client_secret.json
+          echo "$YT_TOKEN_B64" | base64 -d > yt_token.json
+
+      - name: Build and post
+        if: steps.gate.outputs.post == 'true'
+        env:
+          # Optional: without it the bot uses its 161 built-in questions instead
+          # of writing fresh ones. It still posts either way.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          YT_PRIVACY: ${{ github.event.inputs.privacy || 'public' }}
+        run: python -u run.py --upload
+
+      # A queued comment is useless if nothing posts it, so drain the queue on
+      # every check-in — including the ones that don't post a video.
+      - name: Post any due comments
+        if: steps.gate.outputs.post != 'true'
+        env:
+          YT_CLIENT_SECRET_B64: ${{ secrets.YT_CLIENT_SECRET_B64 }}
+          YT_TOKEN_B64: ${{ secrets.YT_TOKEN_B64 }}
+        run: |
+          pip install -q google-api-python-client google-auth google-auth-oauthlib
+          echo "$YT_CLIENT_SECRET_B64" | base64 -d > client_secret.json
+          echo "$YT_TOKEN_B64" | base64 -d > yt_token.json
+          python -u run.py --comments-only || true
+
+      # Never let a credential reach the commit, even on failure.
+      - name: Shred credentials
+        if: always()
+        run: rm -f client_secret.json yt_token.json
+
+      - name: Save dashboard data
+        if: always()
+        run: |
+          git config user.name "cooldecide-bot"
+          git config user.email "actions@github.com"
+          git add dashboard/kids.json output/used_*.json assets/art 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "Update CoolDecide data [skip ci]"
+          # Another run may have pushed while this one worked; rebase rather than
+          # clobber it, and never fail the job over a dashboard update.
+          git pull --rebase -q origin main || true
+          git push -q || echo "nothing to push"

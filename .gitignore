@@ -1,10 +1,14 @@
 output/*.mp4
 output/*.png
-output/used_matchups.json
 __pycache__/
 *.pyc
 .env
-output/used_*.json
+
+# NOTE: output/used_*.json is deliberately COMMITTED (it used to be ignored).
+# It's the memory of which questions have already aired. The cloud runner is wiped
+# after every run, so if this isn't in the repo the bot forgets everything it has
+# posted and starts repeating itself immediately — on a channel posting daily,
+# forever.
 
 # NOTE: assets/images/ and assets/art/ are deliberately COMMITTED. Every picture
 # in there has been reviewed by eye, and both sources are non-deterministic — the
