@@ -108,7 +108,8 @@ def main() -> None:
 
     # `fmt`, not args.format — that's None unless it was forced on the command line,
     # which would log every video's format as null on the dashboard.
-    dashboard.record(vid, info["title"], fmt, len(items), manual=args.manual)
+    dashboard.record(vid, info["title"], fmt, len(items), manual=args.manual,
+                     privacy=config.YT_PRIVACY)
     dashboard.refresh_stats()
     print("recorded to dashboard/kids.json")
 

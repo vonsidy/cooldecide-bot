@@ -122,8 +122,14 @@ def post_due_comments() -> int:
 
 
 def record(video_id: str, title: str, fmt: str, rounds: int,
-           manual: bool = False) -> None:
-    """Add a freshly-posted video to the board (hub schema)."""
+           manual: bool = False, privacy: str = "") -> None:
+    """Add a freshly-posted video to the board (hub schema).
+
+    `privacy` must be the value the video was ACTUALLY uploaded with. It used to be
+    guessed from `manual` ("unlisted if manual else public"), which labelled a
+    genuinely unlisted cloud post as public on the dashboard — the one place you'd
+    look to check.
+    """
     data = _load()
     now = _now()
     data.setdefault("videos", []).insert(0, {
@@ -134,7 +140,7 @@ def record(video_id: str, title: str, fmt: str, rounds: int,
         "format": fmt,
         "theme": content.format_label(fmt).title(),  # renderer groups on `theme`
         "rounds": rounds,
-        "privacy": "unlisted" if manual else "public",
+        "privacy": privacy or "unknown",
         "local_time": now.astimezone(ET).strftime("%I:%M %p"),
         "manual": manual,
         "views": 0,
@@ -171,10 +177,16 @@ def refresh_stats() -> dict:
 
     ids = [v["id"] for v in data["videos"] if v.get("id")]
     stats = youtube_upload.video_stats(ids)
+    # Re-read privacy from YouTube rather than trusting what we wrote at upload
+    # time: you may have flipped a video public by hand, and a stale label on the
+    # dashboard is worse than none.
+    live = youtube_upload.video_privacy(ids)
     for v in data["videos"]:
         s = stats.get(v.get("id"))
         if s:
             v.update(s)
+        if v.get("id") in live:
+            v["privacy"] = live[v["id"]]
 
     # daily snapshot so the dashboard can graph growth
     if ch:

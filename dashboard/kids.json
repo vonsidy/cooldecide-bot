@@ -15,7 +15,7 @@
       "format": "wyr",
       "theme": "Would You Rather",
       "rounds": 3,
-      "privacy": "public",
+      "privacy": "unlisted",
       "local_time": "02:28 PM",
       "manual": false,
       "views": 0,
@@ -83,5 +83,5 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-16T18:28:01+00:00"
+  "updated": "2026-07-16T18:30:08+00:00"
 }
