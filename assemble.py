@@ -209,7 +209,7 @@ def build(items, out_path: str, background: str | None = None) -> str:
                 ducks.append((clock, clock + olen + 0.45))
             except Exception as e:  # noqa: BLE001
                 print("  (outro voice skipped:", e, ")")
-        outro_len = round(max(olen + 0.9, config.OUTRO_SECONDS), 2)
+        outro_len = round(max(olen + config.OUTRO_TAIL, config.OUTRO_SECONDS), 2)
         seg_specs.append((f_out, outro_len))
         clock += outro_len
 

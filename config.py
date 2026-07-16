@@ -69,8 +69,16 @@ MUSIC_DUCK = float(get("MUSIC_DUCK", "0.16"))
 # Silent-mode pacing (seconds). The vote phase is sized to READING time since
 # there's no voice to set the pace.
 READ_MIN, READ_MAX = 2.3, 4.3
-REVEAL_SECONDS = float(get("REVEAL_SECONDS", "2.9"))
+# How long the result sits on screen before the next round. The reveal reads
+# INSTANTLY — the bar fills and the number is right there — so this only needs to
+# be long enough to register, not to read. At 2.9s it was a dead stare between
+# every round; the ding already does the work of landing it.
+REVEAL_SECONDS = float(get("REVEAL_SECONDS", "1.9"))
 # End card. The video used to just stop on the last reveal — a dead beat exactly
 # when the viewer has an opinion and nothing to do with it.
 ENABLE_OUTRO = get("ENABLE_OUTRO", "1") == "1"
-OUTRO_SECONDS = float(get("OUTRO_SECONDS", "2.8"))
+# Floor only — the card actually lasts as long as the spoken ask plus OUTRO_TAIL.
+# Keep it tight: once the ask has been said the card is doing nothing, and a Short
+# that lingers on a static end card just gets swiped.
+OUTRO_SECONDS = float(get("OUTRO_SECONDS", "2.1"))
+OUTRO_TAIL = float(get("OUTRO_TAIL", "0.45"))
