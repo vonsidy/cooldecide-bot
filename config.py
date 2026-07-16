@@ -84,5 +84,5 @@ ENABLE_OUTRO = get("ENABLE_OUTRO", "1") == "1"
 # Floor only — the card actually lasts as long as the spoken ask plus OUTRO_TAIL.
 # Keep it tight: once the ask has been said the card is doing nothing, and a Short
 # that lingers on a static end card just gets swiped.
-OUTRO_SECONDS = float(get("OUTRO_SECONDS", "2.1"))
-OUTRO_TAIL = float(get("OUTRO_TAIL", "0.45"))
+OUTRO_SECONDS = float(get("OUTRO_SECONDS", "1.7"))
+OUTRO_TAIL = float(get("OUTRO_TAIL", "0.3"))
