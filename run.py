@@ -48,6 +48,12 @@ def main() -> None:
     import meta
     import youtube_upload
 
+    # Honor a dashboard "Pause 1 day" click (auto-scheduled runs only; an explicit
+    # --manual test still posts so you can verify things work while paused).
+    if dashboard.paused() and not args.manual:
+        print("paused via dashboard — skipping today's post (auto-resumes later)")
+        return
+
     info = meta.build(items)
     print(f"uploading: {info['title']!r} (privacy={config.YT_PRIVACY})")
     vid = youtube_upload.upload(args.out, info["title"], info["description"], info["tags"])

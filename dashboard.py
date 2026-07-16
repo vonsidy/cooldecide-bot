@@ -18,7 +18,32 @@ import content
 
 _HERE = os.path.dirname(__file__)
 DATA_FILE = os.path.join(_HERE, "dashboard", "kids.json")
+CONTROLS_FILE = os.path.join(_HERE, "dashboard", "controls.json")
+BOT_ID = "kids"
 ET = datetime.timezone(datetime.timedelta(hours=-4))  # US/Eastern (DST); display only
+
+
+def paused() -> bool:
+    """True if this bot is manually paused via the dashboard 'Pause 1 day' button.
+
+    Reads dashboard/controls.json (shared with the story bots' hub). The pause
+    auto-expires once `paused_until` passes. Missing file/field = not paused.
+    """
+    try:
+        with open(CONTROLS_FILE, encoding="utf-8") as f:
+            ctl = json.load(f)
+    except (OSError, ValueError):
+        return False
+    until = (ctl.get(BOT_ID) or {}).get("paused_until")
+    if not until:
+        return False
+    try:
+        t = datetime.datetime.fromisoformat(str(until).replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=datetime.timezone.utc)
+    return _now() < t
 
 
 def _load() -> dict:
