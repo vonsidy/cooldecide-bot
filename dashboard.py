@@ -188,6 +188,24 @@ def refresh_stats() -> dict:
         if v.get("id") in live:
             v["privacy"] = live[v["id"]]
 
+    # Drop videos that no longer exist — deleting one on YouTube otherwise leaves
+    # it on the dashboard forever, inflating the count with ghosts.
+    #
+    # GUARDED: only prune when the lookup found at least one video. video_privacy()
+    # swallows API errors and returns {}, which is indistinguishable from "every
+    # video is gone" — pruning on that would wipe the whole board over one bad
+    # request. Being slow to forget a deleted video is the safe failure.
+    if ids and live:
+        kept = [v for v in data["videos"] if v.get("id") in live]
+        dropped = len(data["videos"]) - len(kept)
+        if dropped:
+            print(f"  (pruned {dropped} deleted video(s) from the board)")
+        data["videos"] = kept
+        gone = {v["video_id"] for v in data.get("pending_comments", [])} - set(live)
+        if gone:
+            data["pending_comments"] = [q for q in data["pending_comments"]
+                                        if q["video_id"] in live]
+
     # daily snapshot so the dashboard can graph growth
     if ch:
         today = _now().date().isoformat()
