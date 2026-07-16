@@ -70,20 +70,31 @@ def _text_c(draw, cx, y, text, font, fill, max_w=None):
 
 
 def _emoji_c(canvas, cx, y, ch, size):
-    """Draw an emoji centred on cx, and centred vertically inside a `size` box at y.
+    """Draw an emoji truly centred on cx, inside a `size` box at y.
 
-    Measured with textbbox, not textlength: emoji glyphs carry uneven side/top
-    bearings, so positioning by advance-width alone leaves them visibly off-centre.
+    Font metrics CANNOT be trusted here. Many emoji carry an invisible variation
+    selector (U+FE0F) — 🏖️ is U+1F3D6 + U+FE0F — and PIL counts that zero-width
+    character as a second glyph. textbbox reported 🏖️ as 852px wide when its real
+    ink was 306px, which centred it 213px to the LEFT. (🍕 has no selector, so it
+    looked fine — which is why this hid for so long.)
+
+    So: draw onto a scratch layer, find the ACTUAL ink with getbbox(), and place
+    that. Correct for any emoji, selector or not.
     """
     f = _emoji(size)
     if not f or not ch:
         return
-    d = ImageDraw.Draw(canvas)
     try:
-        bb = d.textbbox((0, 0), ch, font=f, embedded_color=True)
-        w, h = bb[2] - bb[0], bb[3] - bb[1]
-        d.text((cx - w / 2 - bb[0], y + (size - h) / 2 - bb[1]), ch, font=f,
-               embedded_color=True)
+        pad = int(size * 2)
+        tmp = Image.new("RGBA", (pad * 2, pad * 2), (0, 0, 0, 0))
+        ImageDraw.Draw(tmp).text((pad // 2, pad // 2), ch, font=f, embedded_color=True)
+        box = tmp.getbbox()
+        if not box:
+            return
+        ink = tmp.crop(box)
+        ink.thumbnail((size, size), Image.LANCZOS)   # also normalises the size
+        canvas.alpha_composite(ink, (int(cx - ink.width / 2),
+                                     int(y + (size - ink.height) / 2)))
     except Exception:
         pass
 

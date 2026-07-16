@@ -68,7 +68,24 @@ PICTURABLE = {
     "moon": "full moon",
     "volcano": "volcano eruption",
     "rainbow": "rainbow sky",
+    "everest": "mount everest summit",
+    "eiffel": "eiffel tower paris",
+    "school bus": "yellow school bus",
+    "puppy": "puppy",
+    "kitten": "kitten",
+    "taco": "tacos mexican food",
+    "donut": "doughnut glazed",
+    "chocolate": "chocolate pieces",
 }
+# Reviewed and REJECTED — do not re-add without looking at the result yourself:
+#   beach / mountain / winter / summer / island  -> the CC0 pool for generic
+#       nature words is mostly washed-out archival B&W. Worse than the emoji.
+#   earth  -> a dark frame captioned "You are here" (not Earth from space)
+#   whale  -> a crowd of people (whale WATCHING)
+#   robot  -> a toy figure under a shoe
+#   dog    -> an African wild dog, not a pet
+#   sun    -> indistinguishable from the volcano shot
+#   jetpack / treehouse -> no usable public-domain image exists
 
 
 def _slug(s: str) -> str:
