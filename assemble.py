@@ -78,16 +78,16 @@ def _spoken(item: content.Item, idx: int = 0, total: int = 1) -> tuple[str, str]
     fmt = item.fmt
     factual = item.correct is not None
 
+    # No invented "% got it right" on questions that have a real answer — see the
+    # note in card._panel. The answer is the payoff.
     if fmt == "trivia":
         q = f"{item.prompt} Is it {item.a}, or {item.b}?"
         correct = item.a if item.correct == 0 else item.b
-        pct = item.a_pct if item.correct == 0 else item.b_pct
-        r = f"It's {correct}! Only {pct} percent got that right."
+        r = f"It's {correct}! Did you get it?"
     elif fmt == "higher_lower":
         q = f"Which is bigger? {item.a}, or {item.b}?"
         bigger = item.a if item.correct == 0 else item.b
-        pct = item.a_pct if item.correct == 0 else item.b_pct
-        r = f"{bigger}! Only {pct} percent got that right."
+        r = f"{bigger} is bigger! Did you get it?"
     else:
         q = f"{item.prompt} {item.a}, or {item.b}?"
         winner, wp = (item.a, item.a_pct) if item.a_pct >= item.b_pct else (item.b, item.b_pct)

@@ -129,20 +129,20 @@ def _rounded(im: Image.Image, radius: int = 26) -> Image.Image:
     return out
 
 
-def _picture(canvas, cx, y, size, option_text, emoji):
-    """Best available art for an option, centred in a `size`-tall box.
-
-    Order: a curated local file, then a public-domain photo (images.py only
-    returns one for reviewed, unambiguous terms), then the emoji. The emoji is
-    the floor, not a failure — it's always on-topic and always safe.
-    """
+def photo_for(option_text: str) -> str | None:
+    """A curated local file or a reviewed public-domain photo, else None."""
     path = _image_for(option_text)
-    if not path:
-        try:
-            import images
-            path = images.fetch(option_text)
-        except Exception:  # noqa: BLE001 - offline etc: fall through to the emoji
-            path = None
+    if path:
+        return path
+    try:
+        import images
+        return images.fetch(option_text)
+    except Exception:  # noqa: BLE001 - offline etc: caller falls back to emoji
+        return None
+
+
+def _picture(canvas, cx, y, size, option_text, emoji, path=None):
+    """Art for an option, centred in a `size`-tall box: photo if given, else emoji."""
     if path:
         try:
             im = Image.open(path).convert("RGBA")
@@ -157,7 +157,8 @@ def _picture(canvas, cx, y, size, option_text, emoji):
     _emoji_c(canvas, cx, y, emoji, size)
 
 
-def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_correct, factual):
+def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_correct,
+           factual, photo=None):
     draw = ImageDraw.Draw(canvas)
     cx = W // 2
     # bright rounded panel with a thick white "sticker" border
@@ -177,23 +178,36 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     while draw.textlength(text.upper(), font=tf) > W - 210 and tf.size > 30:
         tf = _font("Anton-Regular.ttf", tf.size - 2)
     num_sz, num_gap, bar_h, bar_gap = 92, 34, 38, 30    # generous gaps so nothing overlaps
-    # vertically centre the whole content block inside the panel
-    block = em + gap + tf.size + (num_gap + num_sz + bar_gap + bar_h if reveal else 0)
+    # vertically centre the whole content block inside the panel. Factual reveals
+    # carry no bar (see below), so they're shorter.
+    extra = 0
+    if reveal:
+        extra = num_gap + num_sz + (0 if factual else bar_gap + bar_h)
+    block = em + gap + tf.size + extra
     y = top_y + (height - block) // 2
 
     if has_pic:
-        _picture(canvas, cx, y, em, text, emoji)
+        _picture(canvas, cx, y, em, text, emoji, photo)
     _shadow_text(draw, cx, y + em + gap, text.upper(), tf, WHITE, off=4, max_w=W - 210)
 
-    if reveal:
+    if reveal and factual:
+        # A question with a RIGHT ANSWER gets no percentage. The number is made up,
+        # and on a kids channel a big "83%" next to the wrong answer teaches the
+        # wrong thing — it read "83% said 5 continents" / "66% said blue+yellow=
+        # purple". The answer itself is the payoff here.
+        _shadow_text(draw, cx, y + em + gap + tf.size + num_gap,
+                     "CORRECT!" if is_correct else "NOPE",
+                     _font("Anton-Regular.ttf", 76), WHITE, off=5)
+    elif reveal:
+        # Opinion formats keep it: "most people picked the dragon" is a claim about
+        # taste, so it isn't asserting anything false — and it's the argument fuel.
         num_y = y + em + gap + tf.size + num_gap
         _shadow_text(draw, cx, num_y, f"{pct}%", _font("Anton-Regular.ttf", num_sz), WHITE, off=5)
         by0 = num_y + num_sz + bar_gap
         by1 = by0 + bar_h
         draw.rounded_rectangle((140, by0, W - 140, by1), radius=bar_h // 2, fill=(255, 255, 255, 120))
         fillw = int((W - 280) * pct / 100)
-        bar_col = GREEN if (factual and is_correct) else GOLD
-        draw.rounded_rectangle((140, by0, 140 + max(fillw, bar_h), by1), radius=bar_h // 2, fill=bar_col + (255,))
+        draw.rounded_rectangle((140, by0, 140 + max(fillw, bar_h), by1), radius=bar_h // 2, fill=GOLD + (255,))
     # winner crown / correct check pinned to the panel corner
     if reveal and factual and is_correct:
         _emoji_c(canvas, W - 172, top_y + 30, "✅", 80)
@@ -220,10 +234,16 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
     else:
         _shadow_text(draw, cx, 56, content.format_label(item.fmt), _font("Anton-Regular.ttf", 84), WHITE, off=6, max_w=W - 50)
 
+    # Photos are all-or-nothing per round: a real photo beside a cartoon emoji
+    # looks like a mistake, so unless BOTH sides have one, both use the emoji.
+    a_photo, b_photo = photo_for(item.a), photo_for(item.b)
+    if not (a_photo and b_photo):
+        a_photo = b_photo = None
+
     _panel(canvas, 250, 560, A_COLOR, item.a, item.a_emoji, item.a_pct,
-           reveal, a_win, item.correct == 0, factual)
+           reveal, a_win, item.correct == 0, factual, a_photo)
     _panel(canvas, 1010, 560, B_COLOR, item.b, item.b_emoji, item.b_pct,
-           reveal, not a_win, item.correct == 1, factual)
+           reveal, not a_win, item.correct == 1, factual, b_photo)
 
     # center chip: bright white badge with a colored ring + big number
     if not reveal:
