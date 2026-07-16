@@ -33,6 +33,7 @@ def main() -> None:
     ap.add_argument("--upload", action="store_true", help="post the video to YouTube")
     ap.add_argument("--manual", action="store_true", help="mark as a test post (doesn't count toward the daily quota)")
     ap.add_argument("--palette", default=None, help="force a colour scheme (sky|sunset|mint|candy|ocean|sunny|grape)")
+    ap.add_argument("--topic", default=None, help="force a topic (food|powers|animals|gaming|magic|space|money|school)")
     args = ap.parse_args()
 
     date = args.date or datetime.date.today().isoformat()
@@ -41,9 +42,18 @@ def main() -> None:
     # the same one twice. Seeded by date+format: stable for a given video (a
     # re-render looks identical) but different from the next one.
     palette = card.set_palette(args.palette or card.palette_for(date, args.format))
-    print(f"  palette: {palette}")
 
-    items = content.several(args.format, date, args.rounds)
+    # One topic per video — all food, or all superpowers — so it has an identity
+    # instead of being three unrelated questions.
+    topic = args.topic or content.topic_for(date, args.format)
+    items = content.several(args.format, date, args.rounds, topic=topic)
+
+    # Only badge the video if every round really is on-topic. The fallback pool
+    # can't always fill a theme, and "FOOD EDITION" over a mixed bag is worse than
+    # no label.
+    themed = content.is_themed(items, topic)
+    card.set_topic_label(content.topic_label(topic) if themed else "")
+    print(f"  palette: {palette} | topic: {topic}{'' if themed else ' (mixed — no badge)'}")
     for i, it in enumerate(items, 1):
         print(f"  round {i} [{it.fmt}] {it.a} ({it.a_pct}%) vs {it.b} ({it.b_pct}%)")
     assemble.build(items, args.out)

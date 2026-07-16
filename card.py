@@ -35,6 +35,15 @@ PALETTES = {
 }
 
 
+# Set per video by run.py; blank means "don't claim a theme" (see content.is_themed).
+TOPIC_LABEL = ""
+
+
+def set_topic_label(label: str) -> None:
+    global TOPIC_LABEL
+    TOPIC_LABEL = label or ""
+
+
 def set_palette(name: str) -> str:
     """Swap the video's colour scheme. Unknown name falls back to the default."""
     global BG_TOP, BG_BOT, A_COLOR, B_COLOR
@@ -249,12 +258,15 @@ def photo_for(option_text: str, hint: str | None = None) -> str | None:
             return path
     try:
         import art
-        path = art.fetch(option_text, hint)
-        if path:
-            return path
+        return art.fetch(option_text, hint)
     except Exception:  # noqa: BLE001
-        pass
-    return _real()
+        return None
+    # NOTE: deliberately no stock-photo fallback here. It put a cartoon pizza next
+    # to a PHOTOGRAPH of ice cream on the same card — the all-or-nothing rule only
+    # checks that art exists, not that it's the same kind. If generation hasn't run
+    # for an option yet, the emoji is the honest fallback; a style clash looks worse
+    # than an emoji does. Stock photos survive only for REAL_FIRST terms above,
+    # where a real landmark genuinely beats a drawing.
 
 
 def _picture(canvas, cx, y, size, option_text, emoji, path=None):
@@ -407,7 +419,16 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
         for i, ln in enumerate(lines):
             _shadow_text(draw, cx, 104 + i * 66, ln, qfont, WHITE, off=4)
     else:
-        _shadow_text(draw, cx, 56, content.format_label(item.fmt), _font("Anton-Regular.ttf", 84), WHITE, off=6, max_w=W - 50)
+        label = content.format_label(item.fmt)
+        if TOPIC_LABEL:
+            # The topic is the video's identity, so it goes above the format name:
+            # "FOOD EDITION / WOULD YOU RATHER".
+            _shadow_text(draw, cx, 34, TOPIC_LABEL, _font("Anton-Regular.ttf", 46),
+                         GOLD, off=4, max_w=W - 90)
+            _shadow_text(draw, cx, 92, label, _font("Anton-Regular.ttf", 84), WHITE,
+                         off=6, max_w=W - 50)
+        else:
+            _shadow_text(draw, cx, 56, label, _font("Anton-Regular.ttf", 84), WHITE, off=6, max_w=W - 50)
 
     # All-or-nothing per round: one side in artwork and the other in emoji looks
     # like a mistake, so unless BOTH sides have art, both fall back to the emoji.

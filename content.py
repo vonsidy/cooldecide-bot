@@ -7,6 +7,7 @@ day's video doesn't change between renders.
 """
 from __future__ import annotations
 import hashlib
+import re
 import json
 import os
 import random
@@ -28,6 +29,57 @@ class Item:
     b_pct: int = 0
     fmt: str = "wyr"
     correct: int | None = None  # 0=a, 1=b for factual formats; None = opinion (no wrong answer)
+
+
+# --- Topics --------------------------------------------------------------------
+# Each video is about ONE thing: all food, or all superpowers, or all animals.
+# A video of three unrelated questions has no identity — you can't title it, and
+# it feels like leftovers. A themed one is "the food episode", the rounds build on
+# each other, and the next day is visibly a different video.
+# (label shown on the card, brief handed to Claude when it writes new questions)
+TOPICS = {
+    "food": ("FOOD EDITION",
+             "food and eating: giving up a favourite food forever, endless supplies "
+             "of one snack, weird food swaps, dream desserts"),
+    "powers": ("SUPERPOWER EDITION",
+               "superpowers and abilities: flying, invisibility, super speed, "
+               "reading minds, freezing time, controlling elements"),
+    "animals": ("ANIMAL EDITION",
+                "animals and impossible pets: talking animals, dragons, dinosaurs, "
+                "tiny or giant creatures, being an animal for a day"),
+    "gaming": ("GAMING EDITION",
+               "video games and gaming life: living inside a game, unlimited in-game "
+               "money, being a pro gamer, game worlds becoming real"),
+    "magic": ("MAGIC EDITION",
+              "magic and fantasy: wands, spells, wizards, portals, magical objects, "
+              "enchanted places, mythical creatures"),
+    "space": ("SPACE EDITION",
+              "space and adventure: rockets, living on other planets, aliens, "
+              "exploring the ocean floor, secret bases"),
+    "money": ("RICH EDITION",
+              "money and luxury: piles of cash, owning anything you want, mansions, "
+              "private islands, buying whole shops"),
+    "school": ("SCHOOL EDITION",
+               "school life: homework, tests, teachers, holidays, lunch, getting out "
+               "of class, school but magical"),
+}
+_TOPIC_KEYS = sorted(TOPICS)
+# Same idea as the palette rotation: STEP through the list rather than hashing, so
+# two videos in a row can't land on the same topic. 8 topics, step 3 (coprime).
+_TOPIC_FMT_OFFSET = {"wyr": 0, "this_or_that": 1, "rank": 2, "higher_lower": 3, "trivia": 4}
+
+
+def topic_for(date: str, fmt: str = "") -> str:
+    import datetime as _dt
+    try:
+        day = _dt.date.fromisoformat(str(date)[:10]).toordinal()
+    except ValueError:
+        day = sum(ord(c) for c in str(date))
+    return _TOPIC_KEYS[(day * 3 + _TOPIC_FMT_OFFSET.get(fmt, 0)) % len(_TOPIC_KEYS)]
+
+
+def topic_label(topic: str) -> str:
+    return TOPICS.get(topic, ("", ""))[0]
 
 
 # --- Format pools (kid-fun, broad appeal) --------------------------------------
@@ -108,6 +160,12 @@ WYR = [
     ("find a real treasure chest", "find a real magic lamp", "💰", "🪔"),
     ("have shoes that let you run on water", "have gloves that let you climb walls", "👟", "🧤"),
     ("turn your homework into gold", "turn your bed into a spaceship", "📄", "🛏️"),
+    # --- money (this topic was too thin to fill a 3-round video) -----------
+    ("have a money tree in the garden", "have a vault full of gold coins", "🌳", "🪙"),
+    ("be a billionaire kid", "own the biggest mansion ever", "💰", "🏰"),
+    ("get paid to play video games", "get paid to eat snacks", "🎮", "🍿"),
+    ("win the lottery every year", "find a pirate chest of gold", "🎟️", "💰"),
+    ("buy any toy you want forever", "buy any game you want forever", "🧸", "🕹️"),
 ]
 
 # Snap picks — kept IMAGINARY on purpose. "Summer vs Winter" and "Chocolate vs
@@ -175,6 +233,56 @@ FORMATS = {
 
 # One format per weekday cycle, so the channel rotates through all five.
 FORMAT_ROTATION = ["wyr", "this_or_that", "wyr", "higher_lower", "wyr", "rank", "trivia"]
+
+
+# Which topic a built-in question belongs to. Only the FALLBACK pool needs this —
+# questions Claude writes are already on-topic by construction. Checked in priority
+# order because options overlap ("pet dragon" is animals AND magic; "unlimited
+# Robux" is gaming AND money), and the first match wins.
+_TOPIC_WORDS = {
+    "school": ("homework", "school", "teacher", "test", "class"),
+    "gaming": ("minecraft", "roblox", "fortnite", "robux", "v-buck", "video game",
+               "pro gamer", "playstation", "xbox", "lego", "nerf", "favorite game"),
+    "food": ("pizza", "ice cream", "candy", "chips", "taco", "donut", "chocolate",
+             "vanilla", "burger", "eat ", "food", "jelly", "sweet", "cake"),
+    "animals": ("dog", "cat", "dragon", "dinosaur", "t-rex", "spider", "penguin",
+                "monkey", "shark", "whale", "unicorn", "phoenix", "animal", "puppy",
+                "kitten", "horse", "duck", "cheetah", " pet", "tail", "wings"),
+    "magic": ("magic", "wizard", "wand", "lightsaber", "portal", "genie", "lamp",
+              "carpet", "spell", "invisible cloak", "treasure", "knight"),
+    "space": ("moon", "space", "rocket", "spaceship", "alien", "planet", "submarine",
+              "underwater", "island", "star"),
+    "money": ("$", "money", "rich", "million", "dollar", "store", "jet", "gold",
+              "mansion", "cash"),
+    "powers": ("invisible", "fly", "super", "control", "read mind", "teleport",
+               "freeze time", "x-ray", "night vision", "speed", "strength", "shrink",
+               "giant", "breathe", "through walls", "gravity", "weather", "clone",
+               "power", "time travel", "hero"),
+}
+_TOPIC_PRIORITY = ["school", "gaming", "food", "animals", "magic", "space", "money", "powers"]
+
+
+def _has_word(text: str, word: str) -> bool:
+    """Substring match with word boundaries.
+
+    Plain `in` misfires badly here: "fastest" contains "test", so "be the fastest
+    kid alive" was filed under SCHOOL.
+    """
+    w = word.strip()
+    if not w:
+        return False
+    if not w[0].isalpha():          # "$" and friends have no word boundary
+        return w in text
+    return re.search(rf"(?<![a-z]){re.escape(w)}(?![a-z])", text) is not None
+
+
+def row_topic(row) -> str:
+    """Best-guess topic for a built-in row, or 'misc'."""
+    t = f"{row[0]} {row[1]}".lower()
+    for topic in _TOPIC_PRIORITY:
+        if any(_has_word(t, w) for w in _TOPIC_WORDS[topic]):
+            return topic
+    return "misc"
 
 
 def _rng(*parts) -> random.Random:
@@ -257,12 +365,25 @@ def _save_used(fmt: str, keys: set[str]) -> None:
         json.dump(sorted(keys), f)
 
 
-def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool = True) -> list[Item]:
-    """n distinct items of one format. Prefers freshly AI-generated questions (so
-    every post is brand-new); falls back to the curated pool so the bot always
-    works. Never repeats a question until everything's been used."""
+def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool = True,
+            topic: str | None = None) -> list[Item]:
+    """n distinct items of one format, all on ONE topic.
+
+    Prefers freshly AI-generated questions (so every post is brand-new); falls back
+    to the curated pool so the bot always works. Never repeats a question until
+    everything's been used.
+
+    The topic is a REQUEST, not a guarantee: Claude writes to it, but the fallback
+    pool only has a handful per topic, so if it can't fill the video it tops up
+    from the rest rather than shipping a two-round Short. Callers check
+    `is_themed()` before printing "FOOD EDITION" over a mixed bag.
+    """
     import generate
     pool = FORMATS[fmt][2]
+    if topic:
+        on_topic = [r for r in pool if row_topic(r) == topic]
+        if len(on_topic) >= n:
+            pool = on_topic
     n = min(n, len(pool))
     used = _load_used(fmt) if avoid_repeats else set()
     rng = random.Random()
@@ -270,7 +391,7 @@ def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool =
     picked_keys: set[str] = set()
 
     # 1) brand-new questions from Claude, skipping anything already used
-    for row in generate.generate(fmt, n, avoid=sorted(used)):
+    for row in generate.generate(fmt, n, avoid=sorted(used), topic=topic):
         k = _key(row)
         if k not in used and k not in picked_keys:
             chosen.append(row)
@@ -313,6 +434,18 @@ def _extremeness(it: Item) -> float:
 
 def format_label(fmt: str) -> str:
     return FORMATS[fmt][0]
+
+
+def is_themed(items: list[Item], topic: str | None) -> bool:
+    """True only if EVERY round really is on the topic.
+
+    Guards the on-screen label: the fallback pool can't always fill a topic, and
+    stamping "FOOD EDITION" over a video that's two-thirds superpowers is worse
+    than showing no label at all.
+    """
+    if not topic or not items:
+        return False
+    return all(row_topic((it.a, it.b)) == topic for it in items)
 
 
 if __name__ == "__main__":

@@ -86,15 +86,24 @@ def _rows_from_json(text: str, factual: bool) -> list[tuple]:
     return rows
 
 
-def generate(fmt: str, n: int, avoid: list[str] | None = None) -> list[tuple]:
-    """Returns rows in the same shape as content.py's pools, or [] on any failure."""
+def generate(fmt: str, n: int, avoid: list[str] | None = None,
+             topic: str | None = None) -> list[tuple]:
+    """Returns rows in the same shape as content.py's pools, or [] on any failure.
+
+    `topic` makes the whole video about one thing (all food, all superpowers), so
+    it has an identity instead of being three unrelated questions.
+    """
     key = _api_key()
     if not key or fmt not in _PROMPTS:
         return []
     try:
         import anthropic
+        import content
         client = anthropic.Anthropic(api_key=key)
         kind, example = _PROMPTS[fmt]
+        if topic and topic in content.TOPICS:
+            kind = (f"{kind}. EVERY question must be about ONE theme — "
+                    f"{content.TOPICS[topic][1]}")
         avoid_txt = ("\nDo NOT repeat or closely echo any of these already-used ones:\n- "
                      + "\n- ".join((avoid or [])[-40:])) if avoid else ""
         prompt = (
