@@ -14,6 +14,18 @@ MODEL = "claude-haiku-4-5-20251001"   # fast + cheap, plenty for short questions
 _SAFE = ("Wholesome and safe for ages 8-14: no violence, weapons aimed at people, "
          "scary/horror, romance, politics, or gross-out. Keep it playful.")
 
+# The pull of this format is the DAYDREAM, not the preference. "Summer or Winter"
+# is something a kid already has an answer to, so there's nothing to picture and
+# nothing to argue about. "Dragon or unicorn" makes them imagine owning one.
+_IMAGINATIVE = (
+    "\nMake them IMAGINATIVE and magical — wish-fulfilment a kid would daydream "
+    "about: powers, creatures, magic, space, secret worlds, impossible pets, being "
+    "a hero. Both options must be things they'd genuinely WANT, so picking hurts. "
+    "Avoid everyday preferences (summer vs winter, chocolate vs vanilla, dogs vs "
+    "cats) — those are boring and already decided. Every option must be something "
+    "you could draw a fun picture of."
+)
+
 _PROMPTS = {
     # opinion formats: two fun options, each with one fitting emoji
     "wyr": ("fun 'would you rather' dilemmas kids would genuinely argue about "
@@ -89,6 +101,7 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None) -> list[tuple]:
             f"Write {n + 3} original {kind} for a kids' YouTube Shorts channel. {_SAFE}\n"
             f"Each needs two short options (2-6 words) and one fitting emoji per option. "
             f"Use clear object emojis, never plain colored squares/circles. Be creative and varied."
+            f"{_IMAGINATIVE if fmt in ('wyr', 'this_or_that') else ''}"
             f"{_ART_RULE}"
             f"{avoid_txt}\n\n"
             f'Return ONLY a JSON array of objects like: {example}'

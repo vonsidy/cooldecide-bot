@@ -92,17 +92,49 @@ WYR = [
     ("be able to fly a plane", "drive a race car", "✈️", "🏎️"),
     ("have glow-in-the-dark skin", "color-changing hair", "✨", "🌈"),
     ("find $500 on the ground", "win a giant teddy bear", "💵", "🧸"),
+    # --- pure daydream fuel -----------------------------------------------
+    ("ride a dragon to school", "fly to school with wings", "🐉", "🪽"),
+    ("live in a giant candy castle", "live in a floating cloud house", "🍭", "☁️"),
+    ("have a magic door to anywhere", "have a rocket in your backyard", "🚪", "🚀"),
+    ("have a dragon best friend", "have a unicorn best friend", "🐉", "🦄"),
+    ("be a wizard with a wand", "be a knight with a sword", "🧙", "🗡️"),
+    ("own a real spaceship", "own a real submarine", "🚀", "🤿"),
+    ("have a pet baby dinosaur", "have a pet baby phoenix", "🦕", "🔥"),
+    ("swim in a chocolate river", "fly through a candy sky", "🍫", "🍭"),
+    ("have an invisible fort", "have a flying treehouse", "🏕️", "🌳"),
+    ("command an army of robots", "command an army of dinosaurs", "🤖", "🦖"),
+    ("live one day as a superhero", "live one day as a dragon", "🦸", "🐉"),
+    ("have a room that becomes any world", "have a pet that becomes any animal", "🌍", "🐾"),
+    ("find a real treasure chest", "find a real magic lamp", "💰", "🪔"),
+    ("have shoes that let you run on water", "have gloves that let you climb walls", "👟", "🧤"),
+    ("turn your homework into gold", "turn your bed into a spaceship", "📄", "🛏️"),
 ]
 
+# Snap picks — kept IMAGINARY on purpose. "Summer vs Winter" and "Chocolate vs
+# Vanilla" are things a kid already has an answer to; there's no daydream in it.
+# Every pair here is a wish, so choosing means picturing yourself with it.
 THIS_OR_THAT = [
-    ("Summer", "Winter", "☀️", "❄️"),
-    ("Dogs", "Cats", "🐶", "🐱"),
+    ("Dragon", "Unicorn", "🐉", "🦄"),
+    ("Wizard", "Superhero", "🧙", "🦸"),
+    ("Flying", "Invisibility", "🦅", "👻"),
+    ("Magic wand", "Magic sword", "🪄", "⚔️"),
+    ("Mermaid", "Fairy", "🧜", "🧚"),
+    ("Robot friend", "Alien friend", "🤖", "👽"),
+    ("Time machine", "Teleporter", "⏳", "🌀"),
+    ("Candy world", "Toy world", "🍭", "🧸"),
+    ("Magic castle", "Rocket ship", "🏰", "🚀"),
+    ("Talking dog", "Talking cat", "🐶", "🐱"),
+    ("Pet dinosaur", "Pet dragon", "🦕", "🐉"),
+    ("Ice powers", "Fire powers", "❄️", "🔥"),
+    ("Turn giant", "Turn tiny", "🦍", "🐜"),
+    ("Treasure map", "Magic key", "🗺️", "🗝️"),
+    ("Super speed", "Super strength", "⚡", "💪"),
+    ("Pirate ship", "Space station", "🏴‍☠️", "🛰️"),
+    ("Phoenix", "Griffin", "🔥", "🦅"),
+    ("Invisible cloak", "Flying carpet", "🧥", "🧞"),
+    # a couple of real-world snap picks so it isn't ALL fantasy
     ("Pizza", "Burgers", "🍕", "🍔"),
-    ("PlayStation", "Xbox", "🎮", "🟢"),
-    ("TikTok", "YouTube", "🎵", "📹"),
-    ("Beach", "Mountains", "🏖️", "⛰️"),
     ("Marvel", "DC", "🦸", "🦇"),
-    ("Chocolate", "Vanilla", "🍫", "🍦"),
 ]
 
 TRIVIA = [  # (question, correct, wrong)
