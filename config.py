@@ -74,6 +74,10 @@ READ_MIN, READ_MAX = 2.3, 4.3
 # be long enough to register, not to read. At 2.9s it was a dead stare between
 # every round; the ding already does the work of landing it.
 REVEAL_SECONDS = float(get("REVEAL_SECONDS", "1.9"))
+# The result counts up over REVEAL_ANIM seconds instead of appearing finished.
+# Taken from REVEAL_SECONDS, not added to it, so pacing doesn't regress.
+REVEAL_FRAMES = int(get("REVEAL_FRAMES", "6"))
+REVEAL_ANIM = float(get("REVEAL_ANIM", "0.5"))
 # End card. The video used to just stop on the last reveal — a dead beat exactly
 # when the viewer has an opinion and nothing to do with it.
 ENABLE_OUTRO = get("ENABLE_OUTRO", "1") == "1"

@@ -159,6 +159,14 @@ def build(items, out_path: str, background: str | None = None) -> str:
         f3 = card.render(item, os.path.join(work, f"{n}_c3.png"), countdown=3)
         f2 = card.render(item, os.path.join(work, f"{n}_c2.png"), countdown=2)
         f1 = card.render(item, os.path.join(work, f"{n}_c1.png"), countdown=1)
+        # Opinion reveals COUNT UP: a few frames of the bar growing and the number
+        # climbing, so the result lands as an event instead of just being there.
+        # Factual reveals are a single frame — CORRECT!/NOPE has nothing to count.
+        anim = []
+        if item.correct is None and config.REVEAL_FRAMES > 1:
+            for k in range(1, config.REVEAL_FRAMES):
+                anim.append(card.render(item, os.path.join(work, f"{n}_rev{k}.png"),
+                                        reveal=True, grow=k / config.REVEAL_FRAMES))
         f_reveal = card.render(item, os.path.join(work, f"{n}_reveal.png"), reveal=True)
 
         if config.ENABLE_VOICE:
@@ -187,7 +195,12 @@ def build(items, out_path: str, background: str | None = None) -> str:
             intro = _read_seconds(item)
             reveal_len = config.REVEAL_SECONDS
 
-        seg_specs += [(f_vote, intro), (f3, 1.0), (f2, 1.0), (f1, 1.0), (f_reveal, reveal_len)]
+        # The count-up eats from the reveal's own time, so pacing is unchanged.
+        step = config.REVEAL_ANIM / max(len(anim), 1) if anim else 0.0
+        hold = round(reveal_len - step * len(anim), 2)
+        seg_specs += [(f_vote, intro), (f3, 1.0), (f2, 1.0), (f1, 1.0)]
+        seg_specs += [(p, step) for p in anim]
+        seg_specs.append((f_reveal, max(hold, 0.6)))
         if has_sfx:
             cues += [(tick, clock + intro), (tick, clock + intro + 1), (tick, clock + intro + 2),
                      (ding, clock + intro + 3)]

@@ -239,7 +239,9 @@ def _picture(canvas, cx, y, size, option_text, emoji, path=None):
 
 
 def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_correct,
-           factual, photo=None):
+           factual, photo=None, grow=1.0):
+    # NB: `grow` (the count-up 0..1), NOT `fill` — this function already uses a
+    # local `fill` for the panel's RGB, which silently shadowed the parameter.
     draw = ImageDraw.Draw(canvas)
     cx = W // 2
     # bright rounded panel with a thick white "sticker" border
@@ -260,7 +262,10 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     tf = _font("Anton-Regular.ttf", tsize)
     while draw.textlength(text.upper(), font=tf) > W - 210 and tf.size > 30:
         tf = _font("Anton-Regular.ttf", tf.size - 2)
-    num_sz, num_gap, bar_h, bar_gap = 92, 34, 38, 30    # generous gaps so nothing overlaps
+    # bar_gap is measured from the % text's BOX, and Anton's digits don't fill it,
+    # so the visual gap always lands tighter than the number suggests — hence the
+    # roomy value here.
+    num_sz, num_gap, bar_h, bar_gap = 92, 34, 38, 60
     # vertically centre the whole content block inside the panel. Factual reveals
     # carry no bar (see below), so they're shorter.
     extra = 0
@@ -284,17 +289,25 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     elif reveal:
         # Opinion formats keep it: "most people picked the dragon" is a claim about
         # taste, so it isn't asserting anything false — and it's the argument fuel.
+        # `grow` (0..1) drives the count-up: the bar grows and the number climbs to
+        # the real value, so the result is an EVENT rather than a fact that was
+        # simply already on screen.
+        shown = int(round(pct * grow))
         num_y = y + em + gap + tf.size + num_gap
-        _shadow_text(draw, cx, num_y, f"{pct}%", _font("Anton-Regular.ttf", num_sz), WHITE, off=5)
+        _shadow_text(draw, cx, num_y, f"{shown}%", _font("Anton-Regular.ttf", num_sz), WHITE, off=5)
         by0 = num_y + num_sz + bar_gap
         by1 = by0 + bar_h
         draw.rounded_rectangle((140, by0, W - 140, by1), radius=bar_h // 2, fill=(255, 255, 255, 120))
-        fillw = int((W - 280) * pct / 100)
-        draw.rounded_rectangle((140, by0, 140 + max(fillw, bar_h), by1), radius=bar_h // 2, fill=GOLD + (255,))
+        fillw = int((W - 280) * shown / 100)
+        if fillw > 2:
+            draw.rounded_rectangle((140, by0, 140 + max(fillw, bar_h), by1),
+                                   radius=bar_h // 2, fill=GOLD + (255,))
     # winner crown / correct check pinned to the panel corner
     if reveal and factual and is_correct:
         _emoji_c(canvas, W - 172, top_y + 30, "✅", 80)
-    if reveal and not factual and winner:
+    # Crown only once the count-up has landed — showing it at 24% crowns the winner
+    # before the numbers finish climbing, which gives the result away.
+    if reveal and not factual and winner and grow >= 0.999:
         _emoji_c(canvas, W - 172, top_y + 30, "👑", 80)
 
 
@@ -333,7 +346,8 @@ def outro(item, out_path: str) -> str:
     return out_path
 
 
-def render(item, out_path: str, countdown: int | None = None, reveal: bool = False) -> str:
+def render(item, out_path: str, countdown: int | None = None, reveal: bool = False,
+           grow: float = 1.0) -> str:
     canvas = _gradient(BG_TOP, BG_BOT)   # bright, cheerful
     draw = ImageDraw.Draw(canvas)
     cx = W // 2
@@ -360,22 +374,28 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
         a_photo = b_photo = None
 
     _panel(canvas, 250, 560, A_COLOR, item.a, item.a_emoji, item.a_pct,
-           reveal, a_win, item.correct == 0, factual, a_photo)
+           reveal, a_win, item.correct == 0, factual, a_photo, grow)
     _panel(canvas, 1010, 560, B_COLOR, item.b, item.b_emoji, item.b_pct,
-           reveal, not a_win, item.correct == 1, factual, b_photo)
+           reveal, not a_win, item.correct == 1, factual, b_photo, grow)
 
     # center chip: bright white badge with a colored ring + big number
     if not reveal:
-        chip = 158
-        cy = 828
+        # The timer ESCALATES: it grows and heats up green -> gold -> red as it
+        # runs out. A fixed grey 3-2-1 is just a delay; this is a clock running
+        # down on you, which is what makes you commit to a side before it lands.
+        ramp = {3: (GREEN, 158), 2: (GOLD, 176), 1: ((255, 60, 80), 198)}
+        ring, chip = ramp.get(countdown, (GOLD, 158))
+        cy = 828 - (chip - 158) // 2
         badge = Image.new("RGBA", (chip, chip), (0, 0, 0, 0))
         bd = ImageDraw.Draw(badge)
-        ring = GOLD if countdown is None else (255, 90, 110)
-        bd.ellipse((0, 0, chip, chip), fill=WHITE + (255,), outline=ring + (255,), width=10)
+        bd.ellipse((0, 0, chip, chip), fill=WHITE + (255,), outline=ring + (255,),
+                   width=10 + (0 if countdown is None else (3 - countdown) * 3))
         mid = str(countdown) if countdown is not None else "VS"
-        mf = _font("Anton-Regular.ttf", 100 if countdown is not None else 66)
+        sz = int(chip * 0.63) if countdown is not None else 66
+        mf = _font("Anton-Regular.ttf", sz)
         mw = bd.textlength(mid, font=mf)
-        bd.text((chip / 2 - mw / 2, chip / 2 - (72 if countdown is not None else 48)), mid, font=mf, fill=NAVY + (255,))
+        bd.text((chip / 2 - mw / 2, chip / 2 - (sz * 0.72 if countdown is not None else 48)),
+                mid, font=mf, fill=(ring if countdown == 1 else NAVY) + (255,))
         canvas.alpha_composite(badge, (cx - chip // 2, cy))
 
     # footer pill
