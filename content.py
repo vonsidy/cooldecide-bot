@@ -147,8 +147,18 @@ def _rng(*parts) -> random.Random:
 
 
 def _split(rng: random.Random) -> tuple[int, int]:
-    """A believable made-up split — never 50/50, one side clearly ahead."""
-    a = rng.choice([52, 55, 58, 61, 64, 67, 71, 74, 78, 83])
+    """A believable made-up split — always LOPSIDED, never close to a tie.
+
+    A 52/48 reveal is a dud: you sit through a countdown to hear "it's basically
+    even". A lopsided number is the whole payoff — it either confirms you or tells
+    you you're in the weird minority, and that's what makes people argue in the
+    comments. So the floor is ~63/37, not 52/48.
+
+    Capped at ~79/21, though: at 91/9 the question stops being a question. The
+    minority has to stay big enough to feel like a real camp that fights back —
+    that argument IS the comment section.
+    """
+    a = rng.choice([63, 66, 69, 72, 76, 79])
     return (a, 100 - a) if rng.random() < 0.5 else (100 - a, a)
 
 
@@ -165,8 +175,10 @@ def _build(fmt: str, row: tuple, rng: random.Random) -> Item:
             a, b, a_e, b_e, correct = correct_text, wrong_text, ae, be, 0
         else:
             a, b, a_e, b_e, correct = wrong_text, correct_text, be, ae, 1
-        # The correct side gets the majority "% who got it right".
-        win = rng.choice([54, 58, 63, 67, 72, 77, 81])
+        # "% who got it right" — deliberately skewed LOW. "Only 23% got this"
+        # makes a viewer who got it feel smart (and want to say so); "72% got it"
+        # is a shrug. The hard ones are the ones people brag about in comments.
+        win = rng.choice([17, 23, 29, 34, 41, 48, 56])
         a_pct, b_pct = (win, 100 - win) if correct == 0 else (100 - win, win)
         return Item(prompt=prompt, a=a, b=b, a_emoji=a_e, b_emoji=b_e, a_pct=a_pct, b_pct=b_pct, fmt=fmt, correct=correct)
 
@@ -240,7 +252,25 @@ def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool =
 
     if avoid_repeats:
         _save_used(fmt, used | picked_keys)
-    return [_build(fmt, row, random.Random()) for row in chosen]
+    built = [_build(fmt, row, random.Random()) for row in chosen]
+
+    # Escalate: put the most extreme reveal LAST. Viewers bail after a payoff, so
+    # the biggest "no way" has to be the thing they're still waiting for at the
+    # end — that's what buys rounds 2 and 3.
+    built.sort(key=_extremeness)
+    return built
+
+
+def _extremeness(it: Item) -> float:
+    """Sort key: bigger = saved for later.
+
+    Opinion rounds escalate on how lopsided the split is. Factual rounds escalate
+    on DIFFICULTY (fewest people got it right) — the gap can't be used there,
+    because a 48%-correct question has a tiny gap yet is harder than a 56% one.
+    """
+    if it.correct is not None:
+        return 100 - (it.a_pct if it.correct == 0 else it.b_pct)
+    return abs(it.a_pct - it.b_pct)
 
 
 def format_label(fmt: str) -> str:

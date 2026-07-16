@@ -8,6 +8,7 @@ Timeline
 from __future__ import annotations
 import glob
 import os
+import random
 import re
 import subprocess
 import tempfile
@@ -39,21 +40,64 @@ def _dur(path: str) -> float:
     return last if last else 2.0
 
 
-def _spoken(item: content.Item) -> tuple[str, str]:
-    """(question read during vote, result read on reveal)."""
+# --- Retention scaffolding -----------------------------------------------------
+# Each round used to be self-contained (ask -> count -> reveal -> done), which
+# gives a viewer nothing to stay for once round 1 pays off. So round 1 now opens a
+# loop that only closes at the END ("the last one splits everyone"), and the
+# comment ask happens ONCE, on the final reveal, where it's earned — not chanted
+# every round where it's just noise.
+_HOOKS_OPINION = [
+    "Careful — the last one splits everyone.",
+    "Pick fast. Number three is the one nobody agrees on.",
+    "Be honest on these. The last one is brutal.",
+]
+_HOOKS_FACTUAL = [
+    "Almost nobody gets all three. How many can you get?",
+    "These get harder. The last one beats most people.",
+    "Most people fail number three. Ready?",
+]
+_CTA_OPINION = [
+    "Comment which ones you picked. I bet you're in the minority on one.",
+    "Disagree? Say it in the comments.",
+    "Comment your picks — let's see who's with you.",
+]
+_CTA_FACTUAL = [
+    "How many did you get? Comment your score!",
+    "Comment your score out of three. Be honest!",
+    "Got all three? Prove it in the comments.",
+]
+
+
+def _spoken(item: content.Item, idx: int = 0, total: int = 1) -> tuple[str, str]:
+    """(question read during vote, result read on reveal).
+
+    idx/total drive the hook (first round) and the comment ask (last round).
+    """
+    rng = random.Random()
     fmt = item.fmt
+    factual = item.correct is not None
+
     if fmt == "trivia":
-        q = f"{item.prompt} Is it {item.a}, or {item.b}? You have three seconds!"
+        q = f"{item.prompt} Is it {item.a}, or {item.b}?"
         correct = item.a if item.correct == 0 else item.b
-        r = f"The answer is {correct}! Did you get it right?"
+        pct = item.a_pct if item.correct == 0 else item.b_pct
+        r = f"It's {correct}! Only {pct} percent got that right."
     elif fmt == "higher_lower":
-        q = f"Which is bigger? {item.a}, or {item.b}? Three seconds!"
+        q = f"Which is bigger? {item.a}, or {item.b}?"
         bigger = item.a if item.correct == 0 else item.b
-        r = f"{bigger} is bigger! {max(item.a_pct, item.b_pct)} percent got it right."
+        pct = item.a_pct if item.correct == 0 else item.b_pct
+        r = f"{bigger}! Only {pct} percent got that right."
     else:
-        q = f"{item.prompt} {item.a}, or {item.b}? Comment your pick!"
+        q = f"{item.prompt} {item.a}, or {item.b}?"
         winner, wp = (item.a, item.a_pct) if item.a_pct >= item.b_pct else (item.b, item.b_pct)
-        r = f"{wp} percent said {winner}!"
+        r = f"{wp} percent said {winner}."
+
+    if idx == 0:
+        q = f"{rng.choice(_HOOKS_FACTUAL if factual else _HOOKS_OPINION)} {q}"
+    else:
+        q = f"{q} Three seconds!"
+    if idx == total - 1:
+        r = f"{r} {rng.choice(_CTA_FACTUAL if factual else _CTA_OPINION)}"
     return q, r
 
 
@@ -81,7 +125,7 @@ def build(items, out_path: str, background: str | None = None) -> str:
         f1 = card.render(item, os.path.join(work, f"{n}_c1.png"), countdown=1)
         f_reveal = card.render(item, os.path.join(work, f"{n}_reveal.png"), reveal=True)
 
-        q_text, r_text = _spoken(item)
+        q_text, r_text = _spoken(item, n, len(items))
         q_mp3 = voice.say(q_text, os.path.join(work, f"{n}_q.mp3"))
         r_mp3 = voice.say(r_text, os.path.join(work, f"{n}_r.mp3"))
         intro = round(max(_dur(q_mp3), 1.5) + 0.4, 2)
