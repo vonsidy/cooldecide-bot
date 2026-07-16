@@ -97,16 +97,19 @@ def post_comment(video_id: str, text: str) -> str | None:
 
 
 def channel_stats() -> dict | None:
-    """Subscriber / view / video totals for the dashboard. None on any failure."""
+    """Channel totals for the dashboard, in the hub's schema. None on failure."""
     try:
         resp = _service().channels().list(part="statistics,snippet", mine=True).execute()
         it = resp["items"][0]
         s = it["statistics"]
+        thumbs = it["snippet"].get("thumbnails", {})
+        thumb = (thumbs.get("default") or thumbs.get("medium") or {}).get("url", "")
         return {
             "title": it["snippet"]["title"],
-            "subs": int(s.get("subscriberCount", 0)),
+            "subscribers": int(s.get("subscriberCount", 0)),
             "views": int(s.get("viewCount", 0)),
-            "videos": int(s.get("videoCount", 0)),
+            "videoCount": int(s.get("videoCount", 0)),
+            "thumbnail": thumb,
         }
     except Exception as e:  # noqa: BLE001
         print("  (channel stats skipped:", e, ")")

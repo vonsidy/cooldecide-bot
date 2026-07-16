@@ -1,6 +1,11 @@
 {
   "channel": null,
   "videos": [],
+  "runs": [],
+  "pending_comments": [],
+  "schedule": { "upcoming": [], "max_per_day": 2 },
+  "learning": { "ready": false, "trained_on": 0, "needs": 4, "min_age_days": 3.0, "min_per_option": 2, "themes": {}, "counts": { "theme": {} } },
+  "history": [],
   "started": null,
   "updated": null
 }
