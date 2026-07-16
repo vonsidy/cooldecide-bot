@@ -20,10 +20,15 @@ on:
   workflow_dispatch:
     inputs:
       privacy:
+        # PUBLIC by default. This used to default to unlisted so my test runs
+        # wouldn't touch the channel — but that makes the safe-looking button do
+        # the surprising thing: hitting "Run workflow" quietly produced an unlisted
+        # video nobody could find. The default should be what you actually want;
+        # pick unlisted deliberately when you're testing.
         description: "Privacy for this manual post"
-        default: "unlisted"
+        default: "public"
         type: choice
-        options: [unlisted, public, private]
+        options: [public, unlisted, private]
 
 concurrency:
   group: cooldecide-bot       # never two uploads at once
