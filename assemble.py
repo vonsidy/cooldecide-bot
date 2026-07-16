@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 
 import card
+import config
 import content
 import voice
 
@@ -101,22 +102,35 @@ def _spoken(item: content.Item, idx: int = 0, total: int = 1) -> tuple[str, str]
     return q, r
 
 
+def _read_seconds(item: content.Item) -> float:
+    """How long to hold the vote card, sized to how much there is to READ.
+
+    With narration off nothing paces the video for us, so a long trivia question
+    can't get the same beat as "Pizza / Burgers" or it flies past unread.
+    """
+    text = f"{item.prompt} {item.a} {item.b}" if item.fmt == "trivia" else f"{item.a} {item.b}"
+    secs = 1.9 + 0.045 * len(text)
+    return round(min(max(secs, config.READ_MIN), config.READ_MAX), 2)
+
+
 def build(items, out_path: str, background: str | None = None) -> str:
     if isinstance(items, content.Item):
         items = [items]
     work = tempfile.mkdtemp(prefix="short_")
 
-    silence = os.path.join(work, "sil.mp3")
-    subprocess.run([FF, "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
-                    "-t", "3.0", silence], capture_output=True)
-
     seg_specs = []          # (image_path, duration) in play order
-    audio_pieces = []       # mp3s concatenated into the voice track
+    audio_pieces = []       # mp3s concatenated into the voice track (voice mode)
     cues = []               # (sfx_path, global_time)
     sfx = os.path.join(os.path.dirname(__file__), "assets")
     tick, ding = os.path.join(sfx, "tick.wav"), os.path.join(sfx, "ding.wav")
     has_sfx = os.path.exists(tick) and os.path.exists(ding)
     clock = 0.0             # running start time of the current round
+
+    silence = None
+    if config.ENABLE_VOICE:
+        silence = os.path.join(work, "sil.mp3")
+        subprocess.run([FF, "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
+                        "-t", "3.0", silence], capture_output=True)
 
     for n, item in enumerate(items):
         f_vote = card.render(item, os.path.join(work, f"{n}_vote.png"), countdown=None)
@@ -125,14 +139,18 @@ def build(items, out_path: str, background: str | None = None) -> str:
         f1 = card.render(item, os.path.join(work, f"{n}_c1.png"), countdown=1)
         f_reveal = card.render(item, os.path.join(work, f"{n}_reveal.png"), reveal=True)
 
-        q_text, r_text = _spoken(item, n, len(items))
-        q_mp3 = voice.say(q_text, os.path.join(work, f"{n}_q.mp3"))
-        r_mp3 = voice.say(r_text, os.path.join(work, f"{n}_r.mp3"))
-        intro = round(max(_dur(q_mp3), 1.5) + 0.4, 2)
-        reveal_len = round(max(_dur(r_mp3), 2.0) + 0.9, 2)
+        if config.ENABLE_VOICE:
+            q_text, r_text = _spoken(item, n, len(items))
+            q_mp3 = voice.say(q_text, os.path.join(work, f"{n}_q.mp3"))
+            r_mp3 = voice.say(r_text, os.path.join(work, f"{n}_r.mp3"))
+            intro = round(max(_dur(q_mp3), 1.5) + 0.4, 2)
+            reveal_len = round(max(_dur(r_mp3), 2.0) + 0.9, 2)
+            audio_pieces += [q_mp3, silence, r_mp3]
+        else:
+            intro = _read_seconds(item)
+            reveal_len = config.REVEAL_SECONDS
 
         seg_specs += [(f_vote, intro), (f3, 1.0), (f2, 1.0), (f1, 1.0), (f_reveal, reveal_len)]
-        audio_pieces += [q_mp3, silence, r_mp3]
         if has_sfx:
             cues += [(tick, clock + intro), (tick, clock + intro + 1), (tick, clock + intro + 2),
                      (ding, clock + intro + 3)]
@@ -156,29 +174,45 @@ def build(items, out_path: str, background: str | None = None) -> str:
                 raise RuntimeError(f"segment {i} failed:\n{r.stderr[-800:]}")
             lst.write(f"file '{seg.replace(os.sep, '/')}'\n")
 
-    a_list = os.path.join(work, "audio.txt")
-    with open(a_list, "w") as f:
-        for p in audio_pieces:
-            f.write(f"file '{p.replace(os.sep, '/')}'\n")
-    voice_track = os.path.join(work, "voice.mp3")
-    subprocess.run([FF, "-y", "-f", "concat", "-safe", "0", "-i", a_list, "-c", "copy", voice_track],
-                   capture_output=True)
+    # ---- audio: music bed + tick/ding cues (+ voice only if re-enabled) -------
+    cmd = [FF, "-y", "-f", "concat", "-safe", "0", "-i", seg_list]
+    parts, labels = [], []
+    idx = 1
 
-    # audio track: voice + SFX cues mixed
-    cmd = [FF, "-y", "-f", "concat", "-safe", "0", "-i", seg_list, "-i", voice_track]
-    for path, _ in cues:
+    music = os.path.join(sfx, "music.mp3")
+    if config.ENABLE_MUSIC and os.path.exists(music):
+        # -stream_loop repeats the ~18s loop to cover any length; -t below cuts it.
+        cmd += ["-stream_loop", "-1", "-i", music]
+        parts.append(f"[{idx}:a]volume={config.MUSIC_VOLUME}[m]")
+        labels.append("[m]")
+        idx += 1
+
+    if config.ENABLE_VOICE and audio_pieces:
+        a_list = os.path.join(work, "audio.txt")
+        with open(a_list, "w") as f:
+            for p in audio_pieces:
+                f.write(f"file '{p.replace(os.sep, '/')}'\n")
+        voice_track = os.path.join(work, "voice.mp3")
+        subprocess.run([FF, "-y", "-f", "concat", "-safe", "0", "-i", a_list,
+                        "-c", "copy", voice_track], capture_output=True)
+        cmd += ["-i", voice_track]
+        parts.append(f"[{idx}:a]volume=1.0[v]")
+        labels.append("[v]")
+        idx += 1
+
+    for path, at in cues:
         cmd += ["-i", path]
-    if cues:
-        parts, mix = [], ["[1:a]"]
-        for j, (_, at) in enumerate(cues):
-            idx = 2 + j
-            d = int(at * 1000)
-            parts.append(f"[{idx}:a]volume=0.85,adelay={d}|{d}[s{idx}]")
-            mix.append(f"[s{idx}]")
-        parts.append("".join(mix) + f"amix=inputs={len(mix)}:normalize=0[a]")
+        d = int(at * 1000)
+        parts.append(f"[{idx}:a]volume={config.SFX_VOLUME},adelay={d}|{d}[s{idx}]")
+        labels.append(f"[s{idx}]")
+        idx += 1
+
+    if labels:
+        parts.append("".join(labels) + f"amix=inputs={len(labels)}:normalize=0[mixed]")
+        parts.append("[mixed]alimiter=limit=0.95[a]")   # stop the mix clipping
         cmd += ["-filter_complex", ";".join(parts), "-map", "0:v", "-map", "[a]"]
     else:
-        cmd += ["-map", "0:v", "-map", "1:a"]
+        cmd += ["-map", "0:v", "-an"]
     cmd += ["-t", str(total), "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
             "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-movflags", "+faststart", out_path]
     res = subprocess.run(cmd, capture_output=True, text=True)

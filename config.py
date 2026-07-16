@@ -43,3 +43,19 @@ MADE_FOR_KIDS = get("MADE_FOR_KIDS", "0") == "1"
 
 # Safety valve: never upload unless explicitly enabled (env or --upload flag).
 UPLOAD = get("UPLOAD", "0") == "1"
+
+# --- Video style --------------------------------------------------------------
+# Narration is OFF: the format is "point at your pick", which works silently and
+# reads as a game rather than a lecture. Audio is a music bed + countdown ticks +
+# the reveal ding. Flip to 1 to bring the voice-over back.
+ENABLE_VOICE = get("ENABLE_VOICE", "0") == "1"
+ENABLE_MUSIC = get("ENABLE_MUSIC", "1") == "1"
+# Music is the whole audio bed now (no voice competing), so it can sit up front —
+# but under the ticks/ding, which carry the timing.
+MUSIC_VOLUME = float(get("MUSIC_VOLUME", "0.55"))
+SFX_VOLUME = float(get("SFX_VOLUME", "0.85"))
+
+# Silent-mode pacing (seconds). The vote phase is sized to READING time since
+# there's no voice to set the pace.
+READ_MIN, READ_MAX = 2.3, 4.3
+REVEAL_SECONDS = float(get("REVEAL_SECONDS", "2.9"))

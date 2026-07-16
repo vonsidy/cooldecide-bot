@@ -1,11 +1,37 @@
 {
-  "channel": null,
+  "channel": {
+    "title": "CoolDecide",
+    "subscribers": 4,
+    "views": 0,
+    "videoCount": 0,
+    "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
+  },
   "videos": [],
   "runs": [],
   "pending_comments": [],
-  "schedule": { "upcoming": [], "max_per_day": 2 },
-  "learning": { "ready": false, "trained_on": 0, "needs": 4, "min_age_days": 3.0, "min_per_option": 2, "themes": {}, "counts": { "theme": {} } },
-  "history": [],
+  "schedule": {
+    "upcoming": [],
+    "max_per_day": 2
+  },
+  "learning": {
+    "ready": false,
+    "trained_on": 0,
+    "needs": 4,
+    "min_age_days": 3.0,
+    "min_per_option": 2,
+    "themes": {},
+    "counts": {
+      "theme": {}
+    }
+  },
+  "history": [
+    {
+      "d": "2026-07-16",
+      "subs": 4,
+      "views": 0,
+      "likes": 0
+    }
+  ],
   "started": null,
-  "updated": null
+  "updated": "2026-07-16T13:59:12+00:00"
 }

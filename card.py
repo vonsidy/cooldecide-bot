@@ -70,13 +70,20 @@ def _text_c(draw, cx, y, text, font, fill, max_w=None):
 
 
 def _emoji_c(canvas, cx, y, ch, size):
+    """Draw an emoji centred on cx, and centred vertically inside a `size` box at y.
+
+    Measured with textbbox, not textlength: emoji glyphs carry uneven side/top
+    bearings, so positioning by advance-width alone leaves them visibly off-centre.
+    """
     f = _emoji(size)
     if not f or not ch:
         return
     d = ImageDraw.Draw(canvas)
     try:
-        w = d.textlength(ch, font=f)
-        d.text((cx - w / 2, y), ch, font=f, embedded_color=True)
+        bb = d.textbbox((0, 0), ch, font=f, embedded_color=True)
+        w, h = bb[2] - bb[0], bb[3] - bb[1]
+        d.text((cx - w / 2 - bb[0], y + (size - h) / 2 - bb[1]), ch, font=f,
+               embedded_color=True)
     except Exception:
         pass
 
@@ -209,7 +216,10 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
     # footer pill
     draw.rounded_rectangle((cx - 430, 1728, cx + 430, 1856), radius=40, fill=WHITE)
     draw.rounded_rectangle((cx - 418, 1740, cx + 418, 1844), radius=34, fill=GOLD)
-    footer = "DID YOU GET IT?" if (reveal and factual) else ("WHAT DID YOU PICK?" if reveal else "COMMENT YOUR PICK")
+    # The ask is physical, not verbal: point at the screen. It's an action a kid
+    # can do instantly while watching, so it reads as "play along" rather than a
+    # chore — and it keeps hands/eyes on the video instead of in the comments.
+    footer = "DID YOU GET IT?" if (reveal and factual) else ("DID YOU PICK IT?" if reveal else "POINT AT YOUR PICK!")
     _text_c(draw, cx, 1758, footer, _font("Anton-Regular.ttf", 60), NAVY, max_w=800)
 
     canvas.convert("RGB").save(out_path, "PNG")
