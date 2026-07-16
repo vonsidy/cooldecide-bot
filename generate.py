@@ -20,10 +20,16 @@ _SAFE = ("Wholesome and safe for ages 8-14: no violence, weapons aimed at people
 _IMAGINATIVE = (
     "\nMake them IMAGINATIVE and magical — wish-fulfilment a kid would daydream "
     "about: powers, creatures, magic, space, secret worlds, impossible pets, being "
-    "a hero. Both options must be things they'd genuinely WANT, so picking hurts. "
-    "Avoid everyday preferences (summer vs winter, chocolate vs vanilla, dogs vs "
-    "cats) — those are boring and already decided. Every option must be something "
-    "you could draw a fun picture of."
+    "a hero. Both options must be things they'd genuinely WANT, so picking HURTS. "
+    "Every option must be something you could draw a fun picture of.\n"
+    "BANNED — real-world preferences a kid already has an answer to, which leave "
+    "nothing to imagine and nothing to argue about. These are failures, not "
+    "examples: 'summer vs winter', 'chocolate vs vanilla', 'dogs vs cats', "
+    "'private island vs private jet', 'puppy vs kitten', 'best at soccer vs best "
+    "at basketball', 'famous singer vs famous actor'. Merely OWNING an expensive "
+    "thing is not imagination — a swimming pool full of gold coins is.\n"
+    "Test each one: could a kid close their eyes and SEE themselves in it? If not, "
+    "throw it away."
 )
 
 _PROMPTS = {
