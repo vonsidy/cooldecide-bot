@@ -4,11 +4,14 @@ output/used_matchups.json
 __pycache__/
 *.pyc
 .env
-assets/images/*.png
-assets/images/*.jpg
-assets/images/*.jpeg
-assets/images/*.webp
 output/used_*.json
+
+# NOTE: assets/images/ and assets/art/ are deliberately COMMITTED. Every picture
+# in there has been reviewed by eye, and both sources are non-deterministic — the
+# stock library's results drift and the art model returns something new each time —
+# so re-fetching in the cloud would ship pictures nobody ever looked at. (An early
+# unreviewed fetch turned up a wine bottle and a 3D pin-up.) Committing them also
+# keeps the cloud from spending ~45s per image on every run.
 
 # YouTube OAuth secrets — NEVER commit these
 client_secret.json

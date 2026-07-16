@@ -7,6 +7,8 @@ Three states, so a video can go vote -> countdown -> reveal:
 """
 from __future__ import annotations
 import os
+import re
+
 from PIL import Image, ImageDraw, ImageFont
 
 W, H = 1080, 1920
@@ -115,14 +117,24 @@ IMAGES = os.path.join(os.path.dirname(__file__), "assets", "images")
 IMAGE_KEYS = [
     ("minecraft", "minecraft"), ("roblox", "roblox"), ("fortnite", "fortnite"),
     ("v-bucks", "vbucks"), ("robux", "robux"), ("youtube", "youtube"), ("tiktok", "tiktok"),
-    ("playstation", "playstation"), ("xbox", "xbox"), ("marvel", "marvel"), ("dc", "dc"),
+    ("playstation", "playstation"), ("xbox", "xbox"), ("marvel", "marvel"),
+    ("lego", "lego"), ("nerf", "nerf"),
+    # "dc" last, and it's a 2-letter string that appears inside ordinary words —
+    # so it must only match on its own (see _image_for).
+    ("dc", "dc"),
 ]
 
 
 def _image_for(option_text: str):
+    """The curated logo for this option, if one is on disk.
+
+    Matched on WORD boundaries, not raw substring: "dc" is two letters and hides
+    inside ordinary words — "sandcastle" contains "dc" and would have pulled up
+    the DC Comics logo.
+    """
     t = option_text.lower()
     for sub, stem in IMAGE_KEYS:
-        if sub in t:
+        if re.search(rf"(?<![a-z]){re.escape(sub)}(?![a-z])", t):
             for ext in ("png", "jpg", "jpeg", "webp"):
                 p = os.path.join(IMAGES, f"{stem}.{ext}")
                 if os.path.exists(p):
@@ -140,17 +152,58 @@ def _rounded(im: Image.Image, radius: int = 26) -> Image.Image:
     return out
 
 
-def photo_for(option_text: str, hint: str | None = None) -> str | None:
-    """Art for an option: a curated local file, else a generated cartoon sticker.
+def _chip(im: Image.Image, pad: int = 20, radius: int = 24) -> Image.Image:
+    """Sit a logo on a white rounded chip.
 
-    Generated art (art.py) is preferred over stock photos because it covers EVERY
-    option — abstract ones included — in one consistent house style. Stock photos
-    only existed for ~30 concrete nouns and looked like a different channel each
-    time. images.py is kept as a fallback for when generation is unavailable.
+    Brand logos are usually flat art on transparency in whatever colour the brand
+    uses — Fortnite's wordmark is BLACK, which is invisible on the coral panel.
+    A white chip guarantees contrast no matter what the logo's colours are.
     """
-    path = _image_for(option_text)
+    w, h = im.width + pad * 2, im.height + pad * 2
+    chip = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    ImageDraw.Draw(chip).rounded_rectangle((0, 0, w - 1, h - 1), radius=radius,
+                                           fill=WHITE + (255,))
+    chip.alpha_composite(im, (pad, pad))
+    return chip
+
+
+# Options where a REAL image beats generated art. An illustrator can draw an idea,
+# but it can only APPROXIMATE a specific real thing — asked for "Minecraft" it
+# invents generic blocky mush, and for "the Eiffel Tower" it draws *an* iron tower.
+# Brands and real landmarks therefore prefer a photo/logo; everything else is
+# better generated (one consistent style, and it can picture abstract options).
+REAL_FIRST = ("minecraft", "roblox", "fortnite", "playstation", "xbox", "tiktok",
+              "youtube", "marvel", "dc", "eiffel", "everest", "school bus",
+              "lego", "nerf")
+
+
+def _prefers_real(option_text: str) -> bool:
+    t = option_text.lower()
+    return any(k in t for k in REAL_FIRST)
+
+
+def photo_for(option_text: str, hint: str | None = None) -> str | None:
+    """Best art for an option.
+
+    Order: a curated local logo, then a real photo IF this is a specific real
+    thing, then generated cartoon art, then a real photo as a last resort.
+    Returning None means the caller falls back to the emoji.
+    """
+    path = _image_for(option_text)          # hand-placed logo files win outright
     if path:
         return path
+
+    def _real():
+        try:
+            import images
+            return images.fetch(option_text)
+        except Exception:  # noqa: BLE001
+            return None
+
+    if _prefers_real(option_text):
+        path = _real()
+        if path:
+            return path
     try:
         import art
         path = art.fetch(option_text, hint)
@@ -158,11 +211,7 @@ def photo_for(option_text: str, hint: str | None = None) -> str | None:
             return path
     except Exception:  # noqa: BLE001
         pass
-    try:
-        import images
-        return images.fetch(option_text)
-    except Exception:  # noqa: BLE001 - offline etc: caller falls back to emoji
-        return None
+    return _real()
 
 
 def _picture(canvas, cx, y, size, option_text, emoji, path=None):
@@ -170,9 +219,14 @@ def _picture(canvas, cx, y, size, option_text, emoji, path=None):
     if path:
         try:
             im = Image.open(path).convert("RGBA")
-            im.thumbnail((min(W - 260, int(size * 2.4)), size), Image.LANCZOS)
-            if os.path.dirname(path).endswith("auto"):
-                im = _rounded(im)          # photos; curated logos stay as-is
+            parent = os.path.basename(os.path.dirname(path))
+            if parent == "images":                     # a brand logo
+                im.thumbnail((min(W - 300, int(size * 2.0)), size - 40), Image.LANCZOS)
+                im = _chip(im)
+            else:
+                im.thumbnail((min(W - 260, int(size * 2.4)), size), Image.LANCZOS)
+                if parent == "auto":                   # stock photo
+                    im = _rounded(im)
             canvas.alpha_composite(im, (int(cx - im.width / 2),
                                         int(y + (size - im.height) / 2)))
             return
