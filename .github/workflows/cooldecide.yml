@@ -92,18 +92,30 @@ jobs:
           YT_PRIVACY: ${{ github.event.inputs.privacy || 'public' }}
         run: python -u run.py --upload
 
-      # A queued comment is useless if nothing posts it, so drain the queue on
-      # every check-in — including the ones that don't post a video.
-      - name: Post any due comments
+      # The dashboard lives in a DIFFERENT repo, so this bot's own commit doesn't
+      # reach it. Without this it silently freezes while the bot keeps posting.
+      - name: Update the dashboard
+        if: steps.gate.outputs.post == 'true'
+        env:
+          DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
+        run: python -u sync_dashboard.py || true
+
+      # The idle check-ins do the upkeep: post comments that came due, refresh view
+      # counts, and push the result to the dashboard. Without this the board would
+      # only ever move twice a day, when a video posts.
+      - name: Comments + refresh stats + dashboard
         if: steps.gate.outputs.post != 'true'
         env:
           YT_CLIENT_SECRET_B64: ${{ secrets.YT_CLIENT_SECRET_B64 }}
           YT_TOKEN_B64: ${{ secrets.YT_TOKEN_B64 }}
+          DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
         run: |
           pip install -q google-api-python-client google-auth google-auth-oauthlib
           echo "$YT_CLIENT_SECRET_B64" | base64 -d > client_secret.json
           echo "$YT_TOKEN_B64" | base64 -d > yt_token.json
           python -u run.py --comments-only || true
+          python -u -c "import dashboard; dashboard.refresh_stats()" || true
+          python -u sync_dashboard.py || true
 
       # Never let a credential reach the commit, even on failure.
       - name: Shred credentials
