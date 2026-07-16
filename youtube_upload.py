@@ -79,7 +79,11 @@ def upload(video_path: str, title: str, description: str, tags: list[str]) -> st
 
 
 def post_comment(video_id: str, text: str) -> str | None:
-    """Seed engagement with a channel comment. Never fails the upload."""
+    """Seed engagement with a channel comment. Never fails the upload.
+
+    Returns the comment id on success, None on failure — callers retry on None,
+    so this must not return None after actually posting.
+    """
     if config.MADE_FOR_KIDS:
         return None  # comments are disabled on made-for-kids videos
     try:
@@ -114,6 +118,27 @@ def channel_stats() -> dict | None:
     except Exception as e:  # noqa: BLE001
         print("  (channel stats skipped:", e, ")")
         return None
+
+
+def video_privacy(video_ids: list[str]) -> dict:
+    """{video_id: 'public'|'unlisted'|'private'} for ids that still exist.
+
+    A missing id means the video was deleted — the caller uses that to drop a
+    queued comment rather than retry forever.
+    """
+    out: dict[str, str] = {}
+    if not video_ids:
+        return out
+    try:
+        for i in range(0, len(video_ids), 50):
+            resp = _service().videos().list(
+                part="status", id=",".join(video_ids[i:i + 50])
+            ).execute()
+            for it in resp.get("items", []):
+                out[it["id"]] = it["status"]["privacyStatus"]
+    except Exception as e:  # noqa: BLE001
+        print("  (privacy check skipped:", e, ")")
+    return out
 
 
 def video_stats(video_ids: list[str]) -> dict:

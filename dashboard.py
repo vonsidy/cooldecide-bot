@@ -68,6 +68,59 @@ def _iso(dt: datetime.datetime | None = None) -> str:
     return (dt or _now()).isoformat(timespec="seconds")
 
 
+def queue_comment(video_id: str, text: str) -> str:
+    """Hold the channel's engagement question for 10-30 minutes after posting.
+
+    A comment from the channel seconds after its own upload is a bot tell — a real
+    person hasn't even watched it back yet. The story bots already delay theirs;
+    this is the same idea. Returns the ISO time it becomes due.
+    """
+    import random
+    data = _load()
+    due = _now() + datetime.timedelta(minutes=random.randint(10, 30))
+    data.setdefault("pending_comments", []).append({
+        "video_id": video_id, "text": text, "due": _iso(due),
+    })
+    _save(data)
+    return _iso(due)
+
+
+def post_due_comments() -> int:
+    """Post any queued comments that are now due. Returns how many went out.
+
+    Only posts once the video is actually PUBLIC (an unlisted test shouldn't get a
+    comment), drops the entry if the video has been deleted, and leaves it queued
+    on a transient failure so the next run retries.
+    """
+    import youtube_upload
+
+    data = _load()
+    queue = data.get("pending_comments") or []
+    if not queue:
+        return 0
+
+    now, keep, sent = _now(), [], 0
+    live = youtube_upload.video_privacy([q["video_id"] for q in queue])
+    for q in queue:
+        try:
+            due = datetime.datetime.fromisoformat(str(q["due"]).replace("Z", "+00:00"))
+        except ValueError:
+            continue                      # unparseable: drop it rather than loop forever
+        status = live.get(q["video_id"])
+        if status is None:                # video is gone — nothing to comment on
+            continue
+        if now < due or status != "public":
+            keep.append(q)
+            continue
+        if youtube_upload.post_comment(q["video_id"], q["text"]):
+            sent += 1
+        else:
+            keep.append(q)                # transient failure: try again next run
+    data["pending_comments"] = keep
+    _save(data)
+    return sent
+
+
 def record(video_id: str, title: str, fmt: str, rounds: int,
            manual: bool = False) -> None:
     """Add a freshly-posted video to the board (hub schema)."""

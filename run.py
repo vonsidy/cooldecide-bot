@@ -37,7 +37,22 @@ def main() -> None:
     ap.add_argument("--manual", action="store_true", help="mark as a test post (doesn't count toward the daily quota)")
     ap.add_argument("--palette", default=None, help="force a colour scheme (sky|sunset|mint|candy|ocean|sunny|grape)")
     ap.add_argument("--topic", default=None, help="force a topic (food|powers|animals|gaming|magic|space|money|school)")
+    ap.add_argument("--comments-only", action="store_true",
+                    help="just post any queued comments that are due, then exit")
     args = ap.parse_args()
+
+    # Drain any comments that came due since the last run, before anything else —
+    # a queued comment is useless if nothing ever posts it.
+    if args.upload or config.UPLOAD or args.comments_only:
+        import dashboard as _dash
+        try:
+            n = _dash.post_due_comments()
+            if n:
+                print(f"posted {n} due comment(s)")
+        except Exception as e:  # noqa: BLE001 - never block a post over this
+            print("  (comment queue skipped:", e, ")")
+    if args.comments_only:
+        return
 
     date = args.date or datetime.date.today().isoformat()
 
@@ -85,7 +100,12 @@ def main() -> None:
     url = f"https://youtube.com/shorts/{vid}"
     print(f"posted -> {url}")
 
-    youtube_upload.post_comment(vid, info["comment"])
+    # The engagement question is QUEUED, not posted now: a comment from the channel
+    # seconds after its own upload is a bot tell. It goes out 10-30 minutes later,
+    # once the video is public (see dashboard.post_due_comments).
+    due = dashboard.queue_comment(vid, info["comment"])
+    print(f"comment queued for {due} (10-30 min)")
+
     # `fmt`, not args.format — that's None unless it was forced on the command line,
     # which would log every video's format as null on the dashboard.
     dashboard.record(vid, info["title"], fmt, len(items), manual=args.manual)
