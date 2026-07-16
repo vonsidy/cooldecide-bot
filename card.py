@@ -119,17 +119,40 @@ def _image_for(option_text: str):
     return None
 
 
+def _rounded(im: Image.Image, radius: int = 26) -> Image.Image:
+    """Round a photo's corners so it reads as part of the card, not pasted on."""
+    mask = Image.new("L", im.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, im.width - 1, im.height - 1),
+                                           radius=radius, fill=255)
+    out = im.copy()
+    out.putalpha(mask)
+    return out
+
+
 def _picture(canvas, cx, y, size, option_text, emoji):
-    """A real image for the option if one is provided, otherwise the emoji.
-    Logos are usually wide wordmarks, so the box is wider than tall."""
+    """Best available art for an option, centred in a `size`-tall box.
+
+    Order: a curated local file, then a public-domain photo (images.py only
+    returns one for reviewed, unambiguous terms), then the emoji. The emoji is
+    the floor, not a failure — it's always on-topic and always safe.
+    """
     path = _image_for(option_text)
+    if not path:
+        try:
+            import images
+            path = images.fetch(option_text)
+        except Exception:  # noqa: BLE001 - offline etc: fall through to the emoji
+            path = None
     if path:
         try:
             im = Image.open(path).convert("RGBA")
-            im.thumbnail((min(W - 240, int(size * 2.8)), size), Image.LANCZOS)
-            canvas.alpha_composite(im, (int(cx - im.width / 2), int(y + (size - im.height) / 2)))
+            im.thumbnail((min(W - 260, int(size * 2.4)), size), Image.LANCZOS)
+            if os.path.dirname(path).endswith("auto"):
+                im = _rounded(im)          # photos; curated logos stay as-is
+            canvas.alpha_composite(im, (int(cx - im.width / 2),
+                                        int(y + (size - im.height) / 2)))
             return
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     _emoji_c(canvas, cx, y, emoji, size)
 
@@ -144,7 +167,10 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     draw.rounded_rectangle((72, top_y + 12, W - 72, top_y + height - 12), radius=44, fill=fill + (255,))
 
     has_pic = bool(emoji)
-    em = (150 if reveal else 200) if has_pic else 0   # the "picture" — big and centred
+    # The picture is the thing you scroll past or stop for, so it gets the room:
+    # at 200px it floated in a 560px panel looking like an afterthought. Shrinks
+    # on the reveal to make way for the % and the bar.
+    em = (200 if reveal else 310) if has_pic else 0
     gap = 16 if has_pic else 0
     tsize = 62 if has_pic else 88                      # answer-only options (trivia) read bigger
     tf = _font("Anton-Regular.ttf", tsize)
