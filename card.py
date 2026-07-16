@@ -19,6 +19,49 @@ BG_TOP = (90, 214, 255)     # bright sky cyan
 BG_BOT = (120, 156, 255)    # cheerful blue
 A_COLOR = (255, 90, 110)    # coral red
 B_COLOR = (124, 92, 255)    # bright purple
+
+# A different skin per video, so two Shorts in a row don't look like the same one
+# twice. The LAYOUT never changes — only the colours — so the channel still reads
+# as one thing. Each palette keeps the two panels clearly different from each
+# other and dark enough for white text to hold up.
+PALETTES = {
+    "sky":    ((90, 214, 255), (120, 156, 255), (255, 90, 110), (124, 92, 255)),
+    "sunset": ((255, 168, 92), (255, 108, 148), (94, 86, 214), (232, 74, 106)),
+    "mint":   ((116, 235, 198), (74, 186, 236), (255, 104, 126), (92, 104, 220)),
+    "candy":  ((198, 148, 255), (255, 138, 200), (238, 72, 108), (72, 132, 236)),
+    "ocean":  ((84, 222, 236), (66, 138, 230), (240, 118, 74), (140, 88, 246)),
+    "sunny":  ((255, 214, 88), (255, 146, 92), (74, 116, 240), (236, 70, 116)),
+    "grape":  ((160, 136, 255), (108, 118, 246), (255, 122, 78), (46, 190, 160)),
+}
+
+
+def set_palette(name: str) -> str:
+    """Swap the video's colour scheme. Unknown name falls back to the default."""
+    global BG_TOP, BG_BOT, A_COLOR, B_COLOR
+    BG_TOP, BG_BOT, A_COLOR, B_COLOR = PALETTES.get(name, PALETTES["sky"])
+    return name if name in PALETTES else "sky"
+
+
+# Each format sits at a different point in the rotation, so same-day videos can't
+# land on the same skin.
+_FMT_OFFSET = {"wyr": 0, "this_or_that": 1, "rank": 2, "higher_lower": 3, "trivia": 4}
+
+
+def palette_for(date_iso: str, fmt: str = "") -> str:
+    """Pick a palette deterministically — a re-render of a video looks identical.
+
+    A ROTATION, not a hash. Hashing collided badly: it gave three identical videos
+    on one day (mint/mint/mint) and repeats four days apart. Stepping by 3 through
+    7 palettes (coprime, so it visits all 7 before repeating) means consecutive days
+    are always different, and the per-format offset separates same-day videos.
+    """
+    import datetime as _dt
+    keys = sorted(PALETTES)
+    try:
+        day = _dt.date.fromisoformat(str(date_iso)[:10]).toordinal()
+    except ValueError:
+        day = sum(ord(c) for c in str(date_iso))
+    return keys[(day * 3 + _FMT_OFFSET.get(fmt, 0)) % len(keys)]
 GOLD = (255, 209, 64)
 GREEN = (54, 214, 122)
 NAVY = (28, 40, 92)         # dark text for contrast on bright backgrounds

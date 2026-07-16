@@ -12,6 +12,7 @@ import os
 import sys
 
 import assemble
+import card
 import config
 import content
 
@@ -31,9 +32,17 @@ def main() -> None:
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "output", "short.mp4"))
     ap.add_argument("--upload", action="store_true", help="post the video to YouTube")
     ap.add_argument("--manual", action="store_true", help="mark as a test post (doesn't count toward the daily quota)")
+    ap.add_argument("--palette", default=None, help="force a colour scheme (sky|sunset|mint|candy|ocean|sunny|grape)")
     args = ap.parse_args()
 
     date = args.date or datetime.date.today().isoformat()
+
+    # A different colour scheme per video, so two Shorts in a row don't look like
+    # the same one twice. Seeded by date+format: stable for a given video (a
+    # re-render looks identical) but different from the next one.
+    palette = card.set_palette(args.palette or card.palette_for(date, args.format))
+    print(f"  palette: {palette}")
+
     items = content.several(args.format, date, args.rounds)
     for i, it in enumerate(items, 1):
         print(f"  round {i} [{it.fmt}] {it.a} ({it.a_pct}%) vs {it.b} ({it.b_pct}%)")
