@@ -20,6 +20,10 @@ class Item:
     b: str             # option B short text
     a_emoji: str = ""
     b_emoji: str = ""
+    # A drawable description of each option, for art.py. Claude writes these
+    # alongside the question; the built-in pool falls back to art.ART_HINTS.
+    a_art: str = ""
+    b_art: str = ""
     a_pct: int = 0     # filled at pick time (made up)
     b_pct: int = 0
     fmt: str = "wyr"
@@ -182,9 +186,11 @@ def _build(fmt: str, row: tuple, rng: random.Random) -> Item:
         a_pct, b_pct = (win, 100 - win) if correct == 0 else (100 - win, win)
         return Item(prompt=prompt, a=a, b=b, a_emoji=a_e, b_emoji=b_e, a_pct=a_pct, b_pct=b_pct, fmt=fmt, correct=correct)
 
-    a, b, ae, be = (row + ("", ""))[:4]
+    # Generated rows carry two extra fields (the art descriptions); pool rows don't.
+    a, b, ae, be, a_art, b_art = (tuple(row) + ("", "", "", ""))[:6]
     a_pct, b_pct = _split(rng)
-    return Item(prompt=prompt, a=a, b=b, a_emoji=ae, b_emoji=be, a_pct=a_pct, b_pct=b_pct, fmt=fmt, correct=None)
+    return Item(prompt=prompt, a=a, b=b, a_emoji=ae, b_emoji=be, a_art=a_art, b_art=b_art,
+                a_pct=a_pct, b_pct=b_pct, fmt=fmt, correct=None)
 
 
 def daily_item(fmt: str | None = None, date: str = "today") -> Item:

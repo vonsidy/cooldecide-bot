@@ -140,11 +140,24 @@ def _rounded(im: Image.Image, radius: int = 26) -> Image.Image:
     return out
 
 
-def photo_for(option_text: str) -> str | None:
-    """A curated local file or a reviewed public-domain photo, else None."""
+def photo_for(option_text: str, hint: str | None = None) -> str | None:
+    """Art for an option: a curated local file, else a generated cartoon sticker.
+
+    Generated art (art.py) is preferred over stock photos because it covers EVERY
+    option — abstract ones included — in one consistent house style. Stock photos
+    only existed for ~30 concrete nouns and looked like a different channel each
+    time. images.py is kept as a fallback for when generation is unavailable.
+    """
     path = _image_for(option_text)
     if path:
         return path
+    try:
+        import art
+        path = art.fetch(option_text, hint)
+        if path:
+            return path
+    except Exception:  # noqa: BLE001
+        pass
     try:
         import images
         return images.fetch(option_text)
@@ -247,9 +260,10 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
     else:
         _shadow_text(draw, cx, 56, content.format_label(item.fmt), _font("Anton-Regular.ttf", 84), WHITE, off=6, max_w=W - 50)
 
-    # Photos are all-or-nothing per round: a real photo beside a cartoon emoji
-    # looks like a mistake, so unless BOTH sides have one, both use the emoji.
-    a_photo, b_photo = photo_for(item.a), photo_for(item.b)
+    # All-or-nothing per round: one side in artwork and the other in emoji looks
+    # like a mistake, so unless BOTH sides have art, both fall back to the emoji.
+    a_photo = photo_for(item.a, getattr(item, "a_art", "") or None)
+    b_photo = photo_for(item.b, getattr(item, "b_art", "") or None)
     if not (a_photo and b_photo):
         a_photo = b_photo = None
 
