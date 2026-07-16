@@ -25,6 +25,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import time
 import urllib.parse
 import urllib.request
 
@@ -32,7 +33,8 @@ ENDPOINT = "https://image.pollinations.ai/prompt/"
 CACHE = os.path.join(os.path.dirname(__file__), "assets", "art")
 UA = {"User-Agent": "cooldecide-bot/0.1"}
 TIMEOUT = 100
-RETRIES = 3
+RETRIES = 4
+BACKOFF = 6      # seconds; multiplied on 429 and by attempt number
 
 # One house style for every card. Flat sticker art on white reads instantly at
 # thumbnail size and cuts out cleanly against the coloured panels.
@@ -121,8 +123,10 @@ def fetch(option_text: str, hint: str | None = None) -> str | None:
     # own cache can serve a repeat instantly instead of re-generating).
     seed = int(hashlib.sha1(option_text.lower().encode()).hexdigest()[:6], 16) % 100000
     from PIL import Image
-    # The endpoint 500s intermittently (it did on ~1 in 8 here), so retry with a
-    # nudged seed rather than losing the picture over one flaky call.
+    # The endpoint is free and strict: it 500s intermittently, and it 429s hard if
+    # you push it. Six parallel workers got 198/200 rejected, so requests must stay
+    # SERIAL and back off. A 429 means "wait", not "give up" — retrying too eagerly
+    # just extends the throttle.
     for attempt in range(RETRIES):
         url = (ENDPOINT + urllib.parse.quote(prompt)
                + f"?width=512&height=512&nologo=true&safe=true&seed={seed + attempt}")
@@ -131,18 +135,21 @@ def fetch(option_text: str, hint: str | None = None) -> str | None:
                                         timeout=TIMEOUT) as r:
                 blob = r.read()
             if len(blob) < 2000:      # an error page, not an image
+                time.sleep(BACKOFF)
                 continue
             with open(path, "wb") as f:
                 f.write(blob)
             with Image.open(path) as im:
                 im.verify()
             return path
-        except Exception:  # noqa: BLE001 - art is never worth failing a render
+        except Exception as e:  # noqa: BLE001 - art is never worth failing a render
             if os.path.exists(path):
                 try:
                     os.remove(path)
                 except OSError:
                     pass
+            code = getattr(e, "code", None)
+            time.sleep(BACKOFF * (4 if code == 429 else 1) * (attempt + 1))
     return None
 
 
