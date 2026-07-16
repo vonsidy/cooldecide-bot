@@ -26,7 +26,10 @@ except Exception:  # noqa: BLE001 - non-reconfigurable streams are fine
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--format", default="wyr", help="wyr | this_or_that | trivia | higher_lower | rank")
+    ap.add_argument("--format", default=None,
+                    help="wyr | this_or_that | trivia | higher_lower | rank "
+                         "(default: today's slot in the rotation)")
+    ap.add_argument("--slot", type=int, default=0, help="Nth video of the day (shifts the rotation)")
     ap.add_argument("--rounds", type=int, default=3, help="questions per video")
     ap.add_argument("--date", default=None, help="YYYY-MM-DD (defaults to today)")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "output", "short.mp4"))
@@ -38,22 +41,25 @@ def main() -> None:
 
     date = args.date or datetime.date.today().isoformat()
 
+    # Rotate the format. Without this the channel is just would-you-rather forever.
+    fmt = args.format or content.format_for(date, args.slot)
+
     # A different colour scheme per video, so two Shorts in a row don't look like
     # the same one twice. Seeded by date+format: stable for a given video (a
     # re-render looks identical) but different from the next one.
-    palette = card.set_palette(args.palette or card.palette_for(date, args.format))
+    palette = card.set_palette(args.palette or card.palette_for(date, fmt))
 
     # One topic per video — all food, or all superpowers — so it has an identity
     # instead of being three unrelated questions.
-    topic = args.topic or content.topic_for(date, args.format)
-    items = content.several(args.format, date, args.rounds, topic=topic)
+    topic = args.topic or content.topic_for(date, fmt)
+    items = content.several(fmt, date, args.rounds, topic=topic)
 
     # Only badge the video if every round really is on-topic. The fallback pool
     # can't always fill a theme, and "FOOD EDITION" over a mixed bag is worse than
     # no label.
     themed = content.is_themed(items, topic)
     card.set_topic_label(content.topic_label(topic) if themed else "")
-    print(f"  palette: {palette} | topic: {topic}{'' if themed else ' (mixed — no badge)'}")
+    print(f"  format: {fmt} | palette: {palette} | topic: {topic}{'' if themed else ' (mixed — no badge)'}")
     for i, it in enumerate(items, 1):
         print(f"  round {i} [{it.fmt}] {it.a} ({it.a_pct}%) vs {it.b} ({it.b_pct}%)")
     assemble.build(items, args.out)
@@ -80,7 +86,9 @@ def main() -> None:
     print(f"posted -> {url}")
 
     youtube_upload.post_comment(vid, info["comment"])
-    dashboard.record(vid, info["title"], args.format, len(items), manual=args.manual)
+    # `fmt`, not args.format — that's None unless it was forced on the command line,
+    # which would log every video's format as null on the dashboard.
+    dashboard.record(vid, info["title"], fmt, len(items), manual=args.manual)
     dashboard.refresh_stats()
     print("recorded to dashboard/kids.json")
 

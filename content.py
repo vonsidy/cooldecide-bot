@@ -293,7 +293,25 @@ FORMATS = {
 }
 
 # One format per weekday cycle, so the channel rotates through all five.
+# Which format each day gets. Would-you-rather appears 3x because it's the
+# flagship and has by far the deepest question pool; the rest get one slot each.
 FORMAT_ROTATION = ["wyr", "this_or_that", "wyr", "higher_lower", "wyr", "rank", "trivia"]
+
+
+def format_for(date: str, slot: int = 0) -> str:
+    """The format for a given day.
+
+    run.py used to default to "wyr" and nothing ever called this, so the channel
+    would have posted would-you-rather EVERY day forever and the other four
+    formats would never have aired. Stepping the date through the rotation is what
+    actually makes it a five-format channel.
+    """
+    import datetime as _dt
+    try:
+        day = _dt.date.fromisoformat(str(date)[:10]).toordinal()
+    except ValueError:
+        day = sum(ord(c) for c in str(date))
+    return FORMAT_ROTATION[(day + slot) % len(FORMAT_ROTATION)]
 
 
 # Which topic a built-in question belongs to. Only the FALLBACK pool needs this —
