@@ -9,3 +9,8 @@ assets/images/*.jpg
 assets/images/*.jpeg
 assets/images/*.webp
 output/used_*.json
+
+# YouTube OAuth secrets — NEVER commit these
+client_secret.json
+yt_token.json
+yt_token.json.bak

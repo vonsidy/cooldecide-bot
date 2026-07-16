@@ -2,3 +2,6 @@ pillow
 numpy
 edge-tts
 anthropic
+google-api-python-client
+google-auth
+google-auth-oauthlib
