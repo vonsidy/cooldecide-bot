@@ -65,17 +65,42 @@ TOPICS = {
 }
 _TOPIC_KEYS = sorted(TOPICS)
 # Same idea as the palette rotation: STEP through the list rather than hashing, so
-# two videos in a row can't land on the same topic. 8 topics, step 3 (coprime).
+# two videos in a row can't land on the same topic. Step 3 is coprime with 8.
 _TOPIC_FMT_OFFSET = {"wyr": 0, "this_or_that": 1, "rank": 2, "higher_lower": 3, "trivia": 4}
+
+# NOT every topic works with every format, and pairing them freely ships nonsense.
+# It really happened: "Who Would WIN? Owning every video game ever made vs Owning
+# every pizza restaurant in town" — a would-you-rather wearing a battle's label,
+# because the topic said "money" and a battle between two possessions is meaningless.
+#
+# So each format declares what it can actually host:
+#   rank         needs two things that could FIGHT — creatures, heroes, powers.
+#   higher_lower needs two things with a real, checkable SIZE.
+#   trivia       needs a settled FACT, which rules out magic (there are no facts
+#                about wizards) and powers.
+# The two opinion formats are pure preference, so anything goes.
+FORMAT_TOPICS = {
+    "wyr": _TOPIC_KEYS,
+    "this_or_that": _TOPIC_KEYS,
+    "rank": ["animals", "magic", "powers", "gaming"],
+    "higher_lower": ["animals", "space"],
+    "trivia": ["animals", "space", "food", "school"],
+}
+
+
+def topics_for_format(fmt: str) -> list[str]:
+    return FORMAT_TOPICS.get(fmt, _TOPIC_KEYS)
 
 
 def topic_for(date: str, fmt: str = "") -> str:
+    """The topic for this video — only one this format can actually host."""
     import datetime as _dt
     try:
         day = _dt.date.fromisoformat(str(date)[:10]).toordinal()
     except ValueError:
         day = sum(ord(c) for c in str(date))
-    return _TOPIC_KEYS[(day * 3 + _TOPIC_FMT_OFFSET.get(fmt, 0)) % len(_TOPIC_KEYS)]
+    allowed = topics_for_format(fmt)
+    return allowed[(day * 3 + _TOPIC_FMT_OFFSET.get(fmt, 0)) % len(allowed)]
 
 
 def topic_label(topic: str) -> str:

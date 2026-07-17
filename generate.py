@@ -41,7 +41,13 @@ _PROMPTS = {
     "this_or_that": ("quick 'this or that' preferences (one word or short each)",
                      '{"a":"Pizza","a_emoji":"\\ud83c\\udf55","a_art":"a slice of pizza",'
                      '"b":"Burgers","b_emoji":"\\ud83c\\udf54","b_art":"a cheeseburger"}'),
-    "rank": ("'who would win' or 'which is cooler' matchups between two fun things",
+    # "matchups" alone wasn't enough — with a money theme it produced "Who would
+    # win: owning every video game vs owning every pizza restaurant", which is a
+    # would-you-rather wearing a battle's label. Both sides must be able to FIGHT.
+    "rank": ("'who would win' FIGHTS between two things that could actually battle "
+             "each other — creatures, heroes, monsters, powers. Both sides must be "
+             "a fighter: never possessions, places, foods or wishes. If you can't "
+             "picture them squaring up, it's wrong",
              '{"a":"Sharks","a_emoji":"\\ud83e\\udd88","a_art":"a great white shark",'
              '"b":"Dinosaurs","b_emoji":"\\ud83e\\udd96","b_art":"a t-rex dinosaur"}'),
     # Factual formats — a different JSON shape, because one answer is RIGHT.

@@ -60,8 +60,29 @@ def slots_for_date(d: dt.date, n: int = MAX_PER_DAY) -> list[dt.datetime]:
 
 
 def posts_today(now: dt.datetime | None = None) -> int:
+    """How many videos exist for TODAY IN EASTERN TIME.
+
+    Must be counted in ET, not UTC. Asking "how many posts share today's UTC date"
+    makes the day roll over at 8pm Eastern: the quota reset mid-evening and the bot
+    posted a third video the same day. Slots are chosen in ET, so the count has to
+    be too, or the two disagree for four hours every night.
+    """
     now = (now or now_local()).astimezone(TZ)
-    return dashboard.posts_today(now.astimezone(dt.timezone.utc).date().isoformat())
+    today = now.date()
+    count = 0
+    for v in dashboard._load().get("videos", []):
+        raw = v.get("date")
+        if not raw:
+            continue
+        try:
+            t = dt.datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=dt.timezone.utc)
+        if t.astimezone(TZ).date() == today:
+            count += 1
+    return count
 
 
 def next_slot(now: dt.datetime | None = None) -> dt.datetime | None:
