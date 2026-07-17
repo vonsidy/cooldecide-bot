@@ -14,6 +14,39 @@ from PIL import Image, ImageDraw, ImageFont
 W, H = 1080, 1920
 FONTS = os.path.join(os.path.dirname(__file__), "fonts")
 EMOJI_FONT = "C:/Windows/Fonts/seguiemj.ttf"
+
+# YouTube stamps its OWN interface over the video, and we don't get a say: player
+# controls across the top, the channel handle + video title + description across
+# the bottom. Anything drawn there is invisible to the viewer no matter how good
+# it looks in the PNG — the first cards put the format name under the pause button
+# and "POINT AT YOUR PICK!" under the video title, so the two things the video is
+# actually asking of you were the two things nobody could read.
+# Measured off the live desktop player (controls end ~y125, title block starts
+# ~y1750); the mobile app stacks handle + title + description and reaches higher,
+# so these keep a wide margin on both. Empty margin is cheap; hidden content isn't.
+# 160 vs a measured ~125: enough clearance to be safe without starving the panels,
+# which have to fit a picture AND the %+bar between these two lines.
+SAFE_TOP = 160
+SAFE_BOTTOM = 1660
+FOOTER_H = 120
+VS_GAP = 200        # gap between panels — must clear the countdown chip (max 198)
+FOOTER_GAP = 36     # air between panel B and the CTA pill, so it reads as its own thing
+
+
+def _layout(header_bottom: int) -> tuple[int, int, int, int]:
+    """Fit header → panel → chip → panel → footer inside the safe box.
+
+    Computed, not hardcoded, because the header's height varies: trivia prints the
+    whole question, so its panels must start lower than a two-word format label's.
+    Returns (panel_a_top, panel_height, panel_b_top, footer_top).
+    """
+    # -10 so the pill's bottom edge CLEARS the line rather than landing on it:
+    # rounded_rectangle draws inclusive of its end coordinate, so a pill ending at
+    # exactly SAFE_BOTTOM still puts a lit row inside the reserved band.
+    footer_top = SAFE_BOTTOM - FOOTER_H - 10
+    a_top = header_bottom + 16
+    panel_h = ((footer_top - FOOTER_GAP - a_top) - VS_GAP) // 2
+    return a_top, panel_h, a_top + panel_h + VS_GAP, footer_top
 # Bright, playful, sticker-style palette — nothing dark.
 BG_TOP = (90, 214, 255)     # bright sky cyan
 BG_BOT = (120, 156, 255)    # cheerful blue
@@ -269,6 +302,18 @@ def photo_for(option_text: str, hint: str | None = None) -> str | None:
     # where a real landmark genuinely beats a drawing.
 
 
+# Image models cannot count. Asked to illustrate the answer "7" the generator drew
+# a family of three; for "5" it drew one kid. Sat next to the answer, that reads as
+# "the answer is a family" — actively worse than no picture, and on a quiz card it
+# teaches the wrong thing. A numeric answer IS its own visual, so it gets the
+# big-text treatment instead.
+_NUMERIC = re.compile(r"^[\s\d.,/-]+$")
+
+
+def _is_number(text: str) -> bool:
+    return bool(text) and bool(_NUMERIC.match(text))
+
+
 def _picture(canvas, cx, y, size, option_text, emoji, path=None):
     """Art for an option, centred in a `size`-tall box: photo if given, else emoji."""
     if path:
@@ -308,12 +353,12 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     # A photo counts as art even with no emoji — trivia rows carry no emoji at all
     # ("Cheetah"/"Lion"), so keying this off the emoji alone left quiz cards bare.
     has_pic = bool(emoji) or bool(photo)
-    # The picture is the thing you scroll past or stop for, so it gets the room:
-    # at 200px it floated in a 560px panel looking like an afterthought. Shrinks
-    # on the reveal to make way for the % and the bar.
-    em = (200 if reveal else 310) if has_pic else 0
     gap = 16 if has_pic else 0
-    tsize = 62 if has_pic else 88                      # answer-only options (trivia) read bigger
+    # With no picture the ANSWER is the visual, so it takes the panel: a numeric
+    # quiz answer at a flat 88px sat marooned in the middle of an empty card. Scaled
+    # to the panel rather than fixed, since the panel height flexes; the shrink loop
+    # below pulls it back for anything long.
+    tsize = 62 if has_pic else int(height * 0.32)
     tf = _font("Anton-Regular.ttf", tsize)
     while draw.textlength(text.upper(), font=tf) > W - 210 and tf.size > 30:
         tf = _font("Anton-Regular.ttf", tf.size - 2)
@@ -321,13 +366,25 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     # so the visual gap always lands tighter than the number suggests — hence the
     # roomy value here.
     num_sz, num_gap, bar_h, bar_gap = 92, 34, 38, 60
-    # vertically centre the whole content block inside the panel. Factual reveals
-    # carry no bar (see below), so they're shorter.
+    # Factual reveals carry no bar (see below), so they're shorter.
     extra = 0
     if reveal:
         extra = num_gap + num_sz + (0 if factual else bar_gap + bar_h)
+
+    # Everything is centred inside the panel's INNER area — the white sticker border
+    # eats 12px a side, and centring against the outer edge drew the % bar straight
+    # through it. The picture takes what's left after the text and the %+bar have
+    # been paid for, rather than a fixed size: the panel height now flexes to fit
+    # YouTube's safe area, and a hardcoded 200px reveal picture overflowed the
+    # shorter panel that leaves.
+    pad = 24                       # 12px border + 12px of actual air below the bar
+    inner = height - pad * 2
+    # The picture is the thing you scroll past or stop for, so it gets the room that
+    # remains: at 200px it floated in a 560px panel looking like an afterthought.
+    em = max(0, min(int(height * (0.34 if reveal else 0.63)),
+                    inner - gap - tf.size - extra)) if has_pic else 0
     block = em + gap + tf.size + extra
-    y = top_y + (height - block) // 2
+    y = top_y + pad + (inner - block) // 2
 
     if has_pic:
         _picture(canvas, cx, y, em, text, emoji, photo)
@@ -413,22 +470,28 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
     # two answer options make sense.
     import content
     if item.fmt == "trivia":
-        _shadow_text(draw, cx, 40, "QUIZ TIME", _font("Anton-Regular.ttf", 46), GOLD, off=4)
+        _shadow_text(draw, cx, SAFE_TOP, "QUIZ TIME", _font("Anton-Regular.ttf", 46), GOLD, off=4)
         qfont = _font("Anton-Regular.ttf", 62)
         lines = _wrap(draw, item.prompt.upper(), qfont, W - 90)[:2]
         for i, ln in enumerate(lines):
-            _shadow_text(draw, cx, 104 + i * 66, ln, qfont, WHITE, off=4)
+            _shadow_text(draw, cx, SAFE_TOP + 64 + i * 66, ln, qfont, WHITE, off=4)
+        head_bot = SAFE_TOP + 64 + len(lines) * 66
     else:
         label = content.format_label(item.fmt)
         if TOPIC_LABEL:
             # The topic is the video's identity, so it goes above the format name:
             # "FOOD EDITION / WOULD YOU RATHER".
-            _shadow_text(draw, cx, 34, TOPIC_LABEL, _font("Anton-Regular.ttf", 46),
+            _shadow_text(draw, cx, SAFE_TOP, TOPIC_LABEL, _font("Anton-Regular.ttf", 46),
                          GOLD, off=4, max_w=W - 90)
-            _shadow_text(draw, cx, 92, label, _font("Anton-Regular.ttf", 84), WHITE,
+            _shadow_text(draw, cx, SAFE_TOP + 58, label, _font("Anton-Regular.ttf", 84), WHITE,
                          off=6, max_w=W - 50)
+            head_bot = SAFE_TOP + 154
         else:
-            _shadow_text(draw, cx, 56, label, _font("Anton-Regular.ttf", 84), WHITE, off=6, max_w=W - 50)
+            _shadow_text(draw, cx, SAFE_TOP + 22, label, _font("Anton-Regular.ttf", 84), WHITE,
+                         off=6, max_w=W - 50)
+            head_bot = SAFE_TOP + 118
+
+    a_top, panel_h, b_top, footer_top = _layout(head_bot)
 
     # All-or-nothing per round: one side in artwork and the other in emoji looks
     # like a mistake, so unless BOTH sides have art, both fall back to the emoji.
@@ -437,9 +500,14 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
     if not (a_photo and b_photo):
         a_photo = b_photo = None
 
-    _panel(canvas, 250, 560, A_COLOR, item.a, item.a_emoji, item.a_pct,
+    a_emoji, b_emoji = item.a_emoji, item.b_emoji
+    if _is_number(item.a) or _is_number(item.b):
+        a_photo = b_photo = None            # see _is_number: nothing can draw "7"
+        a_emoji = b_emoji = ""
+
+    _panel(canvas, a_top, panel_h, A_COLOR, item.a, a_emoji, item.a_pct,
            reveal, a_win, item.correct == 0, factual, a_photo, grow)
-    _panel(canvas, 1010, 560, B_COLOR, item.b, item.b_emoji, item.b_pct,
+    _panel(canvas, b_top, panel_h, B_COLOR, item.b, b_emoji, item.b_pct,
            reveal, not a_win, item.correct == 1, factual, b_photo, grow)
 
     # center chip: bright white badge with a colored ring + big number
@@ -449,7 +517,7 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
         # down on you, which is what makes you commit to a side before it lands.
         ramp = {3: (GREEN, 158), 2: (GOLD, 176), 1: ((255, 60, 80), 198)}
         ring, chip = ramp.get(countdown, (GOLD, 158))
-        cy = 828 - (chip - 158) // 2
+        cy = a_top + panel_h + (VS_GAP - chip) // 2   # centred in the gap, whatever it grows to
         badge = Image.new("RGBA", (chip, chip), (0, 0, 0, 0))
         bd = ImageDraw.Draw(badge)
         bd.ellipse((0, 0, chip, chip), fill=WHITE + (255,), outline=ring + (255,),
@@ -462,14 +530,18 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
                 mid, font=mf, fill=(ring if countdown == 1 else NAVY) + (255,))
         canvas.alpha_composite(badge, (cx - chip // 2, cy))
 
-    # footer pill
-    draw.rounded_rectangle((cx - 430, 1728, cx + 430, 1856), radius=40, fill=WHITE)
-    draw.rounded_rectangle((cx - 418, 1740, cx + 418, 1844), radius=34, fill=GOLD)
+    # footer pill — sits ABOVE SAFE_BOTTOM. It used to run to y1856, straight under
+    # the video title YouTube prints over every Short, so the one instruction the
+    # video gives was unreadable on the platform it was made for.
+    draw.rounded_rectangle((cx - 430, footer_top, cx + 430, footer_top + FOOTER_H),
+                           radius=40, fill=WHITE)
+    draw.rounded_rectangle((cx - 418, footer_top + 12, cx + 418, footer_top + FOOTER_H - 12),
+                           radius=34, fill=GOLD)
     # The ask is physical, not verbal: point at the screen. It's an action a kid
     # can do instantly while watching, so it reads as "play along" rather than a
     # chore — and it keeps hands/eyes on the video instead of in the comments.
     footer = "DID YOU GET IT?" if (reveal and factual) else ("DID YOU PICK IT?" if reveal else "POINT AT YOUR PICK!")
-    _text_c(draw, cx, 1758, footer, _font("Anton-Regular.ttf", 60), NAVY, max_w=800)
+    _text_c(draw, cx, footer_top + 28, footer, _font("Anton-Regular.ttf", 60), NAVY, max_w=800)
 
     canvas.convert("RGB").save(out_path, "PNG")
     return out_path
