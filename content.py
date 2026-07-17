@@ -725,7 +725,7 @@ FORMATS = {
 # To bring one back: review its pictures (tools/contact_sheet.py), then add it here
 # or set ENABLED_FORMATS="wyr,trivia" in the environment. Adding a name is all it
 # takes; the rotation, topics and scheduling already handle it.
-ENABLED_FORMATS = [f.strip() for f in os.getenv("ENABLED_FORMATS", "wyr").split(",") if f.strip()]
+ENABLED_FORMATS = [f.strip() for f in os.getenv("ENABLED_FORMATS", "wyr,rank").split(",") if f.strip()]
 
 _FULL_ROTATION = ["wyr", "this_or_that", "wyr", "higher_lower", "wyr", "rank", "trivia"]
 FORMAT_ROTATION = [f for f in _FULL_ROTATION if f in ENABLED_FORMATS] or ["wyr"]
