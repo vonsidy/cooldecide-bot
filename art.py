@@ -223,10 +223,21 @@ ART_HINTS = {
     "1,000 bees": "a big buzzing swarm of yellow and black bees",
     "1 bear": "one large brown bear standing",
     "20 raptors": "a pack of green velociraptors running together",
+    "10 raptors": "a pack of green velociraptors running together",
     "5 gorillas": "a group of muscular gorillas standing together",
     "5 tigers": "a group of orange tigers with black stripes",
     "5 bears": "a group of large brown bears",
     "5 crocodiles": "a group of green crocodiles with long toothy snouts",
+    # dinosaurs — each species pinned so the picture is unmistakable
+    "a t-rex": "one green tyrannosaurus rex roaring, huge head, tiny arms",
+    "a spinosaurus": "a spinosaurus dinosaur, blue-grey with a tall fan-shaped sail on its back and a long crocodile-like snout",
+    "a triceratops": "a triceratops dinosaur with three horns on its face and a large bony neck frill",
+    "a stegosaurus": "a stegosaurus dinosaur with two rows of tall plates along its back and a spiked tail",
+    "an ankylosaurus": "an ankylosaurus dinosaur covered in bony armour with a heavy round club on its tail",
+    "a pterodactyl": "a pterodactyl, a flying dinosaur with wide leathery wings and a long pointed beak",
+    "a giant eagle": "a huge brown eagle with a white head and enormous outspread wings",
+    "a brachiosaurus": "a brachiosaurus dinosaur, an enormous long-necked plant-eater reaching up to tall trees",
+    "a woolly mammoth": "a woolly mammoth with long curved tusks and shaggy brown fur",
     # Steer HARD away from real characters: "superhero" alone made the model draw
     # bat-ear cowls (Batman). Describe generic costume parts only, no cowls/logos.
     "100 caped heroes": ("a big crowd of cheerful cartoon kids wearing plain round "

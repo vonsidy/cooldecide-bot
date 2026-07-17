@@ -690,8 +690,16 @@ RANK = [
     ("5 gorillas", "5 tigers", "🦍", "🐯"),
     ("10 wolves", "5 bears", "🐺", "🐻"),
     ("5 crocodiles", "5 lions", "🐊", "🦁"),
-    # hero-archetype swarms (named heroes are someone's copyright — see note above)
-    ("100 caped heroes", "100 masked ninjas", "🦸", "🥷"),
+    # dinosaurs — kids' #1 pick. Classic species matchups + a raptor swarm.
+    ("A T-Rex", "A Spinosaurus", "🦖", "🦕"),
+    ("A Triceratops", "A Stegosaurus", "🦕", "🦖"),
+    ("10 raptors", "1 T-Rex", "🦖", "🦖"),
+    ("An Ankylosaurus", "A T-Rex", "🦕", "🦖"),
+    ("A Pterodactyl", "A giant eagle", "🦅", "🦅"),
+    ("A Spinosaurus", "1 megalodon", "🦕", "🦈"),
+    ("A Brachiosaurus", "A T-Rex", "🦕", "🦖"),
+    ("A woolly mammoth", "A T-Rex", "🦣", "🦖"),
+    # one fun fantasy swarm (the caped-heroes-vs-ninjas row was cut — too dull)
     ("50 knights", "1 dragon", "🛡️", "🐉"),
 ]
 
