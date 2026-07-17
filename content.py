@@ -475,7 +475,13 @@ WYR_VETTED = [
      "a kid touching a spinning classroom globe as a swirl of light lifts them toward the pyramids appearing behind them"),
 ]
 
-WYR = WYR + WYR_VETTED
+# Only rows that describe their own artwork go live. The 71 older rows above have no
+# art description, so their pictures are generated from the option text alone — the
+# failure that drew a ringed planet (Saturn) for "Jupiter" and a family of three for
+# the answer "7". They aren't deleted: give a row a_art/b_art and it airs again.
+# 90 vetted rows at 2 posts a day is about 45 days of content, so there is no rush
+# to cut corners here.
+WYR = [r for r in (WYR + WYR_VETTED) if len(r) >= 6 and r[4] and r[5]]
 
 THIS_OR_THAT = [
     ("Dragon", "Unicorn", "🐉", "🦄"),
@@ -497,8 +503,12 @@ THIS_OR_THAT = [
     ("Phoenix", "Griffin", "🔥", "🦅"),
     ("Invisible cloak", "Flying carpet", "🧥", "🧞"),
     # a couple of real-world snap picks so it isn't ALL fantasy
-    ("Pizza", "Burgers", "🍕", "🍔"),
-    ("Marvel", "DC", "🦸", "🦇"),
+    # NOT "Pizza vs Burgers": a real-world preference every kid already has an
+    # answer to — nothing to imagine, nothing to argue about.
+    ("Pizza that never runs out", "A burger the size of a car", "🍕", "🍔"),
+    # NOT "Marvel vs DC": two live brands owned by Disney and Warner Bros, and the
+    # art step would draw their actual characters onto a monetised card.
+    ("A caped flying hero", "A masked night vigilante", "🦸", "🦇"),
 ]
 
 # (question, correct, wrong). These are stated to children as FACT, so every one
@@ -519,10 +529,23 @@ TRIVIA = [
     ("Which bird cannot fly?", "Penguin", "Eagle"),
     ("How many legs does an insect have?", "6", "8"),
     # earth / nature
-    ("How many continents are there?", "7", "5"),
+    # NOT "how many continents": the 7-continent model is taught in the US/UK, but
+    # the 5- and 6-continent models are taught across Latin America and much of
+    # Europe. "5" is a real answer for a real slice of the audience, so marking it
+    # wrong is arguable, not checkable.
+    ("How many legs does a crab have?", "10", "8"),
     ("What is the biggest ocean?", "Pacific", "Atlantic"),
-    ("What is the largest desert on Earth?", "Antarctica", "Sahara"),
-    ("What gas do plants breathe in?", "Carbon dioxide", "Oxygen"),
+    # NOT "largest desert -> Antarctica": true only under the low-precipitation
+    # definition, and the pool's own rule below forbids trick questions. Sahara is
+    # what every kid, teacher and parent will answer — and it IS the largest hot
+    # desert. Telling a child they're wrong for saying it is the likeliest row in
+    # this pool to earn an angry parent comment.
+    ("What is the largest hot desert on Earth?", "Sahara", "Gobi"),
+    # NOT "what gas do plants breathe in": "breathe in" conflates photosynthesis
+    # with respiration. Plants respire too and do take in oxygen, so the "wrong"
+    # answer is literally correct for the verb used. The ambiguity was in the
+    # question, not the answer.
+    ("What gas do plants use to make their food?", "Carbon dioxide", "Nitrogen"),
     ("How many days are in a leap year?", "366", "365"),
     # colours / basics
     ("What color do blue and yellow make?", "Green", "Purple"),
@@ -542,8 +565,11 @@ HIGHER_LOWER = [
     ("A T-Rex", "An elephant", "🦖", "🐘"),
     ("An elephant", "A horse", "🐘", "🐴"),
     ("A giraffe", "A polar bear", "🦒", "🐻‍❄️"),
-    ("An ostrich", "A penguin", "🦤", "🐧"),
-    ("A great white shark", "A dolphin", "🦈", "🐬"),
+    ("An ostrich", "A penguin", "🐦", "🐧"),   # 🦤 is DODO, not an ostrich
+    # NOT bare "A dolphin": the orca is the largest dolphin (~9m, 6t) and dwarfs a
+    # great white, so a kid picturing one gets marked wrong for being right. The
+    # species has to be named for the claim to hold.
+    ("A great white shark", "A bottlenose dolphin", "🦈", "🐬"),
     # space
     ("The Sun", "The Earth", "☀️", "🌍"),
     ("Jupiter", "The Earth", "🪐", "🌍"),
@@ -551,14 +577,25 @@ HIGHER_LOWER = [
     ("The Sun", "Jupiter", "☀️", "🪐"),
     # places / things
     ("Mount Everest", "The Eiffel Tower", "🏔️", "🗼"),
-    ("The Pacific Ocean", "The Atlantic Ocean", "🌊", "🌎"),
+    # 🌏 faces the Pacific, 🌎 the Atlantic — a wave next to a globe read as two
+    # different KINDS of thing rather than two comparable oceans.
+    ("The Pacific Ocean", "The Atlantic Ocean", "🌏", "🌎"),
     ("Russia", "Australia", "🇷🇺", "🇦🇺"),
     ("A football pitch", "A tennis court", "⚽", "🎾"),
     ("A jumbo jet", "A school bus", "✈️", "🚌"),
     ("A skyscraper", "A house", "🏢", "🏠"),
 ]
 
-RANK = [  # a fun "which is better" pair, same reveal mechanic
+# The card says WHO WOULD WIN, so every row must be a FIGHT: both sides have to be
+# something a kid can picture squaring up, able to act, hit and lose. This pool was
+# originally authored as "a fun which-is-better pair" — a different question — and
+# that mismatch is what put "Who would win: Fortnite vs Minecraft" and bare powers
+# like "Mind reading vs Time freezing" on a battle card. generate.py gates the rows
+# Claude writes; nothing gated these, so they were the live half of the same bug.
+# Named characters are out too: the pipeline generates monetised AI art of each
+# option, and drawing Superman is someone else's copyright. Archetypes read the same
+# to a kid and are ours.
+RANK = [
     # animals
     ("Sharks", "Dinosaurs", "🦈", "🦖"),
     ("A lion", "A gorilla", "🦁", "🦍"),
@@ -573,18 +610,19 @@ RANK = [  # a fun "which is better" pair, same reveal mechanic
     ("A giant", "A dragon", "🦍", "🐉"),
     ("A ninja", "A pirate", "🥷", "🏴‍☠️"),
     ("A werewolf", "A vampire", "🐺", "🧛"),
-    # powers
-    ("Super speed", "Super strength", "⚡", "💪"),
-    ("Ice powers", "Fire powers", "❄️", "🔥"),
-    ("Invisibility", "Flying", "👻", "🦅"),
-    ("Mind reading", "Time freezing", "🧠", "⏱️"),
-    # gaming / heroes
-    ("Fortnite", "Minecraft", "🎮", "🟫"),
-    ("Superman", "Batman", "🦸", "🦇"),
-    ("Spider-Man", "Iron Man", "🕷️", "🤖"),
+    # powers — each power needs a BODY to wield it. "Super speed vs Super strength"
+    # is two nouns that cannot fight; a fast hero vs a strong hero is a real fight
+    # with the same appeal.
+    ("A super-fast hero", "A super-strong hero", "⚡", "💪"),
+    ("An ice warrior", "A fire warrior", "❄️", "🔥"),
+    ("An invisible hero", "A flying hero", "🫥", "🦅"),
+    ("A mind-reading hero", "A time-freezing hero", "🧠", "⏱️"),
+    # heroes — archetypes, not anyone's characters
+    ("A block-world builder", "A battle-royale soldier", "🧱", "🪂"),
+    ("A caped flying hero", "A masked night vigilante", "🦸", "🦇"),
+    ("A wall-crawling hero", "A hero in powered armour", "🕸️", "🦾"),
     ("A robot army", "A dinosaur army", "🤖", "🦖"),
     # space
-    ("A rocket", "A spaceship", "🚀", "🛸"),
     ("An alien", "A robot", "👽", "🤖"),
 ]
 
@@ -601,7 +639,19 @@ FORMATS = {
 # One format per weekday cycle, so the channel rotates through all five.
 # Which format each day gets. Would-you-rather appears 3x because it's the
 # flagship and has by far the deepest question pool; the rest get one slot each.
-FORMAT_ROTATION = ["wyr", "this_or_that", "wyr", "higher_lower", "wyr", "rank", "trivia"]
+# Which formats are LIVE, smallest-surface-first. Only would-you-rather has a pool
+# where every airing row carries a reviewed art hint, so only it goes out. The other
+# four are built and their bugs are fixed, but their pictures haven't been eyeballed
+# yet — and this channel's failures have all come from shipping something nobody
+# looked at. A format goes live when it has earned it, not when it exists.
+#
+# To bring one back: review its pictures (tools/contact_sheet.py), then add it here
+# or set ENABLED_FORMATS="wyr,trivia" in the environment. Adding a name is all it
+# takes; the rotation, topics and scheduling already handle it.
+ENABLED_FORMATS = [f.strip() for f in os.getenv("ENABLED_FORMATS", "wyr").split(",") if f.strip()]
+
+_FULL_ROTATION = ["wyr", "this_or_that", "wyr", "higher_lower", "wyr", "rank", "trivia"]
+FORMAT_ROTATION = [f for f in _FULL_ROTATION if f in ENABLED_FORMATS] or ["wyr"]
 
 
 def format_for(date: str, slot: int = 0) -> str:

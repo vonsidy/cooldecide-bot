@@ -56,7 +56,7 @@ def overlay(png: str, out: str) -> str:
 
 def main() -> None:
     os.makedirs(OUT, exist_ok=True)
-    for fmt in ("rank", "wyr", "trivia"):
+    for fmt in ("wyr", "this_or_that", "rank", "higher_lower", "trivia"):
         it = content.daily_item(fmt, "2026-07-16")
         card.set_topic_label("")
         raw = os.path.join(OUT, f"{fmt}_raw.png")
