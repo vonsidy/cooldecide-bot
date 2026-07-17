@@ -1,27 +1,12 @@
 {
   "channel": {
     "title": "CoolDecide",
-    "subscribers": 5,
+    "subscribers": 6,
     "views": 0,
     "videoCount": 1,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
   },
   "videos": [
-    {
-      "date": "2026-07-17T00:30:21+00:00",
-      "id": "2eIOpqmcKg0",
-      "url": "https://youtube.com/shorts/2eIOpqmcKg0",
-      "title": "Who Would WIN? Owning every video game ever made vs Owning every pizza restaurant in town \ud83c\udfc6",
-      "format": "rank",
-      "theme": "Who Would Win",
-      "rounds": 3,
-      "privacy": "private",
-      "local_time": "08:30 PM",
-      "manual": false,
-      "views": 4,
-      "likes": 0,
-      "comments": 0
-    },
     {
       "date": "2026-07-16T22:40:38+00:00",
       "id": "bfmIJStTeDM",
@@ -48,7 +33,7 @@
       "privacy": "public",
       "local_time": "01:59 PM",
       "manual": false,
-      "views": 767,
+      "views": 843,
       "likes": 11,
       "comments": 0
     }
@@ -90,11 +75,6 @@
       "video_id": "bfmIJStTeDM",
       "text": "How many did you get right? Comment below! \ud83d\udc47",
       "due": "2026-07-16T23:03:38+00:00"
-    },
-    {
-      "video_id": "2eIOpqmcKg0",
-      "text": "Drop your answers in the comments! \ud83d\udd25",
-      "due": "2026-07-17T00:43:21+00:00"
     }
   ],
   "schedule": {
@@ -121,11 +101,11 @@
     },
     {
       "d": "2026-07-17",
-      "subs": 5,
+      "subs": 6,
       "views": 0,
       "likes": 11
     }
   ],
   "started": null,
-  "updated": "2026-07-17T14:18:04+00:00"
+  "updated": "2026-07-17T15:18:06+00:00"
 }
