@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "04:25 PM",
       "manual": false,
-      "views": 0,
+      "views": 2,
       "likes": 0,
       "comments": 0
     },
@@ -33,7 +33,7 @@
       "privacy": "public",
       "local_time": "01:59 PM",
       "manual": false,
-      "views": 1124,
+      "views": 1233,
       "likes": 12,
       "comments": 0
     }
@@ -119,5 +119,5 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-17T22:17:29+00:00"
+  "updated": "2026-07-17T23:17:25+00:00"
 }
