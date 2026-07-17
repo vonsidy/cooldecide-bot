@@ -227,8 +227,12 @@ ART_HINTS = {
     "5 tigers": "a group of orange tigers with black stripes",
     "5 bears": "a group of large brown bears",
     "5 crocodiles": "a group of green crocodiles with long toothy snouts",
-    "100 caped heroes": "a big group of smiling caped superheroes in plain colourful costumes",
-    "100 masked ninjas": "a big group of ninjas in black outfits and masks",
+    # Steer HARD away from real characters: "superhero" alone made the model draw
+    # bat-ear cowls (Batman). Describe generic costume parts only, no cowls/logos.
+    "100 caped heroes": ("a big crowd of cheerful cartoon kids wearing plain round "
+                         "helmets and colourful flowing capes, no logos, no bat ears, "
+                         "no face masks"),
+    "100 masked ninjas": "a big group of cartoon ninjas in plain black outfits and orange belts",
     "50 knights": "a group of knights in shining silver armour holding swords and shields",
     "1 dragon": "one big green dragon breathing a burst of fire",
 
