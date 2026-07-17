@@ -624,6 +624,24 @@ RANK = [
     ("A robot army", "A dinosaur army", "🤖", "🦖"),
     # space
     ("An alien", "A robot", "👽", "🤖"),
+    # swarm vs one — the classic viral "100 X vs 1 Y". The whole argument is whether
+    # numbers beat size, so both sides must be real fighters and the mismatch has to
+    # be genuinely arguable. NOTE the art can't COUNT: the hint for "100 house cats"
+    # draws "a big crowd of cats", and the NUMBER lives in the card text, not the
+    # picture. (art.ART_HINTS carries these.)
+    ("100 house cats", "1 tiger", "🐱", "🐯"),
+    ("3 gorillas", "1 megalodon", "🦍", "🦈"),
+    ("50 humans", "1 silverback gorilla", "🧑", "🦍"),
+    ("1,000 rats", "1 elephant", "🐀", "🐘"),
+    ("10 wolves", "1 grizzly bear", "🐺", "🐻"),
+    ("100 chickens", "1 crocodile", "🐔", "🐊"),
+    ("5 lions", "1 T-Rex", "🦁", "🦖"),
+    ("100 kids", "1 gorilla", "🧒", "🦍"),
+    ("1,000 bees", "1 bear", "🐝", "🐻"),
+    ("20 raptors", "1 elephant", "🦖", "🐘"),
+    # hero-archetype swarms (named heroes are someone's copyright — see note above)
+    ("100 caped heroes", "100 masked ninjas", "🦸", "🥷"),
+    ("50 knights", "1 dragon", "🛡️", "🐉"),
 ]
 
 # label, spoken prompt, pool, mode ("opinion" = made-up % split, no wrong answer;

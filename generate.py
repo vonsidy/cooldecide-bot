@@ -47,9 +47,13 @@ _PROMPTS = {
     "rank": ("'who would win' FIGHTS between two things that could actually battle "
              "each other — creatures, heroes, monsters, powers. Both sides must be "
              "a fighter: never possessions, places, foods or wishes. If you can't "
-             "picture them squaring up, it's wrong",
-             '{"a":"Sharks","a_emoji":"\\ud83e\\udd88","a_art":"a great white shark",'
-             '"b":"Dinosaurs","b_emoji":"\\ud83e\\udd96","b_art":"a t-rex dinosaur"}'),
+             "picture them squaring up, it's wrong. Mix in some 'swarm vs one' "
+             "matchups where numbers fight size, like '100 house cats vs 1 tiger' or "
+             "'3 gorillas vs 1 megalodon' — for those, the art must show a CROWD or a "
+             "SINGLE beast (never a countable number, image models can't count) and "
+             "the count stays in the option text",
+             '{"a":"100 house cats","a_emoji":"\\ud83d\\udc31","a_art":"a big crowd of house cats",'
+             '"b":"1 tiger","b_emoji":"\\ud83d\\udc2f","b_art":"one large snarling tiger"}'),
     # Factual formats — a different JSON shape, because one answer is RIGHT.
     "trivia": ("fun general-knowledge quiz questions kids would enjoy guessing",
                '{"question":"Which planet is the biggest?","correct":"Jupiter",'
