@@ -136,6 +136,49 @@ def _rows_from_json(text: str, fmt: str) -> list[tuple]:
     return rows
 
 
+# A stricter brief was not enough. Graded over 24 generated matchups, 3 still came
+# back as would-you-rathers wearing a battle's label ("You as a mighty eagle vs You
+# as a giant octopus"). A prompt can only ask; this checks. Anything that can't
+# fight is dropped before it reaches a card.
+_FIGHT_JUDGE = (
+    "These are meant to be WHO WOULD WIN matchups on a kids' channel — a FIGHT "
+    "between two things that could genuinely battle each other.\n\n"
+    "For each numbered pair, decide: could a kid picture the two SQUARING UP against "
+    "each other? Answer false if either side is a possession, a place, a food, a "
+    "wish, a transformation of the viewer ('you as a shark'), or if the two are "
+    "separate scenarios that never meet ('kid trapped in a game vs character trapped "
+    "in school'). Both sides must be able to act, hit, and lose. Be strict — when "
+    "unsure, answer false.\n\n"
+    "Return ONLY a JSON array of booleans, one per pair, in order. Nothing else."
+)
+
+
+def _fight_check(rows: list[tuple], key: str) -> list[tuple]:
+    """Keep only the matchups that are actually a fight.
+
+    Fails CLOSED: any error returns nothing, so the caller falls back to the
+    hand-vetted pool. Shipping an unchecked matchup is the failure this exists to
+    prevent, so "check unavailable" must never mean "send it anyway".
+    """
+    if not rows:
+        return []
+    try:
+        import anthropic
+        listing = "\n".join(f"{i + 1}. {r[0]} vs {r[1]}" for i, r in enumerate(rows))
+        msg = anthropic.Anthropic(api_key=key).messages.create(
+            model=MODEL, max_tokens=300, temperature=0,
+            messages=[{"role": "user", "content": f"{_FIGHT_JUDGE}\n\n{listing}"}],
+        )
+        text = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
+        match = re.search(r"\[.*\]", text, re.DOTALL)
+        flags = json.loads(match.group(0)) if match else []
+        if len(flags) != len(rows):
+            return []
+        return [r for r, ok in zip(rows, flags) if ok is True]
+    except Exception:
+        return []
+
+
 def generate(fmt: str, n: int, avoid: list[str] | None = None,
              topic: str | None = None) -> list[tuple]:
     """Returns rows in the same shape as content.py's pools, or [] on any failure.
@@ -174,7 +217,10 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
             messages=[{"role": "user", "content": prompt}],
         )
         text = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
-        return _rows_from_json(text, fmt)
+        rows = _rows_from_json(text, fmt)
+        if fmt == "rank":
+            rows = _fight_check(rows, key)
+        return rows
     except Exception:
         return []
 
