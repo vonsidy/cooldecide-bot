@@ -1,7 +1,7 @@
 {
   "channel": {
     "title": "CoolDecide",
-    "subscribers": 4,
+    "subscribers": 5,
     "views": 0,
     "videoCount": 1,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
@@ -48,7 +48,7 @@
       "privacy": "public",
       "local_time": "01:59 PM",
       "manual": false,
-      "views": 490,
+      "views": 535,
       "likes": 8,
       "comments": 0
     }
@@ -121,11 +121,11 @@
     },
     {
       "d": "2026-07-17",
-      "subs": 4,
+      "subs": 5,
       "views": 0,
       "likes": 8
     }
   ],
   "started": null,
-  "updated": "2026-07-17T11:18:07+00:00"
+  "updated": "2026-07-17T12:18:05+00:00"
 }
