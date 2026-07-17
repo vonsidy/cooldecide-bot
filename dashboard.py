@@ -160,6 +160,23 @@ def _empty_learning() -> dict:
             "min_per_option": 2, "themes": {}, "counts": {"theme": {}}}
 
 
+def _fill_schedule(data: dict) -> None:
+    """Write the next few post times so the dashboard's 'NEXT SHORT DROPS IN'
+    countdown has something to count to. It was always [], so the timer was blank.
+
+    scheduler imports dashboard, so this import is local to avoid a cycle. Any
+    failure just leaves the list empty — a missing countdown is cosmetic and must
+    never break a stats refresh.
+    """
+    try:
+        import scheduler
+        data.setdefault("schedule", {})
+        data["schedule"]["max_per_day"] = scheduler.MAX_PER_DAY
+        data["schedule"]["upcoming"] = [_iso(t) for t in scheduler.upcoming(days=3)]
+    except Exception:  # noqa: BLE001
+        data.setdefault("schedule", {"upcoming": [], "max_per_day": 2})
+
+
 def refresh_stats() -> dict:
     """Pull live channel + per-video numbers from YouTube. Safe if offline."""
     import youtube_upload
@@ -217,6 +234,7 @@ def refresh_stats() -> dict:
         else:
             hist.append(snap)
 
+    _fill_schedule(data)
     data["updated"] = _iso()
     data.setdefault("started", _now().date().isoformat())
     _save(data)
