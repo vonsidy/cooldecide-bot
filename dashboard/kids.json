@@ -8,6 +8,21 @@
   },
   "videos": [
     {
+      "date": "2026-07-17T00:30:21+00:00",
+      "id": "2eIOpqmcKg0",
+      "url": "https://youtube.com/shorts/2eIOpqmcKg0",
+      "title": "Who Would WIN? Owning every video game ever made vs Owning every pizza restaurant in town \ud83c\udfc6",
+      "format": "rank",
+      "theme": "Who Would Win",
+      "rounds": 3,
+      "privacy": "public",
+      "local_time": "08:30 PM",
+      "manual": false,
+      "views": 0,
+      "likes": 0,
+      "comments": 0
+    },
+    {
       "date": "2026-07-16T22:40:38+00:00",
       "id": "bfmIJStTeDM",
       "url": "https://youtube.com/shorts/bfmIJStTeDM",
@@ -15,7 +30,7 @@
       "format": "wyr",
       "theme": "Would You Rather",
       "rounds": 3,
-      "privacy": "unlisted",
+      "privacy": "private",
       "local_time": "06:40 PM",
       "manual": false,
       "views": 0,
@@ -33,12 +48,18 @@
       "privacy": "public",
       "local_time": "01:59 PM",
       "manual": false,
-      "views": 23,
+      "views": 24,
       "likes": 2,
       "comments": 0
     }
   ],
   "runs": [
+    {
+      "status": "posted",
+      "title": "Who Would WIN? Owning every video game ever made vs Owning every pizza restaurant in town \ud83c\udfc6",
+      "manual": false,
+      "time": "2026-07-17T00:30:21+00:00"
+    },
     {
       "status": "posted",
       "title": "Only 1% Pick Right... Explore alien jungles with bioluminescent plants or Explore crystal caverns o\u2026",
@@ -69,6 +90,11 @@
       "video_id": "bfmIJStTeDM",
       "text": "How many did you get right? Comment below! \ud83d\udc47",
       "due": "2026-07-16T23:03:38+00:00"
+    },
+    {
+      "video_id": "2eIOpqmcKg0",
+      "text": "Drop your answers in the comments! \ud83d\udd25",
+      "due": "2026-07-17T00:43:21+00:00"
     }
   ],
   "schedule": {
@@ -92,8 +118,14 @@
       "subs": 4,
       "views": 0,
       "likes": 2
+    },
+    {
+      "d": "2026-07-17",
+      "subs": 4,
+      "views": 0,
+      "likes": 2
     }
   ],
   "started": null,
-  "updated": "2026-07-16T22:40:39+00:00"
+  "updated": "2026-07-17T00:30:21+00:00"
 }
