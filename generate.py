@@ -44,18 +44,22 @@ _PROMPTS = {
     # "matchups" alone wasn't enough — with a money theme it produced "Who would
     # win: owning every video game vs owning every pizza restaurant", which is a
     # would-you-rather wearing a battle's label. Both sides must be able to FIGHT.
-    "rank": ("'who would win' FIGHTS kids love to argue about, between two WELL-KNOWN, "
-             "instantly recognisable fighters: real animals (lion, gorilla, shark, "
-             "crocodile, eagle), classic monsters and mythical creatures (dragon, "
-             "T-rex, kraken, giant squid), or simple hero archetypes (a knight, a "
-             "wizard, a ninja, a robot). Both sides must be a fighter you can picture "
-             "squaring up — never possessions, places, foods, wishes, or abstract "
-             "ideas. Keep the two sides in the SAME world so the matchup actually makes "
-             "sense and isn't a random mismatch: animal vs animal, monster vs monster, "
-             "hero vs hero. Classic 1-vs-1 duels ONLY — do NOT do 'swarm vs one' / "
-             "'100 X vs 1 Y' number matchups, and no made-up hybrids",
-             '{"a":"A lion","a_emoji":"\\ud83e\\udd81","a_art":"a male lion with a golden mane",'
-             '"b":"A gorilla","b_emoji":"\\ud83e\\udd8d","b_art":"a big silverback gorilla"}'),
+    "rank": ("'who would win' FIGHTS kids are obsessed with, between FAMOUS, instantly "
+             "recognisable characters a kid knows today: superheroes and villains "
+             "(Spider-Man, Batman, Hulk, Venom, Iron Man), video-game and cartoon "
+             "characters (Mario, Sonic, Pikachu, Goku, Minecraft Steve), or famous "
+             "giant monsters (Godzilla, King Kong, a dragon, a T-rex). Mix BOTH kinds "
+             "of matchup: (1) classic 1-vs-1 dream fights (Spider-Man vs Batman, Mario "
+             "vs Sonic, Goku vs Superman); and (2) 'numbers vs power' battles pitting "
+             "many weaker famous characters against a few strong ones (100 Minions vs "
+             "1 Hulk, 1,000 Stormtroopers vs 5 Jedi, 20 Goombas vs 3 Marios) — for "
+             "these keep the count in the option text and make the art show a CROWD vs "
+             "a SINGLE or FEW (image models can't draw an exact number). Both sides "
+             "must be FIGHTERS that can square up — never possessions, places, foods, "
+             "or wishes. Cross-universe matchups are great; use real, well-known "
+             "characters, never made-up ones",
+             '{"a":"100 Minions","a_emoji":"👾","a_art":"a big crowd of little yellow cartoon henchmen",'
+             '"b":"1 Hulk","b_emoji":"💚","b_art":"one huge green muscular superhero"}'),
     # Factual formats — a different JSON shape, because one answer is RIGHT.
     "trivia": ("fun general-knowledge quiz questions kids would enjoy guessing",
                '{"question":"Which planet is the biggest?","correct":"Jupiter",'
