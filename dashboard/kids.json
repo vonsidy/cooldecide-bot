@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "01:26 PM",
       "manual": false,
-      "views": 0,
+      "views": 12,
       "likes": 0,
       "comments": 0
     },
@@ -33,7 +33,7 @@
       "privacy": "public",
       "local_time": "10:25 PM",
       "manual": false,
-      "views": 229,
+      "views": 240,
       "likes": 5,
       "comments": 1
     },
@@ -63,8 +63,8 @@
       "privacy": "public",
       "local_time": "01:59 PM",
       "manual": false,
-      "views": 1322,
-      "likes": 12,
+      "views": 1330,
+      "likes": 11,
       "comments": 0
     }
   ],
@@ -169,9 +169,9 @@
       "d": "2026-07-18",
       "subs": 5,
       "views": 1349,
-      "likes": 20
+      "likes": 19
     }
   ],
   "started": null,
-  "updated": "2026-07-18T17:26:30+00:00"
+  "updated": "2026-07-18T18:17:29+00:00"
 }
