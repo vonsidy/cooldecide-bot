@@ -8,6 +8,21 @@
   },
   "videos": [
     {
+      "date": "2026-07-18T02:25:38+00:00",
+      "id": "xaysIX9amm0",
+      "url": "https://youtube.com/shorts/xaysIX9amm0",
+      "title": "Kid YouTuber with infinite game lives vs Kid YouTuber with one-hit-kill power \u2014 who wins?? \ud83d\udca5",
+      "format": "rank",
+      "theme": "Who Would Win",
+      "rounds": 3,
+      "privacy": "public",
+      "local_time": "10:25 PM",
+      "manual": false,
+      "views": 0,
+      "likes": 0,
+      "comments": 0
+    },
+    {
       "date": "2026-07-17T20:25:53+00:00",
       "id": "afgfZN1DNtI",
       "url": "https://youtube.com/shorts/afgfZN1DNtI",
@@ -18,9 +33,9 @@
       "privacy": "public",
       "local_time": "04:25 PM",
       "manual": false,
-      "views": 32,
+      "views": 37,
       "likes": 1,
-      "comments": 0
+      "comments": 1
     },
     {
       "date": "2026-07-16T17:59:25+00:00",
@@ -33,12 +48,18 @@
       "privacy": "public",
       "local_time": "01:59 PM",
       "manual": false,
-      "views": 1220,
+      "views": 1274,
       "likes": 12,
       "comments": 0
     }
   ],
   "runs": [
+    {
+      "status": "posted",
+      "title": "Kid YouTuber with infinite game lives vs Kid YouTuber with one-hit-kill power \u2014 who wins?? \ud83d\udca5",
+      "manual": false,
+      "time": "2026-07-18T02:25:38+00:00"
+    },
     {
       "status": "posted",
       "title": "Would You Rather: Live in a video game world or Have unlimited coins in every game? \ud83e\udd14",
@@ -78,14 +99,13 @@
   ],
   "pending_comments": [
     {
-      "video_id": "afgfZN1DNtI",
-      "text": "Comment your answers below! \ud83d\udc47 A or B?",
-      "due": "2026-07-17T20:50:53+00:00"
+      "video_id": "xaysIX9amm0",
+      "text": "Drop your answers in the comments! \ud83d\udd25",
+      "due": "2026-07-18T02:42:38+00:00"
     }
   ],
   "schedule": {
     "upcoming": [
-      "2026-07-17T21:28:00-04:00",
       "2026-07-18T09:53:00-04:00",
       "2026-07-18T18:22:00-04:00",
       "2026-07-19T09:15:00-04:00",
@@ -125,5 +145,5 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-18T01:17:28+00:00"
+  "updated": "2026-07-18T02:25:38+00:00"
 }
