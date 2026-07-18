@@ -8,6 +8,21 @@
   },
   "videos": [
     {
+      "date": "2026-07-18T14:25:54+00:00",
+      "id": "j9TZM8TWLxY",
+      "url": "https://youtube.com/shorts/j9TZM8TWLxY",
+      "title": "Who Would WIN? 1000 slimes vs 1 giant boss dragon \ud83c\udfc6",
+      "format": "rank",
+      "theme": "Who Would Win",
+      "rounds": 3,
+      "privacy": "public",
+      "local_time": "10:25 AM",
+      "manual": false,
+      "views": 0,
+      "likes": 0,
+      "comments": 0
+    },
+    {
       "date": "2026-07-18T02:25:38+00:00",
       "id": "xaysIX9amm0",
       "url": "https://youtube.com/shorts/xaysIX9amm0",
@@ -18,9 +33,9 @@
       "privacy": "public",
       "local_time": "10:25 PM",
       "manual": false,
-      "views": 48,
-      "likes": 1,
-      "comments": 0
+      "views": 146,
+      "likes": 2,
+      "comments": 1
     },
     {
       "date": "2026-07-17T20:25:53+00:00",
@@ -33,7 +48,7 @@
       "privacy": "public",
       "local_time": "04:25 PM",
       "manual": false,
-      "views": 67,
+      "views": 68,
       "likes": 2,
       "comments": 1
     },
@@ -48,12 +63,18 @@
       "privacy": "public",
       "local_time": "01:59 PM",
       "manual": false,
-      "views": 1310,
+      "views": 1311,
       "likes": 11,
       "comments": 0
     }
   ],
   "runs": [
+    {
+      "status": "posted",
+      "title": "Who Would WIN? 1000 slimes vs 1 giant boss dragon \ud83c\udfc6",
+      "manual": false,
+      "time": "2026-07-18T14:25:54+00:00"
+    },
     {
       "status": "posted",
       "title": "Kid YouTuber with infinite game lives vs Kid YouTuber with one-hit-kill power \u2014 who wins?? \ud83d\udca5",
@@ -99,14 +120,13 @@
   ],
   "pending_comments": [
     {
-      "video_id": "xaysIX9amm0",
-      "text": "Drop your answers in the comments! \ud83d\udd25",
-      "due": "2026-07-18T02:42:38+00:00"
+      "video_id": "j9TZM8TWLxY",
+      "text": "Which one did you pick?? \ud83e\udd14 Let me know!",
+      "due": "2026-07-18T14:49:54+00:00"
     }
   ],
   "schedule": {
     "upcoming": [
-      "2026-07-18T09:53:00-04:00",
       "2026-07-18T18:22:00-04:00",
       "2026-07-19T09:15:00-04:00",
       "2026-07-19T18:43:00-04:00",
@@ -143,9 +163,9 @@
       "d": "2026-07-18",
       "subs": 5,
       "views": 1186,
-      "likes": 14
+      "likes": 15
     }
   ],
   "started": null,
-  "updated": "2026-07-18T13:17:27+00:00"
+  "updated": "2026-07-18T14:25:55+00:00"
 }
