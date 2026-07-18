@@ -96,6 +96,9 @@ jobs:
           # Optional: without it the bot uses its 161 built-in questions instead
           # of writing fresh ones. It still posts either way.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Optional free Pollinations token (auth.pollinations.ai): lifts the anonymous
+          # 1-req/15s image limit to 1/5s and enables nologo. Unset = anonymous, still works.
+          POLLINATIONS_TOKEN: ${{ secrets.POLLINATIONS_TOKEN }}
           YT_PRIVACY: ${{ github.event.inputs.privacy || 'public' }}
         run: python -u run.py --upload
 
