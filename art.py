@@ -397,7 +397,11 @@ def looks_right(path: str, subject: str) -> bool | None:
             return None
         with open(path, "rb") as f:
             blob = base64.standard_b64encode(f.read()).decode()
-        msg = anthropic.Anthropic(api_key=key).messages.create(
+        # Bounded + no SDK retries: the check runs in the synchronous render path but
+        # ISN'T covered by the art budget, and the SDK default (600s x 2 retries) could
+        # hang the whole CI job if Anthropic is slow. A timeout just means "couldn't
+        # check" -> None -> keep the image, so failing fast here is safe.
+        msg = anthropic.Anthropic(api_key=key, max_retries=0, timeout=20.0).messages.create(
             model=generate.MODEL, max_tokens=16, temperature=0,
             messages=[{"role": "user", "content": [
                 {"type": "image", "source": {"type": "base64",
@@ -478,6 +482,12 @@ def fetch(option_text: str, hint: str | None = None) -> str | None:
     # own cache can serve a repeat instantly instead of re-generating).
     seed = int(hashlib.sha1(option_text.lower().encode()).hexdigest()[:6], 16) % 100000
     from PIL import Image
+    # Regenerate into a TEMP file and only swap it onto `path` once it passes every
+    # gate. When `path` holds a STALE-but-committed image (its hint changed), writing
+    # in place and deleting on failure would destroy reviewed art on a flaky day — the
+    # exact day this whole fix is about. The old art stays untouched until a good
+    # replacement is ready.
+    tmp = path + ".new"
     # The endpoint is free and strict: it 500s intermittently, and it 429s hard if you
     # push it. Six parallel workers got 198/200 rejected, so requests stay SERIAL and
     # PACED (see _pace) to keep us under the limit in the first place. Each seed also
@@ -509,20 +519,21 @@ def fetch(option_text: str, hint: str | None = None) -> str | None:
             if len(blob) < 2000 or len(blob) > 900_000:
                 time.sleep(min(BACKOFF, max(0.0, _budget_left())))
                 continue
-            with open(path, "wb") as f:
+            with open(tmp, "wb") as f:
                 f.write(blob)
-            with Image.open(path) as im:
+            with Image.open(tmp) as im:
                 im.verify()
-            if VERIFY_ART and looks_right(path, subject) is False:
-                os.remove(path)       # wrong subject — try a different seed
+            if VERIFY_ART and looks_right(tmp, subject) is False:
+                os.remove(tmp)        # wrong subject — try a different seed
                 continue
+            os.replace(tmp, path)     # atomic swap; only now does the old art go
             _remember(slug, prompt)
             _result_memo[slug] = path
             return path
         except Exception:  # noqa: BLE001 - art is never worth failing a render
-            if os.path.exists(path):
+            if os.path.exists(tmp):   # remove only our temp file, never committed art
                 try:
-                    os.remove(path)
+                    os.remove(tmp)
                 except OSError:
                     pass
             # Capped linear backoff, never past the deadline. Pacing already prevents

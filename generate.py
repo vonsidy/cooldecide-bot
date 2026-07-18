@@ -169,7 +169,9 @@ def _fight_check(rows: list[tuple], key: str) -> list[tuple]:
     try:
         import anthropic
         listing = "\n".join(f"{i + 1}. {r[0]} vs {r[1]}" for i, r in enumerate(rows))
-        msg = anthropic.Anthropic(api_key=key).messages.create(
+        # Bounded so a slow Anthropic can't hang the CI job; on error this fails closed
+        # to the hand-vetted pool (see the caller), which is the safe outcome.
+        msg = anthropic.Anthropic(api_key=key, max_retries=0, timeout=30.0).messages.create(
             model=MODEL, max_tokens=300, temperature=0,
             messages=[{"role": "user", "content": f"{_FIGHT_JUDGE}\n\n{listing}"}],
         )
@@ -196,7 +198,9 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
     try:
         import anthropic
         import content
-        client = anthropic.Anthropic(api_key=key)
+        # Bounded so a slow Anthropic can't hang the CI job; on error this returns []
+        # and the caller falls back to the curated pool, so the bot still posts.
+        client = anthropic.Anthropic(api_key=key, max_retries=1, timeout=60.0)
         kind, example = _PROMPTS[fmt]
         if topic and topic in content.TOPICS:
             kind = (f"{kind}. EVERY question must be about ONE theme — "

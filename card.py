@@ -204,7 +204,15 @@ def _emoji_c(canvas, cx, y, ch, size):
         if not box:
             return
         ink = tmp.crop(box)
-        ink.thumbnail((size, size), Image.LANCZOS)   # also normalises the size
+        # Scale the ink to FILL the box, up or down, preserving aspect ratio.
+        # thumbnail() only ever shrinks, so on Linux — where NotoColorEmoji renders at a
+        # fixed ~120px strike — a big panel showed a tiny emoji marooned in empty space
+        # (a vote card's 315px slot was only 38% filled). This fills the space the
+        # fallback is meant to occupy; on Windows (scalable font) the glyph already
+        # matches `size`, so the scale is ~1 and nothing changes.
+        scale = size / max(ink.width, ink.height)
+        ink = ink.resize((max(1, round(ink.width * scale)),
+                          max(1, round(ink.height * scale))), Image.LANCZOS)
         canvas.alpha_composite(ink, (int(cx - ink.width / 2),
                                      int(y + (size - ink.height) / 2)))
     except Exception:
