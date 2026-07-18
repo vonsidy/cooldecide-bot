@@ -8,21 +8,6 @@
   },
   "videos": [
     {
-      "date": "2026-07-18T17:26:30+00:00",
-      "id": "9xR9wgXd8Lg",
-      "url": "https://youtube.com/shorts/9xR9wgXd8Lg",
-      "title": "The Ultimate Battle: 1000 baby slimes vs 1 knight with a sword!",
-      "format": "rank",
-      "theme": "Who Would Win",
-      "rounds": 3,
-      "privacy": "public",
-      "local_time": "01:26 PM",
-      "manual": false,
-      "views": 12,
-      "likes": 0,
-      "comments": 0
-    },
-    {
       "date": "2026-07-18T02:25:38+00:00",
       "id": "xaysIX9amm0",
       "url": "https://youtube.com/shorts/xaysIX9amm0",
@@ -124,13 +109,7 @@
       "time": "2026-07-16T17:59:25+00:00"
     }
   ],
-  "pending_comments": [
-    {
-      "video_id": "9xR9wgXd8Lg",
-      "text": "Which one did you pick?? \ud83e\udd14 Let me know!",
-      "due": "2026-07-18T17:42:30+00:00"
-    }
-  ],
+  "pending_comments": [],
   "schedule": {
     "upcoming": [
       "2026-07-18T18:22:00-04:00",
@@ -173,5 +152,5 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-18T21:17:30+00:00"
+  "updated": "2026-07-18T22:17:24+00:00"
 }
