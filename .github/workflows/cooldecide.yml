@@ -71,9 +71,11 @@ jobs:
           fi
 
       # ---- everything below only runs when it's actually time --------------
-      - name: Install ffmpeg
+      - name: Install ffmpeg + emoji font
         if: steps.gate.outputs.post == 'true'
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+        # fonts-noto-color-emoji is the fallback artwork on every art-less panel
+        # (card._emoji). Without it those panels render blank on the Linux runner.
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-noto-color-emoji
 
       - name: Install deps
         if: steps.gate.outputs.post == 'true'
