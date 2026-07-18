@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "10:25 PM",
       "manual": false,
-      "views": 261,
+      "views": 328,
       "likes": 5,
       "comments": 1
     },
@@ -33,7 +33,7 @@
       "privacy": "public",
       "local_time": "04:25 PM",
       "manual": false,
-      "views": 157,
+      "views": 156,
       "likes": 3,
       "comments": 1
     },
@@ -48,7 +48,7 @@
       "privacy": "public",
       "local_time": "01:59 PM",
       "manual": false,
-      "views": 1328,
+      "views": 1336,
       "likes": 11,
       "comments": 0
     }
@@ -112,7 +112,6 @@
   "pending_comments": [],
   "schedule": {
     "upcoming": [
-      "2026-07-18T18:22:00-04:00",
       "2026-07-19T09:15:00-04:00",
       "2026-07-19T18:43:00-04:00",
       "2026-07-20T10:25:00-04:00",
@@ -152,5 +151,5 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-18T22:17:24+00:00"
+  "updated": "2026-07-18T23:17:24+00:00"
 }
