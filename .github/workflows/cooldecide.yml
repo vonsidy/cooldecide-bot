@@ -29,6 +29,12 @@ on:
         default: "public"
         type: choice
         options: [public, unlisted, private]
+      dry_run:
+        # Build the Short and hand it back as a downloadable artifact WITHOUT
+        # posting to YouTube — for verifying a render change safely.
+        description: "Dry run: build only, upload the .mp4 as an artifact, do NOT post to YouTube"
+        default: false
+        type: boolean
 
 concurrency:
   group: cooldecide-bot       # never two uploads at once
@@ -82,7 +88,8 @@ jobs:
         run: pip install -q -r requirements.txt
 
       - name: Restore credentials
-        if: steps.gate.outputs.post == 'true'
+        # Not needed for a dry run — it never talks to YouTube.
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.dry_run != 'true'
         env:
           YT_CLIENT_SECRET_B64: ${{ secrets.YT_CLIENT_SECRET_B64 }}
           YT_TOKEN_B64: ${{ secrets.YT_TOKEN_B64 }}
@@ -90,7 +97,7 @@ jobs:
           echo "$YT_CLIENT_SECRET_B64" | base64 -d > client_secret.json
           echo "$YT_TOKEN_B64" | base64 -d > yt_token.json
 
-      - name: Build and post
+      - name: Build (and post unless dry run)
         if: steps.gate.outputs.post == 'true'
         env:
           # Optional: without it the bot uses its 161 built-in questions instead
@@ -100,12 +107,26 @@ jobs:
           # 1-req/15s image limit to 1/5s and enables nologo. Unset = anonymous, still works.
           POLLINATIONS_TOKEN: ${{ secrets.POLLINATIONS_TOKEN }}
           YT_PRIVACY: ${{ github.event.inputs.privacy || 'public' }}
-        run: python -u run.py --upload
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "DRY RUN — building only, will NOT post to YouTube"
+            python -u run.py
+          else
+            python -u run.py --upload
+          fi
+
+      - name: Upload the built video (dry run)
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.dry_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cooldecide-test-video
+          path: output/short.mp4
+          if-no-files-found: error
 
       # The dashboard lives in a DIFFERENT repo, so this bot's own commit doesn't
       # reach it. Without this it silently freezes while the bot keeps posting.
       - name: Update the dashboard
-        if: steps.gate.outputs.post == 'true'
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.dry_run != 'true'
         env:
           DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
         run: python -u sync_dashboard.py || true
@@ -133,7 +154,8 @@ jobs:
         run: rm -f client_secret.json yt_token.json
 
       - name: Save dashboard data
-        if: always()
+        # A dry run is a throwaway test — don't commit its used-questions / art back.
+        if: always() && github.event.inputs.dry_run != 'true'
         run: |
           git config user.name "cooldecide-bot"
           git config user.email "actions@github.com"
