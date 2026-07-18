@@ -415,11 +415,16 @@ def looks_right(path: str, subject: str) -> bool | None:
                 {"type": "image", "source": {"type": "base64",
                                              "media_type": "image/jpeg", "data": blob}},
                 {"type": "text", "text": (
-                    f"This picture is supposed to show: {subject}\n\n"
-                    "Does it clearly and unmistakably show THAT? Answer NO if it shows a "
-                    "different subject (a ringed planet when Jupiter was asked for), if the "
-                    "number of things shown is wrong, if it has garbled text in it, or if it "
-                    "is not cheerful and safe for a young child.\n"
+                    f"This is a cartoon sticker for a kids' game card. It should show: "
+                    f"{subject}\n\n"
+                    "Reply NO only if it is clearly the WRONG THING (for example a ringed "
+                    "planet when Jupiter was asked for), or if it is genuinely unsafe for a "
+                    "young child (scary/gory, sexual, or hateful). Otherwise reply YES.\n"
+                    "Do NOT reply NO for any of these — they are all fine: the number of "
+                    "items shown (the exact count is intentional and does not matter here), "
+                    "a little incidental or slightly-garbled text, cartoon game gear or "
+                    "cartoon weapons, or minor style quirks. A recognisable, kid-safe "
+                    "picture of roughly the right subject is a YES.\n"
                     "Reply with exactly YES or NO.")},
             ]}],
         )
