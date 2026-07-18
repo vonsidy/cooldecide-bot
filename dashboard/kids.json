@@ -2,26 +2,11 @@
   "channel": {
     "title": "CoolDecide",
     "subscribers": 5,
-    "views": 1186,
-    "videoCount": 4,
+    "views": 1349,
+    "videoCount": 3,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
   },
   "videos": [
-    {
-      "date": "2026-07-18T14:25:54+00:00",
-      "id": "j9TZM8TWLxY",
-      "url": "https://youtube.com/shorts/j9TZM8TWLxY",
-      "title": "Who Would WIN? 1000 slimes vs 1 giant boss dragon \ud83c\udfc6",
-      "format": "rank",
-      "theme": "Who Would Win",
-      "rounds": 3,
-      "privacy": "public",
-      "local_time": "10:25 AM",
-      "manual": false,
-      "views": 0,
-      "likes": 0,
-      "comments": 0
-    },
     {
       "date": "2026-07-18T02:25:38+00:00",
       "id": "xaysIX9amm0",
@@ -33,8 +18,8 @@
       "privacy": "public",
       "local_time": "10:25 PM",
       "manual": false,
-      "views": 182,
-      "likes": 4,
+      "views": 205,
+      "likes": 5,
       "comments": 1
     },
     {
@@ -48,7 +33,7 @@
       "privacy": "public",
       "local_time": "04:25 PM",
       "manual": false,
-      "views": 68,
+      "views": 79,
       "likes": 2,
       "comments": 1
     },
@@ -63,7 +48,7 @@
       "privacy": "public",
       "local_time": "01:59 PM",
       "manual": false,
-      "views": 1311,
+      "views": 1310,
       "likes": 11,
       "comments": 0
     }
@@ -118,13 +103,7 @@
       "time": "2026-07-16T17:59:25+00:00"
     }
   ],
-  "pending_comments": [
-    {
-      "video_id": "j9TZM8TWLxY",
-      "text": "Which one did you pick?? \ud83e\udd14 Let me know!",
-      "due": "2026-07-18T14:49:54+00:00"
-    }
-  ],
+  "pending_comments": [],
   "schedule": {
     "upcoming": [
       "2026-07-18T18:22:00-04:00",
@@ -162,10 +141,10 @@
     {
       "d": "2026-07-18",
       "subs": 5,
-      "views": 1186,
-      "likes": 17
+      "views": 1349,
+      "likes": 18
     }
   ],
   "started": null,
-  "updated": "2026-07-18T15:38:27+00:00"
+  "updated": "2026-07-18T16:17:27+00:00"
 }
