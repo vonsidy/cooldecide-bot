@@ -97,6 +97,16 @@ _ART_RULE = (
     "already a thing you can draw (a dragon, pizza), just describe that thing."
 )
 
+# The opening decides everything on Shorts: if the first card isn't instantly
+# recognisable, the viewer swipes before the hook lands. So the FIRST item must be
+# the most universally-known one, not a deep cut.
+_HOOK_RULE = (
+    "\nORDER MATTERS: make the FIRST item in your list the most universally famous and "
+    "instantly-recognisable one — the matchup or choice the widest audience knows on "
+    "sight. On Shorts the first two seconds decide whether a viewer stays, so lead "
+    "with your strongest, most-mainstream hook and save the more niche ones for later."
+)
+
 
 def available() -> bool:
     return bool(_api_key())
@@ -220,6 +230,7 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
             f"{_IMAGINATIVE if fmt in ('wyr', 'this_or_that') else ''}"
             f"{_FACT_RULE if fmt in FACTUAL else ''}"
             f"{_ART_RULE}"
+            f"{_HOOK_RULE}"
             f"{avoid_txt}\n\n"
             f'Return ONLY a JSON array of objects like: {example}'
         )
