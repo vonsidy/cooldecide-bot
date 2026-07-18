@@ -35,6 +35,11 @@ on:
         description: "Dry run: build only, upload the .mp4 as an artifact, do NOT post to YouTube"
         default: false
         type: boolean
+      diagnose:
+        # Just probe the image endpoint and print why art succeeds/falls back.
+        description: "Diagnose: probe the art endpoint (no video, no post), print results to the log"
+        default: false
+        type: boolean
 
 concurrency:
   group: cooldecide-bot       # never two uploads at once
@@ -97,8 +102,15 @@ jobs:
           echo "$YT_CLIENT_SECRET_B64" | base64 -d > client_secret.json
           echo "$YT_TOKEN_B64" | base64 -d > yt_token.json
 
+      - name: Diagnose art endpoint
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.diagnose == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          POLLINATIONS_TOKEN: ${{ secrets.POLLINATIONS_TOKEN }}
+        run: python -u tools/diag_art.py
+
       - name: Build (and post unless dry run)
-        if: steps.gate.outputs.post == 'true'
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.diagnose != 'true'
         env:
           # Optional: without it the bot uses its 161 built-in questions instead
           # of writing fresh ones. It still posts either way.
@@ -126,7 +138,7 @@ jobs:
       # The dashboard lives in a DIFFERENT repo, so this bot's own commit doesn't
       # reach it. Without this it silently freezes while the bot keeps posting.
       - name: Update the dashboard
-        if: steps.gate.outputs.post == 'true' && github.event.inputs.dry_run != 'true'
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.dry_run != 'true' && github.event.inputs.diagnose != 'true'
         env:
           DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
         run: python -u sync_dashboard.py || true
@@ -154,8 +166,8 @@ jobs:
         run: rm -f client_secret.json yt_token.json
 
       - name: Save dashboard data
-        # A dry run is a throwaway test — don't commit its used-questions / art back.
-        if: always() && github.event.inputs.dry_run != 'true'
+        # A dry run / diagnose is a throwaway test — don't commit anything back.
+        if: always() && github.event.inputs.dry_run != 'true' && github.event.inputs.diagnose != 'true'
         run: |
           git config user.name "cooldecide-bot"
           git config user.email "actions@github.com"

@@ -62,6 +62,14 @@ _deadline: float | None = None       # monotonic; armed on the first LIVE genera
 _last_req = 0.0                       # monotonic start time of the last network request
 _result_memo: dict[str, str | None] = {}   # slug -> path|None, one live attempt per run
 
+# Set ART_DEBUG=1 to trace exactly what the endpoint returns per option/attempt.
+DEBUG = os.getenv("ART_DEBUG") == "1"
+
+
+def _dbg(*a) -> None:
+    if DEBUG:
+        print("[art]", *a, flush=True)
+
 
 def reset_run() -> None:
     """Clear the per-run pacing / budget / memo state.
@@ -510,27 +518,37 @@ def fetch(option_text: str, hint: str | None = None) -> str | None:
             # overrun the deadline (turns a worst case of BUDGET + one full hang into
             # BUDGET + one short request).
             timeout = min(TIMEOUT, max(1.0, _budget_left()))
+            _dbg(f"'{option_text[:28]}' attempt {attempt} GET (timeout {timeout:.0f}s)")
             with urllib.request.urlopen(urllib.request.Request(url, headers=headers),
                                         timeout=timeout) as r:
                 blob = r.read()
+                status = getattr(r, "status", "?")
+            _dbg(f"  HTTP {status}, {len(blob)} bytes")
             # Too small = an error page; suspiciously large (>900KB for a 512px sticker)
             # = the ~1.3MB "rate limited" placeholder the endpoint returns with HTTP 200.
             # Both mean "no art this time" — back off and retry rather than saving junk.
             if len(blob) < 2000 or len(blob) > 900_000:
+                _dbg(f"  REJECT size {len(blob)} (error page or throttle placeholder)")
                 time.sleep(min(BACKOFF, max(0.0, _budget_left())))
                 continue
             with open(tmp, "wb") as f:
                 f.write(blob)
             with Image.open(tmp) as im:
                 im.verify()
-            if VERIFY_ART and looks_right(tmp, subject) is False:
-                os.remove(tmp)        # wrong subject — try a different seed
-                continue
+            if VERIFY_ART:
+                ok = looks_right(tmp, subject)
+                _dbg(f"  vision-check: {ok}")
+                if ok is False:
+                    os.remove(tmp)    # wrong subject — try a different seed
+                    continue
             os.replace(tmp, path)     # atomic swap; only now does the old art go
+            _dbg(f"  SUCCESS -> {os.path.basename(path)}")
             _remember(slug, prompt)
             _result_memo[slug] = path
             return path
-        except Exception:  # noqa: BLE001 - art is never worth failing a render
+        except Exception as e:  # noqa: BLE001 - art is never worth failing a render
+            _dbg(f"  ERROR {type(e).__name__} code={getattr(e, 'code', None)} "
+                 f"reason={getattr(e, 'reason', None)}")
             if os.path.exists(tmp):   # remove only our temp file, never committed art
                 try:
                     os.remove(tmp)
@@ -543,6 +561,7 @@ def fetch(option_text: str, hint: str | None = None) -> str | None:
             if left <= 0:
                 break
             time.sleep(min(BACKOFF * (attempt + 1), 24.0, left))
+    _dbg(f"'{option_text[:28]}' -> FAILED after {RETRIES} attempts, emoji fallback")
     _result_memo[slug] = None
     return None
 
