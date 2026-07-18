@@ -44,16 +44,18 @@ _PROMPTS = {
     # "matchups" alone wasn't enough — with a money theme it produced "Who would
     # win: owning every video game vs owning every pizza restaurant", which is a
     # would-you-rather wearing a battle's label. Both sides must be able to FIGHT.
-    "rank": ("'who would win' FIGHTS between two things that could actually battle "
-             "each other — creatures, heroes, monsters, powers. Both sides must be "
-             "a fighter: never possessions, places, foods or wishes. If you can't "
-             "picture them squaring up, it's wrong. Mix in some 'swarm vs one' "
-             "matchups where numbers fight size, like '100 house cats vs 1 tiger' or "
-             "'3 gorillas vs 1 megalodon' — for those, the art must show a CROWD or a "
-             "SINGLE beast (never a countable number, image models can't count) and "
-             "the count stays in the option text",
-             '{"a":"100 house cats","a_emoji":"\\ud83d\\udc31","a_art":"a big crowd of house cats",'
-             '"b":"1 tiger","b_emoji":"\\ud83d\\udc2f","b_art":"one large snarling tiger"}'),
+    "rank": ("'who would win' FIGHTS kids love to argue about, between two WELL-KNOWN, "
+             "instantly recognisable fighters: real animals (lion, gorilla, shark, "
+             "crocodile, eagle), classic monsters and mythical creatures (dragon, "
+             "T-rex, kraken, giant squid), or simple hero archetypes (a knight, a "
+             "wizard, a ninja, a robot). Both sides must be a fighter you can picture "
+             "squaring up — never possessions, places, foods, wishes, or abstract "
+             "ideas. Keep the two sides in the SAME world so the matchup actually makes "
+             "sense and isn't a random mismatch: animal vs animal, monster vs monster, "
+             "hero vs hero. Classic 1-vs-1 duels ONLY — do NOT do 'swarm vs one' / "
+             "'100 X vs 1 Y' number matchups, and no made-up hybrids",
+             '{"a":"A lion","a_emoji":"\\ud83e\\udd81","a_art":"a male lion with a golden mane",'
+             '"b":"A gorilla","b_emoji":"\\ud83e\\udd8d","b_art":"a big silverback gorilla"}'),
     # Factual formats — a different JSON shape, because one answer is RIGHT.
     "trivia": ("fun general-knowledge quiz questions kids would enjoy guessing",
                '{"question":"Which planet is the biggest?","correct":"Jupiter",'

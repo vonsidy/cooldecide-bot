@@ -82,7 +82,7 @@ _TOPIC_FMT_OFFSET = {"wyr": 0, "this_or_that": 1, "rank": 2, "higher_lower": 3, 
 FORMAT_TOPICS = {
     "wyr": _TOPIC_KEYS,
     "this_or_that": _TOPIC_KEYS,
-    "rank": ["animals", "magic", "powers", "gaming"],
+    "rank": ["animals", "magic", "powers"],
     "higher_lower": ["animals", "space"],
     "trivia": ["animals", "space", "food", "school"],
 }
