@@ -112,6 +112,12 @@ def post_due_comments() -> int:
         if now < due or status != "public":
             keep.append(q)
             continue
+        # Ground-truth guard against double-commenting: if a prior run already
+        # posted this comment but didn't persist the queue removal, YouTube still
+        # shows our comment. Drop it (don't keep, don't repost) rather than comment
+        # a second time — the dashboard queue can't be trusted to have removed it.
+        if youtube_upload.already_commented(q["video_id"]):
+            continue
         if youtube_upload.post_comment(q["video_id"], q["text"]):
             sent += 1
         else:

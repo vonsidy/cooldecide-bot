@@ -92,7 +92,7 @@ def topics_for_format(fmt: str) -> list[str]:
     return FORMAT_TOPICS.get(fmt, _TOPIC_KEYS)
 
 
-def topic_for(date: str, fmt: str = "") -> str:
+def topic_for(date: str, fmt: str = "", slot: int = 0) -> str:
     """The topic for this video — only one this format can actually host.
 
     Returns "" (no forced theme) on some wyr days. A forced fantasy topic
@@ -101,6 +101,9 @@ def topic_for(date: str, fmt: str = "") -> str:
     untopiced day lets the generator's full dream-vs-dream / loss-vs-loss mix
     through. Empty slots are woven into the rotation so it stays deterministic per
     date. ~1 in 3 wyr days run untopiced.
+
+    `slot` (post-of-day) shifts the pick so the day's two posts don't share a topic
+    ("ANIMAL EDITION" twice), on top of already differing in colour and pattern.
     """
     import datetime as _dt
     try:
@@ -110,7 +113,7 @@ def topic_for(date: str, fmt: str = "") -> str:
     allowed = topics_for_format(fmt)
     if fmt == "wyr":
         allowed = allowed + ["", "", ""]        # ~1/3 of wyr videos: no forced theme
-    return allowed[(day * 3 + _TOPIC_FMT_OFFSET.get(fmt, 0)) % len(allowed)]
+    return allowed[(day * 3 + _TOPIC_FMT_OFFSET.get(fmt, 0) + slot * 2) % len(allowed)]
 
 
 def topic_label(topic: str) -> str:
