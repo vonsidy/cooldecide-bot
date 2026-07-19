@@ -170,6 +170,37 @@ def video_stats(video_ids: list[str]) -> dict:
     return out
 
 
+def already_commented(video_id: str) -> bool:
+    """True if THIS channel already has a top-level comment on this video.
+
+    The engagement-comment queue lives in the dashboard file, so if a run posts the
+    comment but then fails to persist the queue removal (a concurrent run, a rejected
+    dashboard push), the next check-in sees it still queued and comments a SECOND
+    time — the duplicate "Which one did you pick?" we saw. YouTube knows whether we
+    already commented; checking it here makes the queue removal's persistence
+    irrelevant.
+
+    False on any API failure (fail-open: a transient error must never suppress a
+    video's first comment).
+    """
+    try:
+        svc = _service()
+        me = svc.channels().list(part="id", mine=True).execute()
+        my_id = me["items"][0]["id"]
+        resp = svc.commentThreads().list(
+            part="snippet", videoId=video_id, maxResults=100, textFormat="plainText",
+        ).execute()
+        for it in resp.get("items", []):
+            top = it["snippet"]["topLevelComment"]["snippet"]
+            author = (top.get("authorChannelId") or {}).get("value")
+            if author and author == my_id:
+                return True
+        return False
+    except Exception as e:  # noqa: BLE001
+        print("  (already-commented check skipped:", e, ")")
+        return False
+
+
 def uploads_today() -> int:
     """How many videos this channel has ACTUALLY published so far today (US/Eastern),
     straight from YouTube. This is the ground truth the daily cap is enforced against.

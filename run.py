@@ -57,23 +57,34 @@ def main() -> None:
 
     date = args.date or datetime.date.today().isoformat()
 
+    # WHICH post of the day this is (0 = first, 1 = second). The workflow never
+    # passes --slot, so both daily posts used slot 0 — identical format, palette AND
+    # background, i.e. two look-alike videos every day (the "same colour/theme"
+    # sameness that gets a channel flagged). Derive it from how many already went out
+    # today so the second post steps to a different format, which cascades to a
+    # different palette and pattern too.
+    slot = args.slot
+    if not args.slot and not args.format:
+        import scheduler
+        slot = scheduler.posts_today()
+
     # Rotate the format. Without this the channel is just would-you-rather forever.
-    fmt = args.format or content.format_for(date, args.slot)
+    fmt = args.format or content.format_for(date, slot)
 
     # A different colour scheme per video, so two Shorts in a row don't look like
     # the same one twice. Seeded by date+format: stable for a given video (a
     # re-render looks identical) but different from the next one.
-    palette = card.set_palette(args.palette or card.palette_for(date, fmt))
+    palette = card.set_palette(args.palette or card.palette_for(date, fmt, slot))
 
     # A second axis of variety: the background pattern (plain gradient + 7 subtle
     # shapes) rotates on its own offset, so colour AND backdrop advance
     # independently and consecutive Shorts never share the same look — that
     # sameness is what trips the "repetitive content" signal on a faceless channel.
-    bg = card.set_bg_style(args.bg or card.background_for(date, fmt))
+    bg = card.set_bg_style(args.bg or card.background_for(date, fmt, slot))
 
     # One topic per video — all food, or all superpowers — so it has an identity
     # instead of being three unrelated questions.
-    topic = args.topic or content.topic_for(date, fmt)
+    topic = args.topic or content.topic_for(date, fmt, slot)
     items = content.several(fmt, date, args.rounds, topic=topic)
 
     # Every option panel must carry REAL art (owner's rule — never an emoji

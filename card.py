@@ -109,7 +109,7 @@ def set_palette(name: str) -> str:
 _FMT_OFFSET = {"wyr": 0, "this_or_that": 1, "rank": 2, "higher_lower": 3, "trivia": 4}
 
 
-def palette_for(date_iso: str, fmt: str = "") -> str:
+def palette_for(date_iso: str, fmt: str = "", slot: int = 0) -> str:
     """Pick a palette deterministically — a re-render of a video looks identical.
 
     A ROTATION, not a hash. Hashing collided badly: it gave three identical videos
@@ -117,6 +117,11 @@ def palette_for(date_iso: str, fmt: str = "") -> str:
     count visits every palette before repeating, so consecutive days always differ;
     the per-format offset separates same-day videos. (Step 4 is coprime with the 9
     palettes; keep the step coprime if the count changes.)
+
+    `slot` (which post of the day, 0/1) is folded in so the day's SECOND post never
+    shares the first's colours even when the format rotation repeats (wyr two days /
+    two slots running) — that same-colour sameness is what the channel gets flagged
+    for. slot*3 lands on a different palette for slot 0 vs 1 across the 9.
     """
     import datetime as _dt
     keys = sorted(PALETTES)
@@ -124,7 +129,7 @@ def palette_for(date_iso: str, fmt: str = "") -> str:
         day = _dt.date.fromisoformat(str(date_iso)[:10]).toordinal()
     except ValueError:
         day = sum(ord(c) for c in str(date_iso))
-    return keys[(day * 4 + _FMT_OFFSET.get(fmt, 0)) % len(keys)]
+    return keys[(day * 4 + _FMT_OFFSET.get(fmt, 0) + slot * 3) % len(keys)]
 GOLD = (255, 209, 64)
 GREEN = (54, 214, 122)
 NAVY = (28, 40, 92)         # dark text for contrast on bright backgrounds
@@ -281,14 +286,18 @@ _BG_FUNCS = {
 _BG_FMT_OFFSET = {"wyr": 0, "this_or_that": 2, "rank": 4, "higher_lower": 1, "trivia": 3}
 
 
-def background_for(date_iso: str, fmt: str = "") -> str:
-    """Deterministic background style for a video (stable across a re-render)."""
+def background_for(date_iso: str, fmt: str = "", slot: int = 0) -> str:
+    """Deterministic background style for a video (stable across a re-render).
+
+    `slot` folds in the post-of-day (0/1) so the day's two posts never share a
+    pattern even when the format repeats — slot*3 lands elsewhere across the 8.
+    """
     import datetime as _dt
     try:
         day = _dt.date.fromisoformat(str(date_iso)[:10]).toordinal()
     except ValueError:
         day = sum(ord(c) for c in str(date_iso))
-    return BG_STYLES[(day * 3 + _BG_FMT_OFFSET.get(fmt, 0)) % len(BG_STYLES)]
+    return BG_STYLES[(day * 3 + _BG_FMT_OFFSET.get(fmt, 0) + slot * 3) % len(BG_STYLES)]
 
 
 def set_bg_style(name: str) -> str:
@@ -744,15 +753,32 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
     if round_label:
         # Escalation pill under the header. head_bot moves down so _layout gives
         # the panels the remaining space — drawn over the panels it would collide.
-        pf = _font("Anton-Regular.ttf", 42)
-        tw = draw.textlength(round_label, font=pf)
-        px0, px1 = cx - tw / 2 - 34, cx + tw / 2 + 34
+        # The pill is sized to the TEXT (both axes), not the other way round: the
+        # font shrinks to fit a max width, then the box is measured from the real
+        # glyph bounds so a long label ("THIS ONE SPLITS EVERYONE") can't overflow
+        # or clip — the old fixed 62px-tall box cut the text off top and bottom.
+        label = round_label.upper()
+        pad_x, pad_y = 40, 16
+        max_inner = W - 240                 # keep the pill well clear of both edges
+        size = 42
+        pf = _font("Anton-Regular.ttf", size)
+        while draw.textlength(label, font=pf) > max_inner and size > 22:
+            size -= 2
+            pf = _font("Anton-Regular.ttf", size)
+        bbox = draw.textbbox((0, 0), label, font=pf)   # real ink bounds
+        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        pill_h = th + pad_y * 2
+        px0, px1 = cx - tw / 2 - pad_x, cx + tw / 2 + pad_x
         py0 = head_bot + 14
-        draw.rounded_rectangle((px0, py0, px1, py0 + 62), radius=31, fill=WHITE)
-        draw.rounded_rectangle((px0 + 8, py0 + 8, px1 - 8, py0 + 54), radius=23,
-                               fill=(255, 60, 80) + (255,))
-        _text_c(draw, cx, py0 + 12, round_label, pf, WHITE, max_w=W - 160)
-        head_bot = py0 + 62
+        py1 = py0 + pill_h
+        draw.rounded_rectangle((px0, py0, px1, py1), radius=pill_h / 2, fill=WHITE)
+        draw.rounded_rectangle((px0 + 7, py0 + 7, px1 - 7, py1 - 7),
+                               radius=(pill_h - 14) / 2, fill=(255, 60, 80) + (255,))
+        # Centre by the glyph box: subtract bbox offsets so ascent/descent padding
+        # doesn't push the text off-centre inside the pill.
+        draw.text((cx - tw / 2 - bbox[0], py0 + (pill_h - th) / 2 - bbox[1]),
+                  label, font=pf, fill=WHITE)
+        head_bot = py1
 
     a_top, panel_h, b_top, footer_top = _layout(head_bot)
 
