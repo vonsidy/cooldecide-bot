@@ -68,16 +68,22 @@ def _iso(dt: datetime.datetime | None = None) -> str:
     return (dt or _now()).isoformat(timespec="seconds")
 
 
-def queue_comment(video_id: str, text: str) -> str:
+def queue_comment(video_id: str, text: str, after: datetime.datetime | None = None) -> str:
     """Hold the channel's engagement question for 10-30 minutes after posting.
 
     A comment from the channel seconds after its own upload is a bot tell — a real
     person hasn't even watched it back yet. The story bots already delay theirs;
     this is the same idea. Returns the ISO time it becomes due.
+
+    `after` anchors the delay to a SCHEDULED publish time instead of "now" — a
+    video uploaded at 4:23 but going public at 5:07 should be commented ~5:20,
+    not ~4:40. (post_due_comments additionally refuses to post until the video
+    is actually public, so an early due time can't fire while it's still private.)
     """
     import random
     data = _load()
-    due = _now() + datetime.timedelta(minutes=random.randint(10, 30))
+    start = after if after is not None else _now()
+    due = start + datetime.timedelta(minutes=random.randint(10, 30))
     data.setdefault("pending_comments", []).append({
         "video_id": video_id, "text": text, "due": _iso(due),
     })
