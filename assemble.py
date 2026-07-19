@@ -216,7 +216,7 @@ def build(items, out_path: str, background: str | None = None) -> str:
             try:
                 q_mp3 = voice.say(q_text, os.path.join(work, f"{n}_q.mp3"))
                 qlen = _dur(q_mp3)
-                intro = round(max(qlen + 0.5, config.READ_MIN), 2)
+                intro = round(max(qlen + config.POST_VOICE_GAP, config.VOICE_READ_MIN), 2)
                 voice_cues.append((q_mp3, clock))
                 ducks.append((clock, clock + qlen + 0.3))
             except Exception as e:  # noqa: BLE001 - never fail a render over TTS
@@ -230,13 +230,17 @@ def build(items, out_path: str, background: str | None = None) -> str:
         # The count-up eats from the reveal's own time, so pacing is unchanged.
         step = config.REVEAL_ANIM / max(len(anim), 1) if anim else 0.0
         hold = round(reveal_len - step * len(anim), 2)
-        seg_specs += [(f_vote, intro), (f3, 1.0), (f2, 1.0), (f1, 1.0)]
+        # Faster countdown (config.COUNTDOWN_STEP per tick): the 3-2-1 is dead air
+        # for retention if it drags. The tick/ding SFX and the running clock use the
+        # same step so audio stays locked to the visual countdown.
+        cd = config.COUNTDOWN_STEP
+        seg_specs += [(f_vote, intro), (f3, cd), (f2, cd), (f1, cd)]
         seg_specs += [(p, step) for p in anim]
         seg_specs.append((f_reveal, max(hold, 0.6)))
         if has_sfx:
-            cues += [(tick, clock + intro), (tick, clock + intro + 1), (tick, clock + intro + 2),
-                     (ding, clock + intro + 3)]
-        clock += intro + 3.0 + reveal_len
+            cues += [(tick, clock + intro), (tick, clock + intro + cd),
+                     (tick, clock + intro + 2 * cd), (ding, clock + intro + 3 * cd)]
+        clock += intro + 3 * cd + reveal_len
 
     # ---- end card: ask for the comment while they still care ------------------
     if config.ENABLE_OUTRO and items:
