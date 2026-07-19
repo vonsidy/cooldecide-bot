@@ -69,6 +69,13 @@ def main() -> None:
     topic = args.topic or content.topic_for(date, fmt)
     items = content.several(fmt, date, args.rounds, topic=topic)
 
+    # Every option panel must carry REAL art (owner's rule — never an emoji
+    # stand-in). This pre-generates each round's art now, and swaps out any round
+    # whose art can't be produced for one whose art already exists on disk. Runs
+    # BEFORE the theme check below, since a swap can change the video's topic mix.
+    if config.ART_REQUIRED:
+        items = content.ensure_art(items, fmt)
+
     # Only badge the video if every round really is on-topic. The fallback pool
     # can't always fill a theme, and "FOOD EDITION" over a mixed bag is worse than
     # no label.

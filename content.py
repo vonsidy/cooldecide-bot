@@ -971,6 +971,59 @@ def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool =
     return built
 
 
+def ensure_art(items: list[Item], fmt: str) -> list[Item]:
+    """Guarantee every round shows REAL art — swap questions rather than show emoji.
+
+    Owner's rule: an emoji is never an acceptable picture. Retrying generation
+    harder can't guarantee that (a dead endpoint wins any retry fight), but the
+    CONTENT is fungible: if a round's art can't be produced, replace the round
+    with one whose art already exists on disk. The pre-fetch below also warms the
+    cache, so the render later hits disk instead of the network.
+
+    Numeric options are exempt: by design they show the number as BIG TEXT (an
+    image model can't draw "7" — see card._is_number), which is not an emoji.
+    The original item is kept only if the whole pool has nothing with art — at
+    which point the emoji fallback remains as the absolute last resort.
+    """
+    import card
+    rng = random.Random()
+    pool = FORMATS[fmt][2]
+    taken = {f"{it.a}|{it.b}" for it in items}
+    out: list[Item] = []
+    for it in items:
+        if card._is_number(it.a) or card._is_number(it.b):
+            out.append(it)                        # big-text card, no art wanted
+            continue
+        try:                                      # the real (paced, budgeted) attempt
+            ok = bool(card.photo_for(it.a, it.a_art or None)) and \
+                 bool(card.photo_for(it.b, it.b_art or None))
+        except Exception:  # noqa: BLE001
+            ok = False
+        if ok:
+            out.append(it)
+            continue
+        # Art failed: swap in a pool question whose art is ALREADY on disk (free).
+        cands = [r for r in pool if _key(r) not in taken]
+        rng.shuffle(cands)
+        for r in cands:
+            cand = _build(fmt, r, random.Random())
+            if card._is_number(cand.a) or card._is_number(cand.b):
+                continue
+            if card.art_on_disk(cand.a) and card.art_on_disk(cand.b):
+                print(f"  (no art for '{it.a[:28]}' vs '{it.b[:28]}' — swapped in "
+                      f"'{cand.a[:28]}' vs '{cand.b[:28]}')")
+                taken.add(_key(r))
+                _save_used(fmt, _load_used(fmt) | {_key(r)})
+                out.append(cand)
+                break
+        else:
+            out.append(it)                        # nothing has art: last-resort keep
+    # Re-impose the running order: the hook stays first, the rest escalate.
+    if len(out) > 1:
+        out = [out[0]] + sorted(out[1:], key=_extremeness)
+    return out
+
+
 def _extremeness(it: Item) -> float:
     """Sort key: bigger = saved for later.
 

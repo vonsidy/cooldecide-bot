@@ -92,3 +92,7 @@ OUTRO_TAIL = float(get("OUTRO_TAIL", "0.3"))
 # question you just saw. Shorts counts rewatches, so loopability is pure reach.
 # 0 disables it.
 TEASER_SECONDS = float(get("TEASER_SECONDS", "0.8"))
+# Owner's rule: every option panel shows REAL art — never an emoji stand-in. When
+# a round's art can't be produced, the round itself is swapped for one whose art
+# already exists (content.ensure_art) before anything renders.
+ART_REQUIRED = get("ART_REQUIRED", "1") == "1"
