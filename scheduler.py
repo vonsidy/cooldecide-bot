@@ -9,6 +9,7 @@ a channel that posts at exactly 16:00:00 every single day looks like a machine.
 """
 from __future__ import annotations
 import datetime as dt
+import hashlib
 import os
 import random
 from zoneinfo import ZoneInfo
@@ -17,6 +18,16 @@ import dashboard
 
 TZ = ZoneInfo(os.getenv("BOT_TZ", "America/New_York"))
 MAX_PER_DAY = int(os.getenv("MAX_UPLOADS_PER_DAY", "2"))
+
+# How far ahead a slot may be for a check-in to act on it. The cloud only wakes
+# at fixed cron minutes, so without look-ahead every upload lands at wake-minute +
+# build time — the day's carefully random slot minute was thrown away, and all
+# posts shared one machine-like timestamp. With look-ahead the bot builds early
+# and hands YouTube a publishAt for the REAL slot time instead.
+# 90 because the staggered cron (see the workflow) leaves up to ~86 minutes
+# between consecutive check-ins; anything smaller lets a slot slip through the
+# gap and fall back to an immediate (pattern-stamped) post.
+LOOKAHEAD_MIN = float(os.getenv("PUBLISH_LOOKAHEAD_MIN", "90"))
 
 # Windows worth posting in for a KIDS audience, in local time. Nothing before
 # school and nothing near bedtime — a Short posted at 3am gets its one shot at the
@@ -35,13 +46,21 @@ def now_local() -> dt.datetime:
 
 
 def _seeded(date: dt.date) -> random.Random:
-    """Same picks all day, different picks tomorrow.
+    """Same picks all day, different picks tomorrow — and different per BOT.
 
     Seeded by the DATE so every hourly check-in agrees on today's times. If this
     were unseeded, each check would roll new times and the bot would post
     repeatedly or never.
+
+    Salted by BOT_ID because sibling bots share this scheduler: seeding on the
+    date alone made every channel pick the SAME "random" minutes each day, which
+    is a coordinated-network fingerprint — three channels posting in lockstep
+    looks far more automated than any one channel's timing ever could.
+    (sha1, not hash(): Python randomises hash() per process, which would reroll
+    the day's times on every check-in.)
     """
-    return random.Random(date.toordinal() * 7919)
+    salt = int(hashlib.sha1(dashboard.BOT_ID.encode()).hexdigest()[:8], 16)
+    return random.Random(date.toordinal() * 7919 + salt)
 
 
 def slots_for_date(d: dt.date, n: int = MAX_PER_DAY) -> list[dt.datetime]:
@@ -95,17 +114,19 @@ def next_slot(now: dt.datetime | None = None) -> dt.datetime | None:
 
 
 def should_post(now: dt.datetime | None = None) -> bool:
-    """True if a slot is due and today's quota isn't spent.
+    """True if a slot is due — or close enough ahead to build for.
 
-    A slot counts as due once its time has PASSED — the check-in is hourly, so a
-    target of 16:20 is first seen at 17:00. Requiring an exact match would mean
-    never posting at all.
+    Fires when the slot is within LOOKAHEAD_MIN (build now, publish AT the slot
+    via YouTube's publishAt — see run.py), or once it has already passed (the
+    fallback: a missed check-in still posts, just immediately). Without the
+    look-ahead, an hourly check-in meant every upload went live at wake-minute +
+    build time, erasing the day's random slot minute.
     """
     now = (now or now_local()).astimezone(TZ)
     if dashboard.paused():
         return False
     target = next_slot(now)
-    return target is not None and now >= target
+    return target is not None and now >= target - dt.timedelta(minutes=LOOKAHEAD_MIN)
 
 
 def upcoming(days: int = 3, now: dt.datetime | None = None) -> list[dt.datetime]:
