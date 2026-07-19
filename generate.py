@@ -11,8 +11,10 @@ import re
 
 MODEL = "claude-haiku-4-5-20251001"   # fast + cheap, plenty for short questions
 
-_SAFE = ("Wholesome and safe for ages 8-14: no violence, weapons aimed at people, "
-         "scary/horror, romance, politics, or gross-out. Keep it playful.")
+_SAFE = ("Wholesome and safe for a young audience: no violence, weapons aimed at "
+         "people, scary/horror, politics, or gross-out, and nothing beyond an "
+         "INNOCENT crush (a nervous text, a school dance — never anything physical "
+         "or adult). Keep it playful.")
 
 # The pull of this format is the DAYDREAM, not the preference. "Summer or Winter"
 # is something a kid already has an answer to, so there's nothing to picture and
@@ -30,6 +32,28 @@ _IMAGINATIVE = (
     "thing is not imagination — a swimming pool full of gold coins is.\n"
     "Test each one: could a kid close their eyes and SEE themselves in it? If not, "
     "throw it away."
+)
+
+# WYR lives or dies on the AGONY of the choice, not the whimsy of the options.
+# "Pet dragon vs pet dinosaur" is cute but easy; "never do homework again vs go on
+# a date with your crush" starts an argument in the comments. Owner's brief: make
+# picking hurt, and let a slice skew slightly older so teens argue too.
+_DILEMMA = (
+    "\nMake every one GENUINELY HARD to choose — picking must HURT. Two shapes "
+    "work:\n"
+    "  * dream vs dream: two things they'd BOTH desperately want — 'never do "
+    "homework again' vs 'go on a date with your crush'.\n"
+    "  * loss vs loss: two things they'd HATE to give up — 'give up YouTube "
+    "forever' vs 'give up Instagram forever'.\n"
+    "Mix roughly half imaginative wish-fulfilment (powers, creatures, secret "
+    "worlds, impossible pets) with half real-life stakes (school, phones, social "
+    "media, gaming, friendships, an innocent crush). About one in three should "
+    "skew slightly OLDER (15-18: streaks, clout, first crush, learning to drive) "
+    "while staying totally clean.\n"
+    "The test: imagine 100 kids voting — if it wouldn't split close to 50/50, "
+    "it's too easy, throw it away. 'Summer vs winter', 'dogs vs cats', 'pizza vs "
+    "burgers' are failures: everyone already has an answer. Every option must be "
+    "something you could draw."
 )
 
 _PROMPTS = {
@@ -227,7 +251,8 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
             f"Write {n + 3} original {kind} for a kids' YouTube Shorts channel. {_SAFE}\n"
             f"Each needs two short options (2-6 words) and one fitting emoji per option. "
             f"Use clear object emojis, never plain colored squares/circles. Be creative and varied."
-            f"{_IMAGINATIVE if fmt in ('wyr', 'this_or_that') else ''}"
+            f"{_DILEMMA if fmt == 'wyr' else ''}"
+            f"{_IMAGINATIVE if fmt == 'this_or_that' else ''}"
             f"{_FACT_RULE if fmt in FACTUAL else ''}"
             f"{_ART_RULE}"
             f"{_HOOK_RULE}"

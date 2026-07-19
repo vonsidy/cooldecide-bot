@@ -519,6 +519,31 @@ WYR_VETTED = [
     ("a bubble you can live inside and float anywhere", "a kite big enough to ride", "🫧", "🪁",
      "a kid sitting comfily inside a giant floating soap bubble drifting over the rooftops",
      "a kid holding on to a huge colourful kite, lifted up into the windy blue sky"),
+
+    # --- hard dilemmas (owner's brief: picking must HURT; a slice skews 15-18) ---
+    # Real-life stakes instead of pure whimsy: dream-vs-dream and loss-vs-loss
+    # pairs built to split a comment section near 50/50.
+    ("Never do homework again", "Go on a date with your crush", "📚", "😍",
+     "a kid joyfully throwing an armful of homework papers into the air like confetti, arms up in victory",
+     "two shy smiling teens sharing a milkshake with two straws at a diner booth, both blushing"),
+    ("Give up YouTube forever", "Give up Instagram forever", "📹", "📸",
+     "a sad kid closing a laptop that shows a big play-button symbol on screen",
+     "a sad teen placing a phone face-down on a table, a little camera icon floating away"),
+    ("1 million subscribers", "1 million dollars", "🔔", "💰",
+     "a kid streamer celebrating in front of a ring light as golden confetti rains down",
+     "a stunned kid sitting on a huge pile of gold coins and banknotes"),
+    ("Know every test answer", "Be invisible at school", "💯", "🫥",
+     "a kid winking beside a test paper where every answer box glows with a golden tick",
+     "a see-through kid strolling down a school hallway, only sneakers and a backpack visible"),
+    ("Never have a bedtime again", "Never take a test again", "🌙", "📝",
+     "a wide-awake happy kid gaming at midnight by a moonlit window",
+     "a kid triumphantly ripping a test paper in half while classmates cheer"),
+    ("Text your crush first", "Wait forever for them to text", "📱", "⏳",
+     "a nervous teen hovering a thumb over a glowing phone screen with a heart typed in the message box",
+     "a teen lying on a bed staring at a silent phone that has little cobwebs growing on it"),
+    ("Skip school forever", "Get paid to go to school", "🛹", "💵",
+     "a carefree kid skateboarding past a yellow school bus on a sunny morning, no backpack",
+     "a kid at a school desk grinning as banknotes gently rain down around them"),
 ]
 
 # Only rows that describe their own artwork go live. The 71 older rows above have no
