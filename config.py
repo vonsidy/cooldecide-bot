@@ -73,6 +73,17 @@ READ_MIN, READ_MAX = 2.3, 4.3
 # INSTANTLY — the bar fills and the number is right there — so this only needs to
 # be long enough to register, not to read. At 2.9s it was a dead stare between
 # every round; the ding already does the work of landing it.
+# Countdown pacing. The 3-2-1 is dead air for retention if it drags: a viewer with
+# nothing new happening scrolls. Tighter ticks keep the tension moving.
+COUNTDOWN_STEP = float(get("COUNTDOWN_STEP", "0.7"))    # seconds per tick (was a flat 1.0)
+# Gap between the spoken question ending and the countdown starting — small so the
+# timer starts the instant the choice has landed, before attention drifts.
+POST_VOICE_GAP = float(get("POST_VOICE_GAP", "0.2"))    # was 0.5
+# Vote-card floor in question-voice mode. The voice paces the read, so it needn't
+# linger as long as the silent-read floor (READ_MIN) — a shorter floor cuts the
+# gap on quick questions instead of holding a static card.
+VOICE_READ_MIN = float(get("VOICE_READ_MIN", "1.5"))
+
 REVEAL_SECONDS = float(get("REVEAL_SECONDS", "1.9"))
 # The result counts up over REVEAL_ANIM seconds instead of appearing finished.
 # Taken from REVEAL_SECONDS, not added to it, so pacing doesn't regress.
