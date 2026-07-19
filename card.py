@@ -335,6 +335,33 @@ def photo_for(option_text: str, hint: str | None = None) -> str | None:
     # where a real landmark genuinely beats a drawing.
 
 
+def art_on_disk(option_text: str) -> bool:
+    """True if a REAL picture for this option already exists locally — no network.
+
+    The cheap test behind the no-emoji guarantee (content.ensure_art): candidate
+    replacement questions are screened with this instead of photo_for, which would
+    burn the paced/budgeted network allowance scanning a hundred pool rows.
+    """
+    if _image_for(option_text):                       # curated brand logo
+        return True
+    try:
+        import art
+        if os.path.exists(os.path.join(art.CACHE, art._slug(option_text) + ".jpg")):
+            return True                               # committed generated art
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        import images
+        q = images.query_for(option_text)
+        if q:
+            stem = os.path.join(images.CACHE, images._slug(q))
+            if os.path.exists(stem + ".jpg") or os.path.exists(stem + ".png"):
+                return True                           # cached public-domain photo
+    except Exception:  # noqa: BLE001
+        pass
+    return False
+
+
 # Image models cannot count. Asked to illustrate the answer "7" the generator drew
 # a family of three; for "5" it drew one kid. Sat next to the answer, that reads as
 # "the answer is a family" — actively worse than no picture, and on a quiz card it
