@@ -86,3 +86,9 @@ ENABLE_OUTRO = get("ENABLE_OUTRO", "1") == "1"
 # that lingers on a static end card just gets swiped.
 OUTRO_SECONDS = float(get("OUTRO_SECONDS", "1.7"))
 OUTRO_TAIL = float(get("OUTRO_TAIL", "0.3"))
+# Retention teaser: flash the FINAL (hardest) round's card for this long before
+# round 1. Opens a loop ("can you get #3?") AND makes the Short loop seamlessly —
+# the end card's "which did you pick?" wraps straight back into the tease of the
+# question you just saw. Shorts counts rewatches, so loopability is pure reach.
+# 0 disables it.
+TEASER_SECONDS = float(get("TEASER_SECONDS", "0.8"))
