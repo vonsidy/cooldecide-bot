@@ -3,7 +3,7 @@
     "title": "CoolDecide",
     "subscribers": 5,
     "views": 1349,
-    "videoCount": 3,
+    "videoCount": 4,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
   },
   "videos": [
@@ -18,8 +18,8 @@
       "privacy": "public",
       "local_time": "11:25 PM",
       "manual": false,
-      "views": 0,
-      "likes": 0,
+      "views": 60,
+      "likes": 1,
       "comments": 0
     },
     {
@@ -33,7 +33,7 @@
       "privacy": "public",
       "local_time": "10:25 PM",
       "manual": false,
-      "views": 404,
+      "views": 421,
       "likes": 6,
       "comments": 2
     },
@@ -48,9 +48,9 @@
       "privacy": "public",
       "local_time": "04:25 PM",
       "manual": false,
-      "views": 171,
+      "views": 190,
       "likes": 3,
-      "comments": 1
+      "comments": 2
     },
     {
       "date": "2026-07-16T17:59:25+00:00",
@@ -63,7 +63,7 @@
       "privacy": "public",
       "local_time": "01:59 PM",
       "manual": false,
-      "views": 1336,
+      "views": 1330,
       "likes": 11,
       "comments": 0
     }
@@ -139,10 +139,12 @@
   ],
   "schedule": {
     "upcoming": [
-      "2026-07-19T09:15:00-04:00",
-      "2026-07-19T18:43:00-04:00",
-      "2026-07-20T10:25:00-04:00",
-      "2026-07-20T20:02:00-04:00"
+      "2026-07-19T09:49:00-04:00",
+      "2026-07-19T17:16:00-04:00",
+      "2026-07-20T16:27:00-04:00",
+      "2026-07-20T20:44:00-04:00",
+      "2026-07-21T10:08:00-04:00",
+      "2026-07-21T15:23:00-04:00"
     ],
     "max_per_day": 2
   },
@@ -180,9 +182,9 @@
       "d": "2026-07-19",
       "subs": 5,
       "views": 1349,
-      "likes": 20
+      "likes": 21
     }
   ],
   "started": null,
-  "updated": "2026-07-19T03:25:38+00:00"
+  "updated": "2026-07-19T10:17:32+00:00"
 }
