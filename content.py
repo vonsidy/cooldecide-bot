@@ -82,7 +82,7 @@ _TOPIC_FMT_OFFSET = {"wyr": 0, "this_or_that": 1, "rank": 2, "higher_lower": 3, 
 FORMAT_TOPICS = {
     "wyr": _TOPIC_KEYS,
     "this_or_that": _TOPIC_KEYS,
-    "rank": ["animals", "magic", "powers", "gaming"],
+    "rank": ["animals", "magic", "powers"],
     "higher_lower": ["animals", "space"],
     "trivia": ["animals", "space", "food", "school"],
 }
@@ -936,10 +936,13 @@ def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool =
         _save_used(fmt, used | picked_keys)
     built = [_build(fmt, row, random.Random()) for row in chosen]
 
-    # Escalate: put the most extreme reveal LAST. Viewers bail after a payoff, so
-    # the biggest "no way" has to be the thing they're still waiting for at the
-    # end — that's what buys rounds 2 and 3.
-    built.sort(key=_extremeness)
+    # Round 1 is the HOOK. On Shorts the first two seconds decide whether a viewer
+    # stays, so the opener must be the most instantly-recognisable question — the
+    # generator is told to put its most famous one first (generate.py _HOOK_RULE), and
+    # we keep it in slot 1. The REMAINING rounds still escalate, with the most extreme
+    # "no way" reveal saved for last, so there's a reason to watch to the end.
+    if len(built) > 1:
+        built = [built[0]] + sorted(built[1:], key=_extremeness)
     return built
 
 

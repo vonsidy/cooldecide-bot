@@ -13,7 +13,21 @@ from PIL import Image, ImageDraw, ImageFont
 
 W, H = 1080, 1920
 FONTS = os.path.join(os.path.dirname(__file__), "fonts")
-EMOJI_FONT = "C:/Windows/Fonts/seguiemj.ttf"
+
+# The emoji is the universal fallback whenever a card has no artwork — the design
+# leans on it as "always on-topic and always safe" (see photo_for / images.py). It
+# therefore has to resolve on the box that actually RENDERS, and that box is the
+# Linux CI runner, not a Windows desktop. A hardcoded C:/Windows path silently
+# returned no font in the cloud, so _emoji() was None on every call and every
+# art-less round shipped a BLANK panel — no picture and no emoji. Pick the first
+# emoji font that exists on THIS OS instead.
+_EMOJI_FONT_CANDIDATES = (
+    "C:/Windows/Fonts/seguiemj.ttf",                       # Windows
+    "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",   # Debian/Ubuntu (CI runner)
+    "/usr/share/fonts/noto/NotoColorEmoji.ttf",            # Arch/Fedora
+    "/System/Library/Fonts/Apple Color Emoji.ttc",         # macOS
+)
+EMOJI_FONT = next((p for p in _EMOJI_FONT_CANDIDATES if os.path.exists(p)), "")
 
 # YouTube stamps its OWN interface over the video, and we don't get a say: player
 # controls across the top, the channel handle + video title + description across
@@ -116,10 +130,21 @@ def _font(name: str, size: int) -> ImageFont.FreeTypeFont:
 
 
 def _emoji(size: int) -> ImageFont.FreeTypeFont | None:
+    if not EMOJI_FONT:
+        return None
     try:
         return ImageFont.truetype(EMOJI_FONT, size)
     except OSError:
-        return None
+        # Colour-bitmap emoji fonts (NotoColorEmoji, Apple Color Emoji) ship only
+        # fixed strike sizes and PIL rejects any other — NotoColorEmoji exposes 109.
+        # The sole caller (_emoji_c) rescales the rendered glyph to the size it
+        # needs, so loading at a valid strike and letting it resize is correct.
+        for strike in (109, 128, 137, 160, 96, 64):
+            try:
+                return ImageFont.truetype(EMOJI_FONT, strike)
+            except OSError:
+                continue
+    return None
 
 
 def _gradient(top: tuple, bottom: tuple) -> Image.Image:
@@ -179,7 +204,15 @@ def _emoji_c(canvas, cx, y, ch, size):
         if not box:
             return
         ink = tmp.crop(box)
-        ink.thumbnail((size, size), Image.LANCZOS)   # also normalises the size
+        # Scale the ink to FILL the box, up or down, preserving aspect ratio.
+        # thumbnail() only ever shrinks, so on Linux — where NotoColorEmoji renders at a
+        # fixed ~120px strike — a big panel showed a tiny emoji marooned in empty space
+        # (a vote card's 315px slot was only 38% filled). This fills the space the
+        # fallback is meant to occupy; on Windows (scalable font) the glyph already
+        # matches `size`, so the scale is ~1 and nothing changes.
+        scale = size / max(ink.width, ink.height)
+        ink = ink.resize((max(1, round(ink.width * scale)),
+                          max(1, round(ink.height * scale))), Image.LANCZOS)
         canvas.alpha_composite(ink, (int(cx - ink.width / 2),
                                      int(y + (size - ink.height) / 2)))
     except Exception:

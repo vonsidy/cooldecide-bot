@@ -33,9 +33,66 @@ import urllib.request
 ENDPOINT = "https://image.pollinations.ai/prompt/"
 CACHE = os.path.join(os.path.dirname(__file__), "assets", "art")
 UA = {"User-Agent": "cooldecide-bot/0.1"}
-TIMEOUT = 100
-RETRIES = 4
-BACKOFF = 6      # seconds; multiplied on 429 and by attempt number
+TIMEOUT = int(os.getenv("ART_TIMEOUT", "60"))   # normal generation is 10-45s; cap a hang
+RETRIES = int(os.getenv("ART_RETRIES", "3"))
+BACKOFF = 6      # base seconds between retries (capped below; no punitive 429 multiplier)
+
+# Pacing + a hard wall-clock budget. Videos render on a Linux CI runner with a
+# 25-minute job timeout, and this free endpoint rate-limits (429s) per IP per window.
+# The old code fired both options of every round back-to-back with NO spacing: round 0
+# hit a fresh window and succeeded, round 1 ("the second question") saturated it, both
+# options 429'd, and a punitive backoff (24+48+72+96 = 240s/option, re-run on each of a
+# round's ~10 render frames) burned minutes and returned nothing — so the 2nd round
+# shipped with no art while its long backoff acted as a cooldown that let round 2 recover.
+# PACE keeps us UNDER the limit so every round gets its real art; the memo makes each
+# option cost one attempt (not ~10); ART_BUDGET guarantees we degrade to the emoji rather
+# than blow the CI timeout (a blown job posts NO video at all — strictly worse).
+# A free Pollinations token (auth.pollinations.ai) lifts the anonymous per-IP limit of
+# one request / 15s to one / 5s and makes nologo actually take effect. Optional and
+# fail-open: with no token we just pace slower and may get a small watermark.
+TOKEN = os.getenv("POLLINATIONS_TOKEN", "").strip()
+# Space requests at (just over) the per-IP tier interval so we never trip the 429 that
+# blanked the second round. Default keys off whether a token is present.
+PACE = float(os.getenv("ART_PACE", "6" if TOKEN else "16"))
+ART_BUDGET = float(os.getenv("ART_BUDGET", "600"))  # max total live-generation seconds/run
+MODEL = os.getenv("ART_MODEL", "flux")   # pin the model so a server-default change can't
+                                         # silently swap the style out from under the cache
+
+_deadline: float | None = None       # monotonic; armed on the first LIVE generation
+_last_req = 0.0                       # monotonic start time of the last network request
+_result_memo: dict[str, str | None] = {}   # slug -> path|None, one live attempt per run
+
+# Set ART_DEBUG=1 to trace exactly what the endpoint returns per option/attempt.
+DEBUG = os.getenv("ART_DEBUG") == "1"
+
+
+def _dbg(*a) -> None:
+    if DEBUG:
+        print("[art]", *a, flush=True)
+
+
+def reset_run() -> None:
+    """Clear the per-run pacing / budget / memo state.
+
+    run.py renders exactly one video per process, so module-init state is already
+    correct; this exists for callers (or tests) that render several in one process.
+    """
+    global _deadline, _last_req, _result_memo
+    _deadline, _last_req, _result_memo = None, 0.0, {}
+
+
+def _budget_left() -> float:
+    return ART_BUDGET if _deadline is None else _deadline - time.monotonic()
+
+
+def _pace() -> None:
+    """Hold successive network requests at least PACE seconds apart so we glide under
+    the endpoint's rate limit instead of tripping it. Never sleeps past the budget."""
+    global _last_req
+    gap = PACE - (time.monotonic() - _last_req)
+    if gap > 0:
+        time.sleep(min(gap, max(0.0, _budget_left())))
+    _last_req = time.monotonic()
 
 # One house style for every card. Flat sticker art on white reads instantly at
 # thumbnail size and cuts out cleanly against the coloured panels.
@@ -348,17 +405,26 @@ def looks_right(path: str, subject: str) -> bool | None:
             return None
         with open(path, "rb") as f:
             blob = base64.standard_b64encode(f.read()).decode()
-        msg = anthropic.Anthropic(api_key=key).messages.create(
+        # Bounded + no SDK retries: the check runs in the synchronous render path but
+        # ISN'T covered by the art budget, and the SDK default (600s x 2 retries) could
+        # hang the whole CI job if Anthropic is slow. A timeout just means "couldn't
+        # check" -> None -> keep the image, so failing fast here is safe.
+        msg = anthropic.Anthropic(api_key=key, max_retries=0, timeout=20.0).messages.create(
             model=generate.MODEL, max_tokens=16, temperature=0,
             messages=[{"role": "user", "content": [
                 {"type": "image", "source": {"type": "base64",
                                              "media_type": "image/jpeg", "data": blob}},
                 {"type": "text", "text": (
-                    f"This picture is supposed to show: {subject}\n\n"
-                    "Does it clearly and unmistakably show THAT? Answer NO if it shows a "
-                    "different subject (a ringed planet when Jupiter was asked for), if the "
-                    "number of things shown is wrong, if it has garbled text in it, or if it "
-                    "is not cheerful and safe for a young child.\n"
+                    f"This is a cartoon sticker for a kids' game card. It should show: "
+                    f"{subject}\n\n"
+                    "Reply NO only if it is clearly the WRONG THING (for example a ringed "
+                    "planet when Jupiter was asked for), or if it is genuinely unsafe for a "
+                    "young child (scary/gory, sexual, or hateful). Otherwise reply YES.\n"
+                    "Do NOT reply NO for any of these — they are all fine: the number of "
+                    "items shown (the exact count is intentional and does not matter here), "
+                    "a little incidental or slightly-garbled text, cartoon game gear or "
+                    "cartoon weapons, or minor style quirks. A recognisable, kid-safe "
+                    "picture of roughly the right subject is a YES.\n"
                     "Reply with exactly YES or NO.")},
             ]}],
         )
@@ -391,7 +457,14 @@ VERIFY_ART = os.getenv("VERIFY_ART", "1") != "0"
 
 
 def fetch(option_text: str, hint: str | None = None) -> str | None:
-    """A local cartoon sticker for this option, or None. Never raises."""
+    """A local cartoon sticker for this option, or None. Never raises.
+
+    Each option is generated at most ONCE per run — paced under the endpoint's rate
+    limit — and the outcome (a path OR a failure) is remembered, so a throttled option
+    isn't re-attempted on every one of a round's ~10 render frames. Total live
+    generation is bounded by ART_BUDGET, so a flaky day degrades to the emoji instead
+    of pushing the CI job past its timeout.
+    """
     if not option_text:
         return None
     os.makedirs(CACHE, exist_ok=True)
@@ -401,52 +474,109 @@ def fetch(option_text: str, hint: str | None = None) -> str | None:
     if os.path.exists(path):
         was = _manifest().get(slug)
         if was is None or was == prompt:
-            return path                      # unchanged (or legacy) — keep it
+            return path                      # committed/legacy on disk — free, no budget
         # the hint changed: the cached picture is answering the old question
+
+    # One live attempt per option per run. Reuse the earlier outcome (path or None) so
+    # the same option isn't re-fetched across a round's many render frames — which would
+    # drain the shared budget and starve later rounds of their single real attempt.
+    if slug in _result_memo:
+        return _result_memo[slug]
+
+    global _deadline
+    if _deadline is None:
+        _deadline = time.monotonic() + ART_BUDGET   # arm the clock on first live gen
+    if _budget_left() <= 0:
+        _result_memo[slug] = None
+        return None
 
     subject = visual_for(option_text, hint)
     # Seed from the option so an image is stable across runs (and so Pollinations'
     # own cache can serve a repeat instantly instead of re-generating).
     seed = int(hashlib.sha1(option_text.lower().encode()).hexdigest()[:6], 16) % 100000
     from PIL import Image
-    # The endpoint is free and strict: it 500s intermittently, and it 429s hard if
-    # you push it. Six parallel workers got 198/200 rejected, so requests must stay
-    # SERIAL and back off. A 429 means "wait", not "give up" — retrying too eagerly
-    # just extends the throttle. Each seed also gets ONE vision-check; a wrong
-    # picture (Saturn for Jupiter) is discarded and the next seed tried.
+    # Regenerate into a TEMP file and only swap it onto `path` once it passes every
+    # gate. When `path` holds a STALE-but-committed image (its hint changed), writing
+    # in place and deleting on failure would destroy reviewed art on a flaky day — the
+    # exact day this whole fix is about. The old art stays untouched until a good
+    # replacement is ready.
+    tmp = path + ".new"
+    # The endpoint is free and strict: it 500s intermittently, and it 429s hard if you
+    # push it. Six parallel workers got 198/200 rejected, so requests stay SERIAL and
+    # PACED (see _pace) to keep us under the limit in the first place. Each seed also
+    # gets ONE vision-check; a wrong picture (Saturn for Jupiter) is discarded and the
+    # next seed tried.
     for attempt in range(RETRIES):
-        url = (ENDPOINT + urllib.parse.quote(prompt)
-               + f"?width=512&height=512&nologo=true&safe=true&seed={seed + attempt}")
+        if _budget_left() <= 0:
+            break
+        _pace()
+        params = urllib.parse.urlencode({
+            "width": 512, "height": 512, "nologo": "true", "safe": "true",
+            "model": MODEL, "referrer": "cooldecide-bot", "seed": seed + attempt,
+        })
+        url = ENDPOINT + urllib.parse.quote(prompt) + "?" + params
+        headers = dict(UA)
+        if TOKEN:
+            headers["Authorization"] = f"Bearer {TOKEN}"
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=UA),
-                                        timeout=TIMEOUT) as r:
+            # Clamp the socket timeout to the budget so the last in-flight request can't
+            # overrun the deadline (turns a worst case of BUDGET + one full hang into
+            # BUDGET + one short request).
+            timeout = min(TIMEOUT, max(1.0, _budget_left()))
+            _dbg(f"'{option_text[:28]}' attempt {attempt} GET (timeout {timeout:.0f}s)")
+            with urllib.request.urlopen(urllib.request.Request(url, headers=headers),
+                                        timeout=timeout) as r:
                 blob = r.read()
-            if len(blob) < 2000:      # an error page, not an image
-                time.sleep(BACKOFF)
+                status = getattr(r, "status", "?")
+            _dbg(f"  HTTP {status}, {len(blob)} bytes")
+            # Too small = an error page; suspiciously large (>900KB for a 512px sticker)
+            # = the ~1.3MB "rate limited" placeholder the endpoint returns with HTTP 200.
+            # Both mean "no art this time" — back off and retry rather than saving junk.
+            if len(blob) < 2000 or len(blob) > 900_000:
+                _dbg(f"  REJECT size {len(blob)} (error page or throttle placeholder)")
+                time.sleep(min(BACKOFF, max(0.0, _budget_left())))
                 continue
-            with open(path, "wb") as f:
+            with open(tmp, "wb") as f:
                 f.write(blob)
-            with Image.open(path) as im:
+            with Image.open(tmp) as im:
                 im.verify()
-            if VERIFY_ART and looks_right(path, subject) is False:
-                os.remove(path)       # wrong subject — try a different seed
-                continue
+            if VERIFY_ART:
+                ok = looks_right(tmp, subject)
+                _dbg(f"  vision-check: {ok}")
+                if ok is False:
+                    os.remove(tmp)    # wrong subject — try a different seed
+                    continue
+            os.replace(tmp, path)     # atomic swap; only now does the old art go
+            _dbg(f"  SUCCESS -> {os.path.basename(path)}")
             _remember(slug, prompt)
+            _result_memo[slug] = path
             return path
         except Exception as e:  # noqa: BLE001 - art is never worth failing a render
-            if os.path.exists(path):
+            _dbg(f"  ERROR {type(e).__name__} code={getattr(e, 'code', None)} "
+                 f"reason={getattr(e, 'reason', None)}")
+            if os.path.exists(tmp):   # remove only our temp file, never committed art
                 try:
-                    os.remove(path)
+                    os.remove(tmp)
                 except OSError:
                     pass
-            code = getattr(e, "code", None)
-            time.sleep(BACKOFF * (4 if code == 429 else 1) * (attempt + 1))
+            # Capped linear backoff, never past the deadline. Pacing already prevents
+            # the burst that triggers a 429, so a stray one just needs a short cool — not
+            # the old punitive 24/48/72/96s ramp that blanked the whole second round.
+            left = _budget_left()
+            if left <= 0:
+                break
+            time.sleep(min(BACKOFF * (attempt + 1), 24.0, left))
+    _dbg(f"'{option_text[:28]}' -> FAILED after {RETRIES} attempts, emoji fallback")
+    _result_memo[slug] = None
     return None
 
 
 if __name__ == "__main__":
     import sys
     import content
+    # The bulk pre-gen tool draws the WHOLE pool (100+ images) and isn't under the CI
+    # clock, so lift the per-run budget cap while keeping the pacing that avoids 429s.
+    ART_BUDGET = float("inf")
     opts, seen = [], set()
     for fmt in content.FORMATS:
         for row in content.FORMATS[fmt][2]:

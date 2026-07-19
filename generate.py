@@ -44,16 +44,22 @@ _PROMPTS = {
     # "matchups" alone wasn't enough — with a money theme it produced "Who would
     # win: owning every video game vs owning every pizza restaurant", which is a
     # would-you-rather wearing a battle's label. Both sides must be able to FIGHT.
-    "rank": ("'who would win' FIGHTS between two things that could actually battle "
-             "each other — creatures, heroes, monsters, powers. Both sides must be "
-             "a fighter: never possessions, places, foods or wishes. If you can't "
-             "picture them squaring up, it's wrong. Mix in some 'swarm vs one' "
-             "matchups where numbers fight size, like '100 house cats vs 1 tiger' or "
-             "'3 gorillas vs 1 megalodon' — for those, the art must show a CROWD or a "
-             "SINGLE beast (never a countable number, image models can't count) and "
-             "the count stays in the option text",
-             '{"a":"100 house cats","a_emoji":"\\ud83d\\udc31","a_art":"a big crowd of house cats",'
-             '"b":"1 tiger","b_emoji":"\\ud83d\\udc2f","b_art":"one large snarling tiger"}'),
+    "rank": ("'who would win' FIGHTS kids are obsessed with, between FAMOUS, instantly "
+             "recognisable characters a kid knows today: superheroes and villains "
+             "(Spider-Man, Batman, Hulk, Venom, Iron Man), video-game and cartoon "
+             "characters (Mario, Sonic, Pikachu, Goku, Minecraft Steve), or famous "
+             "giant monsters (Godzilla, King Kong, a dragon, a T-rex). Mix BOTH kinds "
+             "of matchup: (1) classic 1-vs-1 dream fights (Spider-Man vs Batman, Mario "
+             "vs Sonic, Goku vs Superman); and (2) 'numbers vs power' battles pitting "
+             "many weaker famous characters against a few strong ones (100 Minions vs "
+             "1 Hulk, 1,000 Stormtroopers vs 5 Jedi, 20 Goombas vs 3 Marios) — for "
+             "these keep the count in the option text and make the art show a CROWD vs "
+             "a SINGLE or FEW (image models can't draw an exact number). Both sides "
+             "must be FIGHTERS that can square up — never possessions, places, foods, "
+             "or wishes. Cross-universe matchups are great; use real, well-known "
+             "characters, never made-up ones",
+             '{"a":"100 Minions","a_emoji":"👾","a_art":"a big crowd of little yellow cartoon henchmen",'
+             '"b":"1 Hulk","b_emoji":"💚","b_art":"one huge green muscular superhero"}'),
     # Factual formats — a different JSON shape, because one answer is RIGHT.
     "trivia": ("fun general-knowledge quiz questions kids would enjoy guessing",
                '{"question":"Which planet is the biggest?","correct":"Jupiter",'
@@ -89,6 +95,16 @@ _ART_RULE = (
     "physically drawable — never an abstract phrase. Bad: \"never do homework again\". "
     "Good: \"a happy kid throwing homework papers into the air\". If the option is "
     "already a thing you can draw (a dragon, pizza), just describe that thing."
+)
+
+# The opening decides everything on Shorts: if the first card isn't instantly
+# recognisable, the viewer swipes before the hook lands. So the FIRST item must be
+# the most universally-known one, not a deep cut.
+_HOOK_RULE = (
+    "\nORDER MATTERS: make the FIRST item in your list the most universally famous and "
+    "instantly-recognisable one — the matchup or choice the widest audience knows on "
+    "sight. On Shorts the first two seconds decide whether a viewer stays, so lead "
+    "with your strongest, most-mainstream hook and save the more niche ones for later."
 )
 
 
@@ -169,7 +185,9 @@ def _fight_check(rows: list[tuple], key: str) -> list[tuple]:
     try:
         import anthropic
         listing = "\n".join(f"{i + 1}. {r[0]} vs {r[1]}" for i, r in enumerate(rows))
-        msg = anthropic.Anthropic(api_key=key).messages.create(
+        # Bounded so a slow Anthropic can't hang the CI job; on error this fails closed
+        # to the hand-vetted pool (see the caller), which is the safe outcome.
+        msg = anthropic.Anthropic(api_key=key, max_retries=0, timeout=30.0).messages.create(
             model=MODEL, max_tokens=300, temperature=0,
             messages=[{"role": "user", "content": f"{_FIGHT_JUDGE}\n\n{listing}"}],
         )
@@ -196,7 +214,9 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
     try:
         import anthropic
         import content
-        client = anthropic.Anthropic(api_key=key)
+        # Bounded so a slow Anthropic can't hang the CI job; on error this returns []
+        # and the caller falls back to the curated pool, so the bot still posts.
+        client = anthropic.Anthropic(api_key=key, max_retries=1, timeout=60.0)
         kind, example = _PROMPTS[fmt]
         if topic and topic in content.TOPICS:
             kind = (f"{kind}. EVERY question must be about ONE theme — "
@@ -210,6 +230,7 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
             f"{_IMAGINATIVE if fmt in ('wyr', 'this_or_that') else ''}"
             f"{_FACT_RULE if fmt in FACTUAL else ''}"
             f"{_ART_RULE}"
+            f"{_HOOK_RULE}"
             f"{avoid_txt}\n\n"
             f'Return ONLY a JSON array of objects like: {example}'
         )
