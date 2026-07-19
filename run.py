@@ -132,6 +132,19 @@ def main() -> None:
                     if wait > 0:
                         print(f"  …{wait / 60:.0f} min to go")
 
+    # Ground-truth quota guard, checked right before uploading (after the hold, so
+    # it catches a sibling run that posted while we slept). The dashboard count can
+    # undercount if a prior run uploaded but failed to record/push — YouTube itself
+    # can't, so this is what actually stops double-posting. Manual runs bypass it:
+    # a human pressing the button means "post now" regardless of the cap.
+    if not args.manual:
+        import scheduler
+        already = youtube_upload.uploads_today()
+        if already >= scheduler.MAX_PER_DAY:
+            print(f"channel already has {already} upload(s) today "
+                  f"(cap {scheduler.MAX_PER_DAY}) — skipping to avoid a double post")
+            return
+
     info = meta.build(items)
     print(f"uploading: {info['title']!r} (privacy={config.YT_PRIVACY})")
     vid = youtube_upload.upload(args.out, info["title"], info["description"], info["tags"])

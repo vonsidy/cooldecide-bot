@@ -170,6 +170,50 @@ def video_stats(video_ids: list[str]) -> dict:
     return out
 
 
+def uploads_today() -> int:
+    """How many videos this channel has ACTUALLY published so far today (US/Eastern),
+    straight from YouTube. This is the ground truth the daily cap is enforced against.
+
+    The dashboard file the scheduler normally counts can UNDERCOUNT — a run that
+    uploaded but then failed to record, commit, or push its dashboard update (a
+    concurrent run, a rejected push) leaves the channel with a video the count never
+    saw, and the next check-in, seeing "0 posts today", posts a second time. Asking
+    YouTube can't undercount that way, so a guard on this value makes double-posting
+    impossible regardless of dashboard/push races.
+
+    Returns 0 on any API failure: a transient error must never BLOCK a legitimate
+    post, and the dashboard-based check still runs upstream.
+    """
+    import datetime
+    from zoneinfo import ZoneInfo
+
+    try:
+        svc = _service()
+        ch = svc.channels().list(part="contentDetails", mine=True).execute()
+        uploads = ch["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+        resp = svc.playlistItems().list(
+            part="snippet,contentDetails", playlistId=uploads, maxResults=50,
+        ).execute()
+        tz = ZoneInfo("America/New_York")
+        today = datetime.datetime.now(tz).date()
+        n = 0
+        for it in resp.get("items", []):
+            raw = (it.get("contentDetails", {}).get("videoPublishedAt")
+                   or it.get("snippet", {}).get("publishedAt"))
+            if not raw:
+                continue
+            try:
+                t = datetime.datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            except ValueError:
+                continue
+            if t.astimezone(tz).date() == today:
+                n += 1
+        return n
+    except Exception as e:  # noqa: BLE001
+        print("  (uploads_today check skipped:", e, ")")
+        return 0
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--auth", action="store_true", help="Run one-time OAuth")
