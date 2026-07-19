@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import re
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 W, H = 1080, 1920
 FONTS = os.path.join(os.path.dirname(__file__), "fonts")
@@ -68,17 +68,21 @@ A_COLOR = (255, 90, 110)    # coral red
 B_COLOR = (124, 92, 255)    # bright purple
 
 # A different skin per video, so two Shorts in a row don't look like the same one
-# twice. The LAYOUT never changes — only the colours — so the channel still reads
-# as one thing. Each palette keeps the two panels clearly different from each
-# other and dark enough for white text to hold up.
+# twice. The LAYOUT never changes — only the colours + background pattern — so the
+# channel still reads as one thing. Each palette is now a single COHESIVE colour
+# family: the two panels are ANALOGOUS (red+orange, pink+purple, blue+teal…), not
+# clashing complementaries (orange-on-blue), while staying distinct enough to tell
+# apart and dark enough for white text. (BG_TOP, BG_BOT, A_COLOR, B_COLOR)
 PALETTES = {
-    "sky":    ((90, 214, 255), (120, 156, 255), (255, 90, 110), (124, 92, 255)),
-    "sunset": ((255, 168, 92), (255, 108, 148), (94, 86, 214), (232, 74, 106)),
-    "mint":   ((116, 235, 198), (74, 186, 236), (255, 104, 126), (92, 104, 220)),
-    "candy":  ((198, 148, 255), (255, 138, 200), (238, 72, 108), (72, 132, 236)),
-    "ocean":  ((84, 222, 236), (66, 138, 230), (240, 118, 74), (140, 88, 246)),
-    "sunny":  ((255, 214, 88), (255, 146, 92), (74, 116, 240), (236, 70, 116)),
-    "grape":  ((160, 136, 255), (108, 118, 246), (255, 122, 78), (46, 190, 160)),
+    "sunset": ((255, 196, 140), (255, 150, 120), (232, 74, 86), (240, 138, 52)),
+    "candy":  ((255, 178, 222), (214, 158, 248), (232, 80, 150), (150, 92, 220)),
+    "grape":  ((186, 164, 250), (150, 140, 235), (138, 92, 216), (84, 104, 214)),
+    "ocean":  ((120, 214, 240), (96, 168, 232), (56, 132, 214), (40, 176, 178)),
+    "lagoon": ((128, 232, 206), (96, 206, 178), (42, 176, 164), (70, 190, 116)),
+    "meadow": ((176, 228, 138), (120, 206, 140), (70, 178, 96), (150, 196, 54)),
+    "berry":  ((224, 148, 224), (186, 120, 224), (214, 72, 140), (150, 84, 196)),
+    "flame":  ((255, 178, 120), (255, 138, 110), (228, 66, 78), (240, 176, 54)),
+    "coral":  ((255, 186, 176), (255, 150, 160), (236, 86, 120), (244, 124, 96)),
 }
 
 
@@ -94,8 +98,10 @@ def set_topic_label(label: str) -> None:
 def set_palette(name: str) -> str:
     """Swap the video's colour scheme. Unknown name falls back to the default."""
     global BG_TOP, BG_BOT, A_COLOR, B_COLOR
-    BG_TOP, BG_BOT, A_COLOR, B_COLOR = PALETTES.get(name, PALETTES["sky"])
-    return name if name in PALETTES else "sky"
+    _default = next(iter(PALETTES))
+    BG_TOP, BG_BOT, A_COLOR, B_COLOR = PALETTES.get(name, PALETTES[_default])
+    _BG_CACHE.clear()          # palette changed -> the cached background is stale
+    return name if name in PALETTES else _default
 
 
 # Each format sits at a different point in the rotation, so same-day videos can't
@@ -107,9 +113,10 @@ def palette_for(date_iso: str, fmt: str = "") -> str:
     """Pick a palette deterministically — a re-render of a video looks identical.
 
     A ROTATION, not a hash. Hashing collided badly: it gave three identical videos
-    on one day (mint/mint/mint) and repeats four days apart. Stepping by 3 through
-    7 palettes (coprime, so it visits all 7 before repeating) means consecutive days
-    are always different, and the per-format offset separates same-day videos.
+    on one day and repeats days apart. Stepping by a value COPRIME with the palette
+    count visits every palette before repeating, so consecutive days always differ;
+    the per-format offset separates same-day videos. (Step 4 is coprime with the 9
+    palettes; keep the step coprime if the count changes.)
     """
     import datetime as _dt
     keys = sorted(PALETTES)
@@ -117,7 +124,7 @@ def palette_for(date_iso: str, fmt: str = "") -> str:
         day = _dt.date.fromisoformat(str(date_iso)[:10]).toordinal()
     except ValueError:
         day = sum(ord(c) for c in str(date_iso))
-    return keys[(day * 3 + _FMT_OFFSET.get(fmt, 0)) % len(keys)]
+    return keys[(day * 4 + _FMT_OFFSET.get(fmt, 0)) % len(keys)]
 GOLD = (255, 209, 64)
 GREEN = (54, 214, 122)
 NAVY = (28, 40, 92)         # dark text for contrast on bright backgrounds
@@ -155,6 +162,153 @@ def _gradient(top: tuple, bottom: tuple) -> Image.Image:
         mask.putpixel((0, y), int(255 * (1 - y / H) ** 1.3))
     base.paste(top_img, (0, 0), mask.resize((W, H)))
     return base.convert("RGBA")
+
+
+# ---- rotating BACKGROUNDS ----------------------------------------------------
+# A second axis of variety on top of the palettes: the plain gradient plus 7 subtle
+# patterns. Rotated per video (like the palette) so consecutive Shorts never share a
+# backdrop — the "repetitive content" signal is the thing that gets a faceless
+# channel flagged. Kept low-opacity so the panels and their white text stay crisp;
+# patterns are DETERMINISTIC (fixed seeds) so every frame of a video is identical
+# and the background is built once per video (see _BG_CACHE), not per frame.
+import math as _math
+import random as _random
+
+BG_STYLE = "gradient"
+BG_STYLES = ["gradient", "radial", "dots", "stripes", "confetti", "rays", "bokeh",
+             "bubbles"]
+_BG_CACHE: dict = {}
+
+
+def _bg_gradient():
+    return _gradient(BG_TOP, BG_BOT)
+
+
+def _bg_radial():
+    import numpy as _np
+    yy, xx = _np.mgrid[0:H, 0:W]
+    cx, cy = W / 2, H * 0.40
+    d = _np.clip(_np.sqrt(((xx - cx) / (W * 0.8)) ** 2 + ((yy - cy) / (H * 0.8)) ** 2), 0, 1)
+    im = (_np.array(BG_TOP, float) * (1 - d[..., None])
+          + _np.array(BG_BOT, float) * d[..., None]).astype("uint8")
+    return Image.fromarray(im, "RGB").convert("RGBA")
+
+
+def _overlay():
+    return Image.new("RGBA", (W, H), (0, 0, 0, 0))
+
+
+def _bg_dots():
+    bg = _gradient(BG_TOP, BG_BOT)
+    ov = _overlay()
+    d = ImageDraw.Draw(ov)
+    for gy in range(60, H, 150):
+        for gx in range(60, W, 150):
+            d.ellipse((gx - 26, gy - 26, gx + 26, gy + 26), fill=(255, 255, 255, 30))
+    return Image.alpha_composite(bg, ov)
+
+
+def _bg_stripes():
+    bg = _gradient(BG_TOP, BG_BOT)
+    ov = _overlay()
+    d = ImageDraw.Draw(ov)
+    for i in range(-H, W + H, 150):
+        d.line([(i, 0), (i + H, H)], fill=(255, 255, 255, 20), width=60)
+    return Image.alpha_composite(bg, ov)
+
+
+def _bg_confetti():
+    bg = _gradient(BG_TOP, BG_BOT)
+    ov = _overlay()
+    d = ImageDraw.Draw(ov)
+    r = _random.Random(7)
+    cols = [GOLD, A_COLOR, B_COLOR, WHITE, GREEN]
+    for _ in range(90):
+        x, y = r.randint(0, W), r.randint(0, H)
+        c = tuple(cols[r.randrange(len(cols))]) + (70,)
+        s = r.randint(10, 26)
+        if r.random() < 0.5:
+            d.rectangle((x, y, x + s, y + s // 2), fill=c)
+        else:
+            d.ellipse((x, y, x + s, y + s), fill=c)
+    return Image.alpha_composite(bg, ov)
+
+
+def _bg_rays():
+    bg = _gradient(BG_TOP, BG_BOT)
+    ov = _overlay()
+    d = ImageDraw.Draw(ov)
+    cx, cy = W / 2, -200
+    for a in range(0, 360, 18):
+        p1 = (cx + 3000 * _math.cos(_math.radians(a)), cy + 3000 * _math.sin(_math.radians(a)))
+        p2 = (cx + 3000 * _math.cos(_math.radians(a + 9)), cy + 3000 * _math.sin(_math.radians(a + 9)))
+        d.polygon([(cx, cy), p1, p2], fill=(255, 255, 255, 15))
+    return Image.alpha_composite(bg, ov)
+
+
+def _bg_bokeh():
+    bg = _gradient(BG_TOP, BG_BOT)
+    ov = _overlay()
+    d = ImageDraw.Draw(ov)
+    r = _random.Random(3)
+    for _ in range(22):
+        x, y = r.randint(0, W), r.randint(0, H)
+        rad = r.randint(40, 130)
+        d.ellipse((x - rad, y - rad, x + rad, y + rad), fill=(255, 255, 255, 22))
+    return Image.alpha_composite(bg, ov.filter(ImageFilter.GaussianBlur(18)))
+
+
+def _bg_bubbles():
+    bg = _gradient(BG_TOP, BG_BOT)
+    ov = _overlay()
+    d = ImageDraw.Draw(ov)
+    r = _random.Random(11)
+    for _ in range(16):
+        x, y = r.randint(0, W), r.randint(0, H)
+        rad = r.randint(60, 180)
+        d.ellipse((x - rad, y - rad, x + rad, y + rad), outline=(255, 255, 255, 55), width=8)
+    return Image.alpha_composite(bg, ov)
+
+
+_BG_FUNCS = {
+    "gradient": _bg_gradient, "radial": _bg_radial, "dots": _bg_dots,
+    "stripes": _bg_stripes, "confetti": _bg_confetti, "rays": _bg_rays,
+    "bokeh": _bg_bokeh, "bubbles": _bg_bubbles,
+}
+
+# Backgrounds step through their own rotation (offset from the palette's) so colour
+# and pattern advance independently — many more combinations before anything repeats.
+_BG_FMT_OFFSET = {"wyr": 0, "this_or_that": 2, "rank": 4, "higher_lower": 1, "trivia": 3}
+
+
+def background_for(date_iso: str, fmt: str = "") -> str:
+    """Deterministic background style for a video (stable across a re-render)."""
+    import datetime as _dt
+    try:
+        day = _dt.date.fromisoformat(str(date_iso)[:10]).toordinal()
+    except ValueError:
+        day = sum(ord(c) for c in str(date_iso))
+    return BG_STYLES[(day * 3 + _BG_FMT_OFFSET.get(fmt, 0)) % len(BG_STYLES)]
+
+
+def set_bg_style(name: str) -> str:
+    """Choose the video's background pattern (run.py sets it per video)."""
+    global BG_STYLE
+    BG_STYLE = name if name in _BG_FUNCS else "gradient"
+    _BG_CACHE.clear()
+    return BG_STYLE
+
+
+def _render_bg() -> Image.Image:
+    """The current palette+style backdrop, built once per video and reused across all
+    its frames (so it never flickers and costs nothing after the first frame)."""
+    key = (BG_STYLE, BG_TOP, BG_BOT, A_COLOR, B_COLOR)
+    if key not in _BG_CACHE:
+        try:
+            _BG_CACHE[key] = _BG_FUNCS.get(BG_STYLE, _bg_gradient)()
+        except Exception:  # noqa: BLE001 - a broken pattern must never fail a render
+            _BG_CACHE[key] = _bg_gradient()
+    return _BG_CACHE[key].copy()
 
 
 def _wrap(draw, text, font, max_w):
@@ -515,7 +669,7 @@ def outro(item, out_path: str) -> str:
     viewer has just been proven right or wrong and actually has something to say —
     so it asks for the comment instead of wasting it.
     """
-    canvas = _gradient(BG_TOP, BG_BOT)
+    canvas = _render_bg()
     draw = ImageDraw.Draw(canvas)
     cx = W // 2
     factual = item.correct is not None
@@ -556,7 +710,7 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
     (vote, countdown, reveal, anim) — it shifts the layout, and a label that
     appears only on some frames makes the panels jump mid-round.
     """
-    canvas = _gradient(BG_TOP, BG_BOT)   # bright, cheerful
+    canvas = _render_bg()   # palette gradient + rotating pattern
     draw = ImageDraw.Draw(canvas)
     cx = W // 2
     factual = item.correct is not None

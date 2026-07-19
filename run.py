@@ -35,7 +35,8 @@ def main() -> None:
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "output", "short.mp4"))
     ap.add_argument("--upload", action="store_true", help="post the video to YouTube")
     ap.add_argument("--manual", action="store_true", help="mark as a test post (doesn't count toward the daily quota)")
-    ap.add_argument("--palette", default=None, help="force a colour scheme (sky|sunset|mint|candy|ocean|sunny|grape)")
+    ap.add_argument("--palette", default=None, help="force a colour scheme (sunset|candy|grape|ocean|lagoon|meadow|berry|flame|coral)")
+    ap.add_argument("--bg", default=None, help="force a background pattern (gradient|radial|dots|stripes|confetti|rays|bokeh|bubbles)")
     ap.add_argument("--topic", default=None, help="force a topic (food|powers|animals|gaming|magic|space|money|school)")
     ap.add_argument("--comments-only", action="store_true",
                     help="just post any queued comments that are due, then exit")
@@ -64,6 +65,12 @@ def main() -> None:
     # re-render looks identical) but different from the next one.
     palette = card.set_palette(args.palette or card.palette_for(date, fmt))
 
+    # A second axis of variety: the background pattern (plain gradient + 7 subtle
+    # shapes) rotates on its own offset, so colour AND backdrop advance
+    # independently and consecutive Shorts never share the same look — that
+    # sameness is what trips the "repetitive content" signal on a faceless channel.
+    bg = card.set_bg_style(args.bg or card.background_for(date, fmt))
+
     # One topic per video — all food, or all superpowers — so it has an identity
     # instead of being three unrelated questions.
     topic = args.topic or content.topic_for(date, fmt)
@@ -81,7 +88,7 @@ def main() -> None:
     # no label.
     themed = content.is_themed(items, topic)
     card.set_topic_label(content.topic_label(topic) if themed else "")
-    print(f"  format: {fmt} | palette: {palette} | topic: {topic}{'' if themed else ' (mixed — no badge)'}")
+    print(f"  format: {fmt} | palette: {palette} | bg: {bg} | topic: {topic}{'' if themed else ' (mixed — no badge)'}")
     for i, it in enumerate(items, 1):
         print(f"  round {i} [{it.fmt}] {it.a} ({it.a_pct}%) vs {it.b} ({it.b_pct}%)")
     assemble.build(items, args.out)
