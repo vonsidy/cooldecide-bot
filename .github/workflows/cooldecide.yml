@@ -9,21 +9,19 @@ name: CoolDecide bot
 
 on:
   schedule:
-    # Hourly-ish, 8am–11pm Eastern only. Nothing to do overnight, and skipping
-    # the dead hours saves ~200 billed minutes a month.
-    # Times are UTC. 8am ET = 12:00 UTC, 11pm ET = 03:00 UTC (EDT, UTC-4).
-    # NOTE: pinned to EDT. When the clocks go back this window shifts an hour
-    # earlier; harmless, adjust then if it matters.
-    # Three interleaved lines instead of one so the wake minute varies by hour
-    # (:11 / :37 / :52) — one fixed minute for every check-in was itself a
-    # pattern. Consecutive checks are 19–86 min apart; scheduler.LOOKAHEAD_MIN
-    # (90) must stay >= the largest gap or a slot can fall between checks and
-    # lose its scheduled publish time.
-    - cron: "11 12,15,18,21,0,3 * * *"
-    - cron: "37 13,16,19,22,1 * * *"
-    - cron: "52 14,17,20,23,2 * * *"
+    # UPKEEP + SAFETY-NET ONLY — every ~2 hours (8am–11pm ET). The actual POSTING
+    # is triggered precisely by the Cloudflare worker's `post-now` dispatch a few
+    # minutes before each random slot (see below), so the run no longer wakes
+    # hourly and SLEEPS to the slot — that hold burned ~5x the free Actions tier.
+    # These scheduled runs mostly find should_post()=false and just do the cheap
+    # upkeep (comments, stats). They also catch a slot if the worker ever misses
+    # one (scheduler.LOOKAHEAD_MIN=15, so a slot within 15 min of one of these
+    # still posts). Times are UTC (EDT, UTC-4).
+    - cron: "11 0,2,12,14,16,18,20,22 * * *"
   repository_dispatch:
-    types: [cron-tick]        # a reliable external ping (GitHub's own cron skips)
+    # cron-tick = hourly upkeep poke; post-now = the worker firing ~7-12 min before
+    # a slot so the run builds and uploads born-public AT the slot minute.
+    types: [cron-tick, post-now]
   workflow_dispatch:
     inputs:
       privacy:
