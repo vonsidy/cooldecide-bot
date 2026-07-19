@@ -52,16 +52,23 @@ _DILEMMA = (
     "while staying totally clean.\n"
     "The test: imagine 100 kids voting — if it wouldn't split close to 50/50, "
     "it's too easy, throw it away. 'Summer vs winter', 'dogs vs cats', 'pizza vs "
-    "burgers' are failures: everyone already has an answer. Every option must be "
-    "something you could draw."
+    "burgers' are failures: everyone already has an answer.\n"
+    "BIGGEST failure to avoid — two nice-to-haves with NO downside, where a kid "
+    "would be thrilled with EITHER and just shrug ('both are awesome, whatever'): "
+    "'pet dragon vs pet unicorn', 'talking dog vs talking cat', 'fly vs be "
+    "invisible', 'pet dragon vs pet phoenix'. Two cool things is NOT a dilemma. The "
+    "AGONY of LOSING the one you don't pick is the entire point — if giving it up "
+    "doesn't sting, the question is dead. Every option must be something you could "
+    "draw."
 )
 
 _PROMPTS = {
     # opinion formats: two fun options, each with one fitting emoji
-    "wyr": ("fun 'would you rather' dilemmas kids would genuinely argue about "
-            "(video games, superpowers, animals, money, food, silly hypotheticals)",
-            '{"a":"have a pet dragon","a_emoji":"\\ud83d\\udc09","a_art":"a cute friendly dragon",'
-            '"b":"have a pet dinosaur","b_emoji":"\\ud83e\\udd96","b_art":"a cute friendly dinosaur"}'),
+    "wyr": ("fun 'would you rather' dilemmas kids would genuinely argue about, where "
+            "picking one means painfully giving up the other (superpowers, gaming, "
+            "phones/social media, school, friendships, money, secret worlds)",
+            '{"a":"Never do homework again","a_emoji":"\\ud83c\\udf92","a_art":"a happy kid tossing homework papers into the air",'
+            '"b":"Get every video game for free","b_emoji":"\\ud83c\\udfae","b_art":"a kid surrounded by tall stacks of video games"}'),
     "this_or_that": ("quick 'this or that' preferences (one word or short each)",
                      '{"a":"Pizza","a_emoji":"\\ud83c\\udf55","a_art":"a slice of pizza",'
                      '"b":"Burgers","b_emoji":"\\ud83c\\udf54","b_art":"a cheeseburger"}'),
