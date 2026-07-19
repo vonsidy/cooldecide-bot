@@ -154,11 +154,41 @@ def build(items, out_path: str, background: str | None = None) -> str:
     voice_cues: list[tuple[str, float]] = []   # (mp3, start time)
     ducks: list[tuple[float, float]] = []      # windows where the music drops
 
+    # ---- retention teaser: flash the FINAL round before round 1 ---------------
+    # Items arrive sorted easiest -> hardest, so items[-1] is the payoff. Skipped
+    # in full-voice mode: its audio track is a blind concat with no clock offsets,
+    # and the teaser would shift the video 0.8s out from under it. Never fatal —
+    # a broken teaser must not cost the day's upload.
+    if (len(items) >= 2 and config.TEASER_SECONDS > 0 and not config.ENABLE_VOICE):
+        try:
+            last = items[-1]
+            tease = (f"CAN YOU GET #{len(items)}?" if last.correct is not None
+                     else f"NOBODY AGREES ON #{len(items)}")
+            f_tease = card.teaser(last, os.path.join(work, "teaser.png"), tease)
+            seg_specs.append((f_tease, config.TEASER_SECONDS))
+            clock += config.TEASER_SECONDS
+        except Exception as e:  # noqa: BLE001
+            print("  (teaser skipped:", e, ")")
+
     for n, item in enumerate(items):
-        f_vote = card.render(item, os.path.join(work, f"{n}_vote.png"), countdown=None)
-        f3 = card.render(item, os.path.join(work, f"{n}_c3.png"), countdown=3)
-        f2 = card.render(item, os.path.join(work, f"{n}_c2.png"), countdown=2)
-        f1 = card.render(item, os.path.join(work, f"{n}_c1.png"), countdown=1)
+        # Escalation label: an on-screen promise that the video keeps getting
+        # better — the visible version of the narrated hook. Same label on every
+        # frame of the round, or the layout jumps mid-round (see card.render).
+        if len(items) >= 2 and n == len(items) - 1:
+            round_label = ("ALMOST NOBODY GETS THIS" if item.correct is not None
+                           else "THIS ONE SPLITS EVERYONE")
+        elif n >= 1:
+            round_label = "GETS HARDER"
+        else:
+            round_label = ""
+        f_vote = card.render(item, os.path.join(work, f"{n}_vote.png"), countdown=None,
+                             round_label=round_label)
+        f3 = card.render(item, os.path.join(work, f"{n}_c3.png"), countdown=3,
+                         round_label=round_label)
+        f2 = card.render(item, os.path.join(work, f"{n}_c2.png"), countdown=2,
+                         round_label=round_label)
+        f1 = card.render(item, os.path.join(work, f"{n}_c1.png"), countdown=1,
+                         round_label=round_label)
         # Opinion reveals COUNT UP: a few frames of the bar growing and the number
         # climbing, so the result lands as an event instead of just being there.
         # Factual reveals are a single frame — CORRECT!/NOPE has nothing to count.
@@ -166,8 +196,10 @@ def build(items, out_path: str, background: str | None = None) -> str:
         if item.correct is None and config.REVEAL_FRAMES > 1:
             for k in range(1, config.REVEAL_FRAMES):
                 anim.append(card.render(item, os.path.join(work, f"{n}_rev{k}.png"),
-                                        reveal=True, grow=k / config.REVEAL_FRAMES))
-        f_reveal = card.render(item, os.path.join(work, f"{n}_reveal.png"), reveal=True)
+                                        reveal=True, grow=k / config.REVEAL_FRAMES,
+                                        round_label=round_label))
+        f_reveal = card.render(item, os.path.join(work, f"{n}_reveal.png"), reveal=True,
+                               round_label=round_label)
 
         if config.ENABLE_VOICE:
             q_text, r_text = _spoken(item, n, len(items))

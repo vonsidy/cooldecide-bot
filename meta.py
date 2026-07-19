@@ -44,6 +44,10 @@ _COMMENTS = [
     "Which one did you pick?? 🤔 Let me know!",
     "How many did you get right? Comment below! 👇",
     "Drop your answers in the comments! 🔥",
+    # Identity bait: people comment to claim a tribe, not to report a vote.
+    "Your 3 picks = your personality. Drop them 👇😳",
+    "Everyone who picked the first one is brave, everyone who picked the second is smart 🧠🔥 Which are you?",
+    "I can guess your age from your picks… prove me wrong 👇",
 ]
 
 

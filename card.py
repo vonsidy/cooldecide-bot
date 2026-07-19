@@ -456,6 +456,30 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
         _emoji_c(canvas, W - 172, top_y + 30, "👑", 80)
 
 
+def teaser(item, out_path: str, text: str) -> str:
+    """The half-second flash of the FINAL round shown before round 1.
+
+    Opens a loop (the viewer now knows a harder question is coming and stays for
+    it) and doubles as the seam of the rewatch loop: the outro's "which did you
+    pick?" wraps straight back into this flash of the question they just saw.
+    Built from the real vote card, darkened so the big promise line owns the
+    frame — the question stays teasingly half-readable underneath.
+    """
+    render(item, out_path, countdown=None)
+    im = Image.open(out_path).convert("RGBA")
+    veil = Image.new("RGBA", im.size, (10, 12, 40, 150))
+    im = Image.alpha_composite(im, veil)
+    draw = ImageDraw.Draw(im)
+    cx = W // 2
+    lines = _wrap(draw, text.upper(), _font("Anton-Regular.ttf", 108), W - 140)[:2]
+    y = H // 2 - 70 * len(lines)
+    for i, ln in enumerate(lines):
+        _shadow_text(draw, cx, y + i * 130, ln, _font("Anton-Regular.ttf", 108),
+                     GOLD, off=7, max_w=W - 120)
+    im.convert("RGB").save(out_path, "PNG")
+    return out_path
+
+
 def outro(item, out_path: str) -> str:
     """The end card.
 
@@ -476,6 +500,11 @@ def outro(item, out_path: str) -> str:
     _shadow_text(draw, cx, 470, head, _font("Anton-Regular.ttf", 138), WHITE, off=7, max_w=W - 90)
     _shadow_text(draw, cx, 620, line2, _font("Anton-Regular.ttf", 138), GOLD, off=7, max_w=W - 90)
 
+    # Identity bait: people comment to claim a tribe, not to report a vote. One
+    # line is enough to reframe the ask from "answer" to "say who you are".
+    _shadow_text(draw, cx, 788, "YOUR PICKS = YOUR PERSONALITY",
+                 _font("Anton-Regular.ttf", 46), WHITE, off=4, max_w=W - 120)
+
     # the ask, in a fat pill
     draw.rounded_rectangle((cx - 470, 880, cx + 470, 1050), radius=54, fill=WHITE)
     draw.rounded_rectangle((cx - 456, 894, cx + 456, 1036), radius=46, fill=A_COLOR + (255,))
@@ -492,7 +521,14 @@ def outro(item, out_path: str) -> str:
 
 
 def render(item, out_path: str, countdown: int | None = None, reveal: bool = False,
-           grow: float = 1.0) -> str:
+           grow: float = 1.0, round_label: str = "") -> str:
+    """`round_label` stamps an escalation promise under the header ("GETS HARDER",
+    "SPLITS EVERYONE") — the on-screen version of the narrated hook, because a
+    promise the viewer can't SEE can't hold them. Text only: the label renders in
+    Anton, which has no emoji glyphs. Must be passed to EVERY frame of a round
+    (vote, countdown, reveal, anim) — it shifts the layout, and a label that
+    appears only on some frames makes the panels jump mid-round.
+    """
     canvas = _gradient(BG_TOP, BG_BOT)   # bright, cheerful
     draw = ImageDraw.Draw(canvas)
     cx = W // 2
@@ -523,6 +559,19 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
             _shadow_text(draw, cx, SAFE_TOP + 22, label, _font("Anton-Regular.ttf", 84), WHITE,
                          off=6, max_w=W - 50)
             head_bot = SAFE_TOP + 118
+
+    if round_label:
+        # Escalation pill under the header. head_bot moves down so _layout gives
+        # the panels the remaining space — drawn over the panels it would collide.
+        pf = _font("Anton-Regular.ttf", 42)
+        tw = draw.textlength(round_label, font=pf)
+        px0, px1 = cx - tw / 2 - 34, cx + tw / 2 + 34
+        py0 = head_bot + 14
+        draw.rounded_rectangle((px0, py0, px1, py0 + 62), radius=31, fill=WHITE)
+        draw.rounded_rectangle((px0 + 8, py0 + 8, px1 - 8, py0 + 54), radius=23,
+                               fill=(255, 60, 80) + (255,))
+        _text_c(draw, cx, py0 + 12, round_label, pf, WHITE, max_w=W - 160)
+        head_bot = py0 + 62
 
     a_top, panel_h, b_top, footer_top = _layout(head_bot)
 
