@@ -62,7 +62,12 @@ env:
 jobs:
   post:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 115, not 25: a posting run now BUILDS EARLY and then HOLDS the upload until
+    # the day's random slot (run.py), so the video is born public at that minute.
+    # Worst case = ~86 min hold (largest gap between check-ins) + ~15 min build +
+    # upload. Idle check-ins still exit in ~1 min; only the ~2 posting runs a day
+    # hold, at the cost of extra billed Actions minutes while they sleep.
+    timeout-minutes: 115
     steps:
       - uses: actions/checkout@v4
 
