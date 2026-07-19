@@ -94,35 +94,41 @@ def main() -> None:
         print("paused via dashboard — skipping today's post (auto-resumes later)")
         return
 
-    # Publish AT the day's random slot, not at upload time. The workflow wakes at a
-    # fixed minute each hour, so uploading straight to public stamped every video
-    # with the same wake-minute — a clockwork pattern that defeated the scheduler's
-    # whole point. Instead the check-in fires up to an hour EARLY (scheduler
-    # look-ahead), the upload goes up private, and YouTube itself flips it public at
-    # the slot. Manual runs skip this: a human pressing the button means "post now".
-    # The 3-minute floor keeps publishAt safely in the future — YouTube rejects
-    # scheduling into the past, and the upload itself takes a moment.
-    publish_at = None
+    # HOLD the finished video until the day's slot, then upload — born public at
+    # that moment. The check-in fires up to LOOKAHEAD_MIN early (scheduler), so the
+    # render is already done by now; sleeping the remainder puts the actual upload
+    # at the slot's random minute instead of stamping every post with the cron's
+    # wake-minute. Deliberately NOT publishAt scheduling — the owner wants no
+    # private/scheduled uploads sitting on the channel, ever. Manual runs skip the
+    # hold: a human pressing the button means "post now". Sleep in short chunks so
+    # the Actions log shows a heartbeat instead of 40 silent minutes.
     if not args.manual:
+        import time as _time
+
         import scheduler
         target = scheduler.next_slot()
-        if target is not None and (target - scheduler.now_local()).total_seconds() > 180:
-            publish_at = target
+        if target is not None:
+            wait = (target - scheduler.now_local()).total_seconds()
+            if wait > 0:
+                print(f"video ready — holding upload until {target:%H:%M %Z} "
+                      f"({wait / 60:.0f} min)")
+                while wait > 0:
+                    _time.sleep(min(wait, 300))
+                    wait = (target - scheduler.now_local()).total_seconds()
+                    if wait > 0:
+                        print(f"  …{wait / 60:.0f} min to go")
 
     info = meta.build(items)
-    print(f"uploading: {info['title']!r} (privacy={config.YT_PRIVACY}"
-          + (f", goes public {publish_at:%H:%M %Z}" if publish_at else "") + ")")
-    vid = youtube_upload.upload(args.out, info["title"], info["description"], info["tags"],
-                                publish_at=publish_at)
+    print(f"uploading: {info['title']!r} (privacy={config.YT_PRIVACY})")
+    vid = youtube_upload.upload(args.out, info["title"], info["description"], info["tags"])
     url = f"https://youtube.com/shorts/{vid}"
-    print(("scheduled -> " if publish_at else "posted -> ") + url)
+    print(f"posted -> {url}")
 
     # The engagement question is QUEUED, not posted now: a comment from the channel
-    # seconds after its own upload is a bot tell. It goes out 10-30 minutes after
-    # the video is PUBLIC (see dashboard.post_due_comments) — anchored to the
-    # scheduled publish time when there is one.
-    due = dashboard.queue_comment(vid, info["comment"], after=publish_at)
-    print(f"comment queued for {due} (10-30 min after publish)")
+    # seconds after its own upload is a bot tell. It goes out 10-30 minutes later,
+    # once the video is public (see dashboard.post_due_comments).
+    due = dashboard.queue_comment(vid, info["comment"])
+    print(f"comment queued for {due} (10-30 min)")
 
     # `fmt`, not args.format — that's None unless it was forced on the command line,
     # which would log every video's format as null on the dashboard.

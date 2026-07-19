@@ -51,33 +51,18 @@ def _service():
     return build("youtube", "v3", credentials=_credentials())
 
 
-def upload(video_path: str, title: str, description: str, tags: list[str],
-           publish_at=None) -> str:
+def upload(video_path: str, title: str, description: str, tags: list[str]) -> str:
     """Upload the video and return its id.
 
-    `publish_at` (an aware datetime, future) schedules the release: the video is
-    uploaded PRIVATE and YouTube itself flips it public at exactly that moment.
-    This is what makes the day's random slot minute the video's real go-live
-    time — the workflow only wakes once an hour, so uploading "now" stamped every
-    post at the same wake-minute, a clockwork pattern no seeded randomness could
-    hide. Scheduling is only meaningful for public posts; unlisted/private test
-    uploads ignore it.
+    Always uploads at the configured privacy DIRECTLY — no publishAt scheduling.
+    The owner wants each video born public at its moment, never sitting on the
+    channel as a private/scheduled upload; the random go-live minute is achieved
+    by run.py HOLDING the finished video until the slot, then uploading.
     """
     from googleapiclient.http import MediaFileUpload
 
     if "#shorts" not in description.lower():
         description = f"{description}\n\n#shorts"
-
-    status = {
-        "privacyStatus": config.YT_PRIVACY,
-        "selfDeclaredMadeForKids": config.MADE_FOR_KIDS,
-    }
-    if publish_at is not None and config.YT_PRIVACY == "public":
-        import datetime as _dt
-        # YouTube requires privacy=private when publishAt is set; it goes public
-        # by itself at the given instant.
-        status["privacyStatus"] = "private"
-        status["publishAt"] = publish_at.astimezone(_dt.timezone.utc).isoformat()
 
     body = {
         "snippet": {
@@ -86,7 +71,10 @@ def upload(video_path: str, title: str, description: str, tags: list[str],
             "tags": tags[:15],
             "categoryId": config.YT_CATEGORY_ID,
         },
-        "status": status,
+        "status": {
+            "privacyStatus": config.YT_PRIVACY,
+            "selfDeclaredMadeForKids": config.MADE_FOR_KIDS,
+        },
     }
     media = MediaFileUpload(video_path, chunksize=-1, resumable=True)
     request = _service().videos().insert(
