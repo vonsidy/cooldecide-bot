@@ -68,7 +68,18 @@ jobs:
     # hold, at the cost of extra billed Actions minutes while they sleep.
     timeout-minutes: 115
     steps:
+      # `ref` is NOT optional here. Without it checkout takes github.sha — the commit
+      # that existed when the run was CREATED — and this job can start well over an
+      # hour later, because the concurrency group queues runs without refreshing that
+      # snapshot (measured: created 01:17, started 03:09). The gate then counts
+      # today's posts from a stale dashboard/kids.json and can decide to post again,
+      # and the state commit is built on a base that main has already moved past.
+      # Checking out the branch HEAD means every run reads what actually happened.
+      # ref_name (not a literal "main") so a workflow_dispatch dry run from a feature
+      # branch still tests THAT branch's code.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-python@v5
         with:
@@ -179,12 +190,14 @@ jobs:
       - name: Save dashboard data
         # A dry run / diagnose is a throwaway test — don't commit anything back.
         if: always() && github.event.inputs.dry_run != 'true' && github.event.inputs.diagnose != 'true'
+        # No `|| true`. This step used to swallow every failure into a green check:
+        # a conflicted `pull --rebase` left a detached HEAD, the push failed, and the
+        # `|| echo` fallback exited 0 — which is how a live video (JUFdeYK8DJ4) ended
+        # up recorded nowhere. tools/save_state.py merges onto a freshly-fetched base
+        # instead of rebasing, retries if it loses a push race, and exits non-zero if
+        # the state genuinely didn't persist. A state save that didn't happen SHOULD
+        # fail the job.
         run: |
           git config user.name "cooldecide-bot"
           git config user.email "actions@github.com"
-          git add dashboard/kids.json output/used_*.json assets/art 2>/dev/null || true
-          git diff --cached --quiet || git commit -m "Update CoolDecide data [skip ci]"
-          # Another run may have pushed while this one worked; rebase rather than
-          # clobber it, and never fail the job over a dashboard update.
-          git pull --rebase -q origin main || true
-          git push -q || echo "nothing to push"
+          python -u tools/save_state.py
