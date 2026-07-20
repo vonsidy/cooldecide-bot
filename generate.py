@@ -274,7 +274,14 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
         if topic and topic in content.TOPICS:
             kind = (f"{kind}. EVERY question must be about ONE theme — "
                     f"{content.TOPICS[topic][1]}")
-        avoid_txt = ("\nDo NOT repeat or closely echo any of these already-used ones:\n- "
+        # `avoid` arrives OLDEST FIRST (content._load_used_list), so the tail really
+        # is the most recent history — it used to be sorted alphabetically, making
+        # this slice an arbitrary s-z window.
+        # Naming both halves matters: repeating ONE option in a new pairing is the
+        # recycling that slipped through, since dedup upstream only matches whole pairs.
+        avoid_txt = ("\nThese exact questions have already been used. Do NOT repeat or "
+                     "closely echo any of them, and do NOT reuse EITHER SIDE of one in "
+                     "a new pairing — both options must be new:\n- "
                      + "\n- ".join((avoid or [])[-40:])) if avoid else ""
         prompt = (
             f"Write {n + 3} original {kind} for a kids' YouTube Shorts channel. {_SAFE}\n"

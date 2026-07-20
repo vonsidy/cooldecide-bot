@@ -969,18 +969,42 @@ def _used_path(fmt: str) -> str:
     return os.path.join(os.path.dirname(__file__), "output", f"used_{fmt}.json")
 
 
-def _load_used(fmt: str) -> set[str]:
+def _load_used_list(fmt: str) -> list[str]:
+    """Used keys OLDEST FIRST. The order is the point: generate.generate() shows
+    Claude only the tail of this list, so it has to be the most RECENT questions.
+    These were stored sorted alphabetically, which meant the tail was whatever
+    happened to start with s-z — Claude was handed an arbitrary slice of history
+    and told it was the recent past, so anything early in the alphabet was never
+    flagged as used and came round again."""
     try:
         with open(_used_path(fmt)) as f:
-            return set(json.load(f))
+            data = json.load(f)
+        return list(dict.fromkeys(data)) if isinstance(data, list) else []
     except (OSError, ValueError):
-        return set()
+        return []
 
 
-def _save_used(fmt: str, keys: set[str]) -> None:
+def _load_used(fmt: str) -> set[str]:
+    return set(_load_used_list(fmt))
+
+
+def _used_options(keys: list[str]) -> set[str]:
+    """Every individual option ever used, either side of the '|'.
+
+    Pair-level dedup only stops an exact repeat, which let the generator recycle a
+    single option into a fresh pairing — 'Text your crush first' came back against
+    a brand-new partner and passed as original. Tracking options catches that."""
+    out: set[str] = set()
+    for k in keys:
+        out.update(part.strip() for part in k.split("|") if part.strip())
+    return out
+
+
+def _save_used(fmt: str, keys: list[str]) -> None:
+    """Append-order, not sorted — see _load_used_list."""
     os.makedirs(os.path.dirname(_used_path(fmt)), exist_ok=True)
     with open(_used_path(fmt), "w") as f:
-        json.dump(sorted(keys), f)
+        json.dump(list(dict.fromkeys(keys)), f)
 
 
 def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool = True,
@@ -1008,32 +1032,41 @@ def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool =
         if len(on_topic) >= n:
             pool = on_topic
     n = min(n, len(pool))
-    used = _load_used(fmt) if avoid_repeats else set()
+    used_list = _load_used_list(fmt) if avoid_repeats else []
+    used = set(used_list)
+    # Options already spent, so a "new" question can't just recombine old halves.
+    spent_options = _used_options(used_list) if avoid_repeats else set()
     rng = random.Random()
     chosen: list[tuple] = []
-    picked_keys: set[str] = set()
+    picked_keys: list[str] = []
 
-    # 1) brand-new questions from Claude, skipping anything already used
-    for row in generate.generate(fmt, n, avoid=sorted(used), topic=topic):
+    # 1) brand-new questions from Claude, skipping anything already used. `avoid` is
+    #    oldest-first so generate() can show Claude the genuinely RECENT tail.
+    for row in generate.generate(fmt, n, avoid=used_list, topic=topic):
         k = _key(row)
-        if k not in used and k not in picked_keys:
-            chosen.append(row)
-            picked_keys.add(k)
-            if len(chosen) >= n:
-                break
+        if k in used or k in picked_keys:
+            continue
+        # Reject a recycled half even when the pair is new. Only generated rows are
+        # held to this — the curated pool below is finite and would starve.
+        if row[0] in spent_options or row[1] in spent_options:
+            continue
+        chosen.append(row)
+        picked_keys.append(k)
+        if len(chosen) >= n:
+            break
 
     # 2) top up from the curated pool if generation was unavailable or short
     if len(chosen) < n:
         avail = [r for r in pool if _key(r) not in used and _key(r) not in picked_keys]
         if len(avail) < n - len(chosen):         # pool exhausted -> fresh cycle
-            used = set(picked_keys)
+            used_list, used = list(picked_keys), set(picked_keys)
             avail = [r for r in pool if _key(r) not in picked_keys]
         for row in rng.sample(avail, n - len(chosen)):
             chosen.append(row)
-            picked_keys.add(_key(row))
+            picked_keys.append(_key(row))
 
     if avoid_repeats:
-        _save_used(fmt, used | picked_keys)
+        _save_used(fmt, used_list + [k for k in picked_keys if k not in used])
     built = [_build(fmt, row, random.Random()) for row in chosen]
 
     # Round 1 is the HOOK — the first two seconds decide whether a viewer stays. The
