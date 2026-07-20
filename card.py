@@ -339,8 +339,12 @@ def _text_c(draw, cx, y, text, font, fill, max_w=None):
     if max_w:
         while draw.textlength(text, font=font) > max_w and font.size > 20:
             font = ImageFont.truetype(font.path, font.size - 2)
-    w = draw.textlength(text, font=font)
-    draw.text((cx - w / 2, y), text, font=font, fill=fill)
+    # Centre on the visual INK bounds, not advance width: trailing punctuation
+    # ("COMMENT BELOW!") and glyph side-bearings otherwise shove the text off-centre
+    # inside its box. bbox[0] corrects the left bearing so it's truly centred.
+    bbox = draw.textbbox((0, 0), text, font=font)
+    w = bbox[2] - bbox[0]
+    draw.text((cx - w / 2 - bbox[0], y), text, font=font, fill=fill)
     return font
 
 
@@ -386,9 +390,12 @@ def _shadow_text(draw, cx, y, text, font, fill, shadow=NAVY, max_w=None, off=5):
     if max_w:
         while draw.textlength(text, font=font) > max_w and font.size > 20:
             font = ImageFont.truetype(font.path, font.size - 2)
-    w = draw.textlength(text, font=font)
-    draw.text((cx - w / 2 + off, y + off), text, font=font, fill=shadow)
-    draw.text((cx - w / 2, y), text, font=font, fill=fill)
+    # Centre on visual ink bounds (see _text_c) so punctuation/bearings don't
+    # nudge the line off-centre.
+    bbox = draw.textbbox((0, 0), text, font=font)
+    x = cx - (bbox[2] - bbox[0]) / 2 - bbox[0]
+    draw.text((x + off, y + off), text, font=font, fill=shadow)
+    draw.text((x, y), text, font=font, fill=fill)
     return font
 
 
@@ -694,9 +701,11 @@ def outro(item, out_path: str) -> str:
     _shadow_text(draw, cx, 470, head, _font("Anton-Regular.ttf", 138), WHITE, off=7, max_w=W - 90)
     _shadow_text(draw, cx, 620, line2, _font("Anton-Regular.ttf", 138), GOLD, off=7, max_w=W - 90)
 
-    # Identity bait: people comment to claim a tribe, not to report a vote. One
-    # line is enough to reframe the ask from "answer" to "say who you are".
-    _shadow_text(draw, cx, 788, "YOUR PICKS = YOUR PERSONALITY",
+    # Identity bait: people comment to claim who they are, not to report a vote —
+    # it reframes the ask from "answer" to "say who you are". Plain words, not the
+    # cryptic "PICKS = PERSONALITY" that read as a riddle. Score-framed for quizzes.
+    tagline = "PROVE YOU'RE ACTUALLY SMART" if factual else "YOUR PICKS SAY A LOT ABOUT YOU"
+    _shadow_text(draw, cx, 788, tagline,
                  _font("Anton-Regular.ttf", 46), WHITE, off=4, max_w=W - 120)
 
     # the ask, in a fat pill
