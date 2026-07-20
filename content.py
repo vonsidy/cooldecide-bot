@@ -1149,8 +1149,13 @@ def _lead_with_hook(built: list[Item]) -> list[Item]:
 # On-screen hook copy (the round-1 pill + the teaser flash). Rotated deterministically
 # per video and kept clean — NEVER a fake stat. An identity/side-pick prompt converts
 # a passive scroller into someone who reflexively answers, without any false claim.
+# "MOST KIDS PICK ONE" was dropped: it states nothing. Picking one is what the
+# format already asks for, so the pill spent its one line of screen time saying
+# that most kids do the obvious thing — while hinting at a majority it can't back
+# up, which is the fake-stat line this pool exists to stay behind. Every pill left
+# here asks the viewer for something.
 _HOOK_PILL_OPINION = ["BE HONEST", "PICK YOUR SIDE", "WHICH ONE ARE YOU?",
-                      "DON'T OVERTHINK IT", "MOST KIDS PICK ONE", "CHOOSE FAST",
+                      "DON'T OVERTHINK IT", "CHOOSE FAST",
                       "NO WRONG ANSWER"]
 _HOOK_PILL_FACTUAL = ["THINK YOU'RE SMART?", "BET YOU CAN'T", "HOW MANY CAN YOU GET?"]
 _TEASE_OPINION = ["COULD YOU EVEN PICK THIS?", "NOBODY CAN CHOOSE THIS",
