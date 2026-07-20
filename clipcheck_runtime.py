@@ -10,6 +10,7 @@ import datetime
 import hashlib
 import json
 import os
+import re
 import subprocess
 import uuid
 
@@ -58,6 +59,35 @@ def _probe(path: str) -> dict:
     }
 
 
+def _decode_scan(path: str, duration: float) -> dict | None:
+    """One ffmpeg decode pass that measures the two failures ffprobe metadata can't
+    see: is the audio actually SILENT (a stream can be present but empty), and is the
+    video mostly BLACK (a render that fell over draws nothing). Best-effort — returns
+    None if ffmpeg is missing or errors, so the rest of the report still stands.
+
+    volumedetect (audio) + blackdetect (video) both run in the single decode and
+    print to stderr; we parse both from there.
+    """
+    try:
+        proc = subprocess.run(
+            ["ffmpeg", "-nostdin", "-hide_banner", "-i", path,
+             "-af", "volumedetect",
+             "-vf", "blackdetect=d=0.3:pix_th=0.10",
+             "-f", "null", "-"],
+            capture_output=True, text=True,
+            timeout=max(60, int((duration or 30) * 4)),
+        )
+    except Exception:  # noqa: BLE001 - ffmpeg missing/timeout -> skip these checks
+        return None
+    err = proc.stderr or ""
+    mean = re.search(r"mean_volume:\s*(-?\d+(?:\.\d+)?) dB", err)
+    black = sum(float(x) for x in re.findall(r"black_duration:\s*(\d+(?:\.\d+)?)", err))
+    return {
+        "meanVolumeDb": float(mean.group(1)) if mean else None,
+        "blackSeconds": round(black, 2),
+    }
+
+
 def analyze_video(path: str, bot_id: str = "kids") -> dict:
     """Return a normalized, explainable ClipCheck report.
 
@@ -88,14 +118,33 @@ def analyze_video(path: str, bot_id: str = "kids") -> dict:
         }
 
     width, height = metadata["width"], metadata["height"]
+    dur = metadata["durationSeconds"]
     ratio = width / height if height else 0
     vertical = abs(ratio - (9 / 16)) <= 0.03
     resolution = width >= 720 and height >= 1280
-    duration = 1 <= metadata["durationSeconds"] <= 180
+    duration_ok = 1 <= dur <= 180
     audio = bool(metadata["hasAudio"])
     even = width % 2 == 0 and height % 2 == 0
 
+    # Broken-render tripwire: a real 1080x1920 Short is hundreds of KB at a healthy
+    # bitrate; a failed render is a near-empty file. Catches "something posted but
+    # it's garbage" that the structural checks (always pass at a fixed size) miss.
+    kbps = round((metadata["bytes"] * 8) / dur / 1000) if dur else 0
+    intact = metadata["bytes"] >= 50_000 and kbps >= 60
+
     findings = [
+        _finding(
+            "file-intact", intact, "error",
+            "File size and bitrate look like a real render." if intact
+            else "File is suspiciously small/low-bitrate — the render may have failed.",
+            {"bytes": metadata["bytes"], "bitrateKbps": kbps,
+             "minBytes": 50_000, "minKbps": 60},
+        ),
+        _finding(
+            "audio-stream", audio, "error",
+            "An audio stream is present." if audio else "No audio stream was found.",
+            {"hasAudio": audio, "audioCodec": metadata["audioCodec"]},
+        ),
         _finding(
             "vertical-aspect-ratio", vertical, "error",
             "Video uses the expected vertical aspect ratio." if vertical
@@ -109,16 +158,10 @@ def analyze_video(path: str, bot_id: str = "kids") -> dict:
             {"width": width, "height": height, "minimumWidth": 720, "minimumHeight": 1280},
         ),
         _finding(
-            "duration", duration, "warning",
-            "Video duration is inside the configured range." if duration
+            "duration", duration_ok, "warning",
+            "Video duration is inside the configured range." if duration_ok
             else "Video duration is outside the configured range.",
-            {"durationSeconds": metadata["durationSeconds"], "minimumSeconds": 1,
-             "maximumSeconds": 180},
-        ),
-        _finding(
-            "audio-stream", audio, "error",
-            "An audio stream is present." if audio else "No audio stream was found.",
-            {"hasAudio": audio, "audioCodec": metadata["audioCodec"]},
+            {"durationSeconds": dur, "minimumSeconds": 1, "maximumSeconds": 180},
         ),
         _finding(
             "even-dimensions", even, "warning",
@@ -127,6 +170,29 @@ def analyze_video(path: str, bot_id: str = "kids") -> dict:
             {"width": width, "height": height},
         ),
     ]
+
+    # Deep checks (best-effort single ffmpeg decode): silent audio + black frames —
+    # the two ways a render can LOOK fine in metadata but be broken. Skipped cleanly
+    # if ffmpeg can't run, so the report degrades to the metadata checks above.
+    scan = _decode_scan(path, dur)
+    if scan is not None:
+        mean_db = scan["meanVolumeDb"]
+        not_silent = mean_db is None or mean_db > -50
+        findings.append(_finding(
+            "audio-not-silent", not_silent, "error",
+            "Audio has real sound." if not_silent
+            else "Audio track is effectively SILENT — the mix likely failed.",
+            {"meanVolumeDb": mean_db, "silentThresholdDb": -50},
+        ))
+        black_frac = round(scan["blackSeconds"] / dur, 3) if dur else 0
+        not_black = black_frac < 0.5
+        findings.append(_finding(
+            "not-mostly-black", not_black, "error",
+            "Frames are drawing normally." if not_black
+            else "Most of the video is BLACK — the render likely fell over.",
+            {"blackSeconds": scan["blackSeconds"], "blackFraction": black_frac,
+             "maxBlackFraction": 0.5},
+        ))
 
     score = round(100 * sum(f["passed"] for f in findings) / len(findings))
     failed_error = any(not f["passed"] and f["severity"] == "error" for f in findings)
