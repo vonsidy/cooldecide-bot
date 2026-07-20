@@ -112,7 +112,11 @@ def topic_for(date: str, fmt: str = "", slot: int = 0) -> str:
         day = sum(ord(c) for c in str(date))
     allowed = topics_for_format(fmt)
     if fmt == "wyr":
-        allowed = allowed + ["", "", ""]        # ~1/3 of wyr videos: no forced theme
+        # wyr is the real-life-dilemma format. A forced FANTASY theme (magic /
+        # powers / space / animals) buries the teen stakes kids actually care about
+        # under whimsy, so wyr runs MOSTLY untopiced (untopiced -> the teen-first
+        # dilemma pool + brief) with only occasional RELATABLE theming.
+        allowed = [""] * 8 + ["school", "gaming"]
     return allowed[(day * 3 + _TOPIC_FMT_OFFSET.get(fmt, 0) + slot * 2) % len(allowed)]
 
 
@@ -533,39 +537,92 @@ WYR_VETTED = [
      "a kid sitting comfily inside a giant floating soap bubble drifting over the rooftops",
      "a kid holding on to a huge colourful kite, lifted up into the windy blue sky"),
 
-    # --- hard dilemmas (owner's brief: picking must HURT; a slice skews 15-18) ---
-    # Real-life stakes instead of pure whimsy: dream-vs-dream and loss-vs-loss
-    # pairs built to split a comment section near 50/50.
+]
+
+# ---------------------------------------------------------------------------
+# TEEN / KID REAL-LIFE DILEMMAS — the heart of would-you-rather. Social media,
+# phones, school, crush, friends, gaming, money: the stuff they actually argue
+# about. wyr runs MOSTLY untopiced (see topic_for), and untopiced days pull from
+# HERE first (see several), so these DOMINATE the channel. No whimsical
+# creatures/genies/portals — kids don't care about a dragon that tells 500-year-old
+# stories, they care about their phone and their crush. Every row is a real
+# dream-vs-dream or loss-vs-loss built to split a comment section near 50/50.
+WYR_TEEN = [
     ("Never do homework again", "Go on a date with your crush", "📚", "😍",
      "a kid joyfully throwing an armful of homework papers into the air like confetti, arms up in victory",
      "two shy smiling teens sharing a milkshake with two straws at a diner booth, both blushing"),
-    ("Give up YouTube forever", "Give up Instagram forever", "📹", "📸",
-     "a sad kid closing a laptop that shows a big play-button symbol on screen",
+    ("Give up TikTok forever", "Give up Instagram forever", "🎵", "📸",
+     "a sad teen watching a phone as a musical-note video app closes and fades",
      "a sad teen placing a phone face-down on a table, a little camera icon floating away"),
-    ("1 million subscribers", "1 million dollars", "🔔", "💰",
-     "a kid streamer celebrating in front of a ring light as golden confetti rains down",
-     "a stunned kid sitting on a huge pile of gold coins and banknotes"),
-    ("Know every test answer", "Be invisible at school", "💯", "🫥",
-     "a kid winking beside a test paper where every answer box glows with a golden tick",
-     "a see-through kid strolling down a school hallway, only sneakers and a backpack visible"),
-    ("Never have a bedtime again", "Never take a test again", "🌙", "📝",
-     "a wide-awake happy kid gaming at midnight by a moonlit window",
-     "a kid triumphantly ripping a test paper in half while classmates cheer"),
-    ("Text your crush first", "Wait forever for them to text", "📱", "⏳",
-     "a nervous teen hovering a thumb over a glowing phone screen with a heart typed in the message box",
+    ("Give up your phone for a month", "Give up gaming for a month", "📵", "🎮",
+     "a glum kid reaching toward a phone locked inside a clear box on a high shelf",
+     "a glum kid staring up at a game controller unplugged and put on a high shelf"),
+    ("Lose all your followers", "Start your account completely over", "📉", "🔄",
+     "a shocked teen staring at a phone as the follower count crashes toward zero",
+     "a teen tapping a blank fresh 'new account' screen on a phone, starting from nothing"),
+    ("Get 1 million TikTok followers", "Get 1,000 dollars cash right now", "🤳", "💵",
+     "a beaming teen filming themselves as a phone screen reads one million followers",
+     "a beaming kid clutching a thick fanned-out stack of cash with both hands"),
+    ("Sit next to your crush all year", "Never have homework again", "😍", "📚",
+     "two shy teens at neighbouring desks sneaking smiles at each other",
+     "a kid tossing a stack of homework into a bin, arms raised in victory"),
+    ("Be the funniest kid in school", "Be the smartest kid in school", "😂", "🧠",
+     "a kid making a whole classroom burst out laughing, everyone grinning",
+     "a kid at the front of class holding up a paper with a huge red A+ as classmates look impressed"),
+    ("Be super popular", "Have 3 real best friends", "🌟", "🫂",
+     "a kid surrounded by a big crowd of waving, cheering classmates in a hallway",
+     "three close friends laughing together on a bench with arms around each other"),
+    ("Text your crush first", "Wait forever for them to text you", "📱", "⏳",
+     "a nervous teen hovering a thumb over a glowing phone with a heart typed in the message box",
      "a teen lying on a bed staring at a silent phone that has little cobwebs growing on it"),
-    ("Skip school forever", "Get paid to go to school", "🛹", "💵",
+    ("Always win every video game", "Always win every argument", "🏆", "🗣️",
+     "a kid celebrating with a controller as the screen behind them flashes VICTORY",
+     "a confident kid making a point while a group around them nods in agreement"),
+    ("Skip school any day you want", "Get paid 100 dollars for every A", "🛹", "💵",
      "a carefree kid skateboarding past a yellow school bus on a sunny morning, no backpack",
-     "a kid at a school desk grinning as banknotes gently rain down around them"),
+     "a kid at a school desk grinning as a report card of A's turns into falling banknotes"),
+    ("Be TikTok famous but broke", "Be rich but totally unknown", "📱", "🤑",
+     "a teen livestreaming to a huge cheering audience with empty pockets turned inside out",
+     "a kid lounging alone on a big pile of money in an otherwise empty room"),
+    ("Keep every Snapchat streak forever", "Have unlimited phone data forever", "🔥", "📶",
+     "a grinning teen showing a phone with a long list of fire-emoji streaks",
+     "a happy teen streaming video on a phone with full glowing signal bars"),
+    ("Have tons of money but no friends", "Have amazing friends but be broke", "💰", "👥",
+     "a kid sitting alone on a huge pile of gold coins in an empty room, looking a bit lonely",
+     "a group of laughing friends sharing one small pizza, pockets empty but everyone happy"),
+    ("Be the best gamer in the world", "Be the best athlete in the world", "🎮", "⚽",
+     "a kid holding a golden esports trophy in front of a giant glowing screen",
+     "a kid mid-air scoring a goal as a stadium crowd leaps up cheering"),
+    ("Never be embarrassed again", "Always know what people think of you", "😎", "💭",
+     "a kid strolling coolly down a hallway, totally unbothered, after dropping their books",
+     "a kid seeing little thought-bubbles floating above everyone's heads in a hallway"),
+    ("Give up YouTube forever", "Give up your group chat forever", "📹", "💬",
+     "a sad kid closing a laptop showing a big play-button symbol",
+     "a sad teen watching a phone as a group chat of speech bubbles fades away"),
+    ("Know every test answer", "Be invisible at school for a day", "💯", "🫥",
+     "a kid winking beside a test paper where every answer box glows with a golden tick",
+     "a see-through kid strolling a school hallway, only sneakers and a backpack visible"),
+    ("Get every Friday off school", "Get summer break twice a year", "🎉", "🏖️",
+     "a kid cheering and throwing a backpack down as a calendar shows Friday circled",
+     "a kid in sunglasses relaxing on a beach towel with a calendar showing two suns"),
+    ("Go viral once for something awesome", "Have 100 loyal fans forever", "🚀", "🙌",
+     "a thrilled teen watching a phone as a video rockets past a million views",
+     "a happy creator waving at a small tight crowd of fans all holding up phones"),
+    ("Never lose a game again", "Never lose an argument again", "🎯", "⚖️",
+     "a kid pumping a fist as a game screen reads WINNER again and again",
+     "a calm kid smiling as everyone around the table finally agrees with them"),
+    ("Have the newest phone forever", "Have unlimited money in every game", "📱", "💎",
+     "a kid unboxing a shiny brand-new phone with a big excited smile",
+     "a kid grinning as a video game screen shows an endless pile of gems and coins"),
 ]
 
-# Only rows that describe their own artwork go live. The 71 older rows above have no
+# Only rows that describe their own artwork go live. The older rows above have no
 # art description, so their pictures are generated from the option text alone — the
 # failure that drew a ringed planet (Saturn) for "Jupiter" and a family of three for
 # the answer "7". They aren't deleted: give a row a_art/b_art and it airs again.
-# 90 vetted rows at 2 posts a day is about 45 days of content, so there is no rush
-# to cut corners here.
-WYR = [r for r in (WYR + WYR_VETTED) if len(r) >= 6 and r[4] and r[5]]
+WYR = [r for r in (WYR + WYR_VETTED + WYR_TEEN) if len(r) >= 6 and r[4] and r[5]]
+# The valid subset of the teen pool, for untopiced-wyr biasing (all have art).
+WYR_TEEN = [r for r in WYR_TEEN if len(r) >= 6 and r[4] and r[5]]
 
 THIS_OR_THAT = [
     ("Dragon", "Unicorn", "🐉", "🦄"),
@@ -941,7 +998,12 @@ def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool =
     """
     import generate
     pool = FORMATS[fmt][2]
-    if topic:
+    if fmt == "wyr" and not topic and len(WYR_TEEN) >= n:
+        # Untopiced wyr is the real-life-dilemma format: draw from the teen pool
+        # (social media / school / crush / friends / money) instead of the whole
+        # mixed list, so the fallback matches the AI's teen-first brief.
+        pool = WYR_TEEN
+    elif topic:
         on_topic = [r for r in pool if row_topic(r) == topic]
         if len(on_topic) >= n:
             pool = on_topic
