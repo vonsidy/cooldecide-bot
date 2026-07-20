@@ -61,6 +61,14 @@ _DILEMMA = (
     "The test: imagine 100 kids voting — if it wouldn't split close to 50/50, "
     "it's too easy, throw it away. 'Summer vs winter', 'dogs vs cats', 'pizza vs "
     "burgers' are failures: everyone already has an answer.\n"
+    "BOTH options must point the SAME WAY: two things they WANT (dream vs dream) or "
+    "two things they'd HATE (loss vs loss) — NEVER one of each. 'Text your crush "
+    "first' (a scary thing you have to DO) against 'never get left on read' (a gift "
+    "you RECEIVE) is not a dilemma, it's a free choice: the gift wins and nobody "
+    "hesitates for a second. If one side costs something and the other hands "
+    "something over, the question answers itself and the video is dead. Pair a cost "
+    "with a COST ('text your crush first' vs 'wait forever for them to text you') "
+    "and a gift with a GIFT.\n"
     "BIGGEST failure to avoid — two nice-to-haves with NO downside, where a kid "
     "would be thrilled with EITHER and just shrug ('both are awesome, whatever'): "
     "'pet dragon vs pet unicorn', 'talking dog vs talking cat', 'fly vs be "
@@ -266,7 +274,14 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
         if topic and topic in content.TOPICS:
             kind = (f"{kind}. EVERY question must be about ONE theme — "
                     f"{content.TOPICS[topic][1]}")
-        avoid_txt = ("\nDo NOT repeat or closely echo any of these already-used ones:\n- "
+        # `avoid` arrives OLDEST FIRST (content._load_used_list), so the tail really
+        # is the most recent history — it used to be sorted alphabetically, making
+        # this slice an arbitrary s-z window.
+        # Naming both halves matters: repeating ONE option in a new pairing is the
+        # recycling that slipped through, since dedup upstream only matches whole pairs.
+        avoid_txt = ("\nThese exact questions have already been used. Do NOT repeat or "
+                     "closely echo any of them, and do NOT reuse EITHER SIDE of one in "
+                     "a new pairing — both options must be new:\n- "
                      + "\n- ".join((avoid or [])[-40:])) if avoid else ""
         prompt = (
             f"Write {n + 3} original {kind} for a kids' YouTube Shorts channel. {_SAFE}\n"
