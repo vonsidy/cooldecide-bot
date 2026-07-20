@@ -128,7 +128,8 @@ def post_due_comments() -> int:
 
 
 def record(video_id: str, title: str, fmt: str, rounds: int,
-           manual: bool = False, privacy: str = "") -> None:
+           manual: bool = False, privacy: str = "",
+           clipcheck_report: dict | None = None) -> None:
     """Add a freshly-posted video to the board (hub schema).
 
     `privacy` must be the value the video was ACTUALLY uploaded with. It used to be
@@ -138,7 +139,7 @@ def record(video_id: str, title: str, fmt: str, rounds: int,
     """
     data = _load()
     now = _now()
-    data.setdefault("videos", []).insert(0, {
+    video = {
         "date": _iso(now),
         "id": video_id,
         "url": f"https://youtube.com/shorts/{video_id}",
@@ -152,7 +153,15 @@ def record(video_id: str, title: str, fmt: str, rounds: int,
         "views": 0,
         "likes": 0,
         "comments": 0,
-    })
+    }
+    if clipcheck_report:
+        video["clipcheck"] = clipcheck_report
+        quality = data.setdefault("clipcheck", {"mode": "observation", "reports": []})
+        quality["mode"] = "observation"
+        quality["latest"] = clipcheck_report
+        quality.setdefault("reports", []).insert(0, clipcheck_report)
+        quality["reports"] = quality["reports"][:25]
+    data.setdefault("videos", []).insert(0, video)
     data.setdefault("runs", []).insert(0, {
         "status": "posted", "title": title, "manual": manual, "time": _iso(now),
     })

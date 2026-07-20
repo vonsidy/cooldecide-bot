@@ -13,6 +13,7 @@ import sys
 
 import assemble
 import card
+import clipcheck_runtime
 import config
 import content
 
@@ -106,6 +107,9 @@ def main() -> None:
     print(f"built {args.out} ({os.path.getsize(args.out)//1024} KB) — {len(items)} rounds")
 
     if not (args.upload or config.UPLOAD):
+        # A build-only run has no publishing clock, so report immediately.
+        clipcheck_report = clipcheck_runtime.analyze_video(args.out, bot_id="kids")
+        clipcheck_runtime.print_summary(clipcheck_report)
         return
 
     # --- Post to YouTube + record it for the dashboard -----------------------
@@ -162,6 +166,12 @@ def main() -> None:
     url = f"https://youtube.com/shorts/{vid}"
     print(f"posted -> {url}")
 
+    # Observation mode must never delay a live post. Analyze only AFTER YouTube
+    # confirms the upload; the extra work can delay the dashboard update, but not
+    # the content itself. Enforcement remains deliberately disabled.
+    clipcheck_report = clipcheck_runtime.analyze_video(args.out, bot_id="kids")
+    clipcheck_runtime.print_summary(clipcheck_report)
+
     # The engagement question is QUEUED, not posted now: a comment from the channel
     # seconds after its own upload is a bot tell. It goes out 10-30 minutes later,
     # once the video is public (see dashboard.post_due_comments).
@@ -171,7 +181,7 @@ def main() -> None:
     # `fmt`, not args.format — that's None unless it was forced on the command line,
     # which would log every video's format as null on the dashboard.
     dashboard.record(vid, info["title"], fmt, len(items), manual=args.manual,
-                     privacy=config.YT_PRIVACY)
+                     privacy=config.YT_PRIVACY, clipcheck_report=clipcheck_report)
     dashboard.refresh_stats()
     print("recorded to dashboard/kids.json")
 
