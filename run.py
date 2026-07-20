@@ -108,8 +108,11 @@ def main() -> None:
 
     if not (args.upload or config.UPLOAD):
         # A build-only run has no publishing clock, so report immediately.
-        clipcheck_report = clipcheck_runtime.analyze_video(args.out, bot_id="kids")
-        clipcheck_runtime.print_summary(clipcheck_report)
+        try:
+            clipcheck_runtime.print_summary(
+                clipcheck_runtime.analyze_video(args.out, bot_id="kids"))
+        except Exception as e:  # noqa: BLE001 - a report failure must not fail the build
+            print("  (clipcheck skipped:", e, ")")
         return
 
     # --- Post to YouTube + record it for the dashboard -----------------------
@@ -169,8 +172,14 @@ def main() -> None:
     # Observation mode must never delay a live post. Analyze only AFTER YouTube
     # confirms the upload; the extra work can delay the dashboard update, but not
     # the content itself. Enforcement remains deliberately disabled.
-    clipcheck_report = clipcheck_runtime.analyze_video(args.out, bot_id="kids")
-    clipcheck_runtime.print_summary(clipcheck_report)
+    # Wrapped so a ClipCheck failure can NEVER skip the comment-queue + dashboard
+    # record that follow it — the video is already public, the bookkeeping still runs.
+    try:
+        clipcheck_report = clipcheck_runtime.analyze_video(args.out, bot_id="kids")
+        clipcheck_runtime.print_summary(clipcheck_report)
+    except Exception as e:  # noqa: BLE001 - observation must never break a live post
+        print("  (clipcheck skipped:", e, ")")
+        clipcheck_report = None
 
     # The engagement question is QUEUED, not posted now: a comment from the channel
     # seconds after its own upload is a bot tell. It goes out 10-30 minutes later,
