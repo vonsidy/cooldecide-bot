@@ -162,8 +162,9 @@ def build(items, out_path: str, background: str | None = None) -> str:
     if (len(items) >= 2 and config.TEASER_SECONDS > 0 and not config.ENABLE_VOICE):
         try:
             last = items[-1]
-            tease = (f"CAN YOU GET #{len(items)}?" if last.correct is not None
-                     else f"NOBODY AGREES ON #{len(items)}")
+            # A concrete curiosity line over the (visible) real options beats a bare
+            # "#3" ordinal — the scroller's first frame gets a real question, not noise.
+            tease = content.teaser_hook(last.a, last.correct is not None)
             f_tease = card.teaser(last, os.path.join(work, "teaser.png"), tease)
             seg_specs.append((f_tease, config.TEASER_SECONDS))
             clock += config.TEASER_SECONDS
@@ -177,6 +178,13 @@ def build(items, out_path: str, background: str | None = None) -> str:
         if len(items) >= 2 and n == len(items) - 1:
             round_label = ("ALMOST NOBODY GETS THIS" if item.correct is not None
                            else "THIS ONE SPLITS EVERYONE")
+        elif n == 0 and item.fmt != "trivia":
+            # Round 1's pill was blank — its strongest visual slot, wasted, on the
+            # exact frame where stay/swipe is decided. Fill it with a clean identity/
+            # side-pick dare so a passive scroller reflexively answers (never a fake
+            # stat). Rotated per video so it isn't a byte-identical template. Skipped
+            # for trivia, whose header already carries the full (tall) question.
+            round_label = content.onscreen_hook(item.a, item.correct is not None)
         elif n >= 1:
             round_label = "GETS HARDER"
         else:
