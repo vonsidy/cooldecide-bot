@@ -9,15 +9,25 @@ name: CoolDecide bot
 
 on:
   schedule:
-    # UPKEEP + SAFETY-NET ONLY — every ~2 hours (8am–11pm ET). The actual POSTING
-    # is triggered precisely by the Cloudflare worker's `post-now` dispatch a few
-    # minutes before each random slot (see below), so the run no longer wakes
-    # hourly and SLEEPS to the slot — that hold burned ~5x the free Actions tier.
-    # These scheduled runs mostly find should_post()=false and just do the cheap
-    # upkeep (comments, stats). They also catch a slot if the worker ever misses
-    # one (scheduler.LOOKAHEAD_MIN=15, so a slot within 15 min of one of these
-    # still posts). Times are UTC (EDT, UTC-4).
-    - cron: "11 0,2,12,14,16,18,20,22 * * *"
+    # HOURLY, 8am–11pm ET. This is the SAFETY NET, and on 2026-07-20 it was the
+    # only thing standing between a dead trigger and a silently dead channel — so
+    # it has to be dense enough to actually catch a slot.
+    #
+    # It was thinned to every ~2 hours once the Cloudflare worker took over precise
+    # posting via `post-now`. Then the worker stopped dispatching entirely (both its
+    # jobs went silent after 01:48 UTC and never resumed), and the 16:27 slot was
+    # missed outright: at 2-hourly spacing the fallback can sit ~2h behind a slot,
+    # and GitHub's own cron only delivered 2 of the 5 firings due that day on top of
+    # that. Two unreliable triggers stacked do not make a reliable one.
+    #
+    # Hourly means a worker outage costs LATENESS, never a missed post: a slot is
+    # either caught within LOOKAHEAD_MIN (15) and posted on time, or caught as
+    # already-passed on the next wake and posted up to ~45 min late. Since the slot
+    # is random anyway, drifting off it is invisible on the channel; not posting is
+    # not. Costs ~16 idle check-ins/day (~1 billed minute each) against a 2000/month
+    # allowance — the outage is worth far more than the ~240 minutes saved.
+    # Times are UTC (EDT, UTC-4).
+    - cron: "11 0-3,12-23 * * *"
   repository_dispatch:
     # cron-tick = upkeep poke; post-now = the worker firing just AFTER a slot time
     # passes, so the run builds and uploads born-public the moment it's done — no
