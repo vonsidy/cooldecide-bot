@@ -348,6 +348,19 @@ def _text_c(draw, cx, y, text, font, fill, max_w=None):
     return font
 
 
+def _text_cc(draw, cx, cy, text, font, fill, max_w=None):
+    """Centre text on (cx, cy) — horizontally AND vertically — by its visual ink
+    bounds. For text sitting inside a pill/box: Anton's tall line box makes a
+    top-anchored draw sit low, so centre on the box's middle instead."""
+    if max_w:
+        while draw.textlength(text, font=font) > max_w and font.size > 20:
+            font = ImageFont.truetype(font.path, font.size - 2)
+    bbox = draw.textbbox((0, 0), text, font=font)
+    w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    draw.text((cx - w / 2 - bbox[0], cy - h / 2 - bbox[1]), text, font=font, fill=fill)
+    return font
+
+
 def _emoji_c(canvas, cx, y, ch, size):
     """Draw an emoji truly centred on cx, inside a `size` box at y.
 
@@ -711,13 +724,15 @@ def outro(item, out_path: str) -> str:
     # the ask, in a fat pill
     draw.rounded_rectangle((cx - 470, 880, cx + 470, 1050), radius=54, fill=WHITE)
     draw.rounded_rectangle((cx - 456, 894, cx + 456, 1036), radius=46, fill=A_COLOR + (255,))
-    _text_c(draw, cx, 928, "COMMENT BELOW!", _font("Anton-Regular.ttf", 84), WHITE, max_w=860)
+    _text_cc(draw, cx, (894 + 1036) // 2, "COMMENT BELOW!",
+             _font("Anton-Regular.ttf", 84), WHITE, max_w=860)
 
     _emoji_c(canvas, cx, 1120, "👇", 210)
 
     draw.rounded_rectangle((cx - 400, 1420, cx + 400, 1560), radius=44, fill=WHITE)
     draw.rounded_rectangle((cx - 388, 1432, cx + 388, 1548), radius=38, fill=GOLD)
-    _text_c(draw, cx, 1454, "FOLLOW FOR MORE", _font("Anton-Regular.ttf", 66), NAVY, max_w=740)
+    _text_cc(draw, cx, (1432 + 1548) // 2, "FOLLOW FOR MORE",
+             _font("Anton-Regular.ttf", 66), NAVY, max_w=740)
 
     canvas.convert("RGB").save(out_path, "PNG")
     return out_path
