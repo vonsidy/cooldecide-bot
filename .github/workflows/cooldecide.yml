@@ -9,25 +9,30 @@ name: CoolDecide bot
 
 on:
   schedule:
-    # HOURLY, 8am–11pm ET. This is the SAFETY NET, and on 2026-07-20 it was the
-    # only thing standing between a dead trigger and a silently dead channel — so
-    # it has to be dense enough to actually catch a slot.
+    # Every 30 minutes, but ONLY in the hours a slot can actually fall in.
     #
-    # It was thinned to every ~2 hours once the Cloudflare worker took over precise
-    # posting via `post-now`. Then the worker stopped dispatching entirely (both its
-    # jobs went silent after 01:48 UTC and never resumed), and the 16:27 slot was
-    # missed outright: at 2-hourly spacing the fallback can sit ~2h behind a slot,
-    # and GitHub's own cron only delivered 2 of the 5 firings due that day on top of
-    # that. Two unreliable triggers stacked do not make a reliable one.
+    # The point of this spacing is the upload TIMESTAMP. Each video is born public
+    # the instant it is uploaded — never scheduled, never private-then-flipped — so
+    # the upload minute IS the publish minute, and if the bot can only act on cron
+    # minutes then every video carries the machine's timestamp. That already happened:
+    # three posts landed at exactly :25 (2026-07-17/18/19) because the wake caught the
+    # slot too late and uploaded at wake + build time instead.
     #
-    # Hourly means a worker outage costs LATENESS, never a missed post: a slot is
-    # either caught within LOOKAHEAD_MIN (15) and posted on time, or caught as
-    # already-passed on the next wake and posted up to ~45 min late. Since the slot
-    # is random anyway, drifting off it is invisible on the channel; not posting is
-    # not. Costs ~16 idle check-ins/day (~1 billed minute each) against a 2000/month
-    # allowance — the outage is worth far more than the ~240 minutes saved.
-    # Times are UTC (EDT, UTC-4).
-    - cron: "11 0-3,12-23 * * *"
+    # With wakes every 30 min and scheduler.LOOKAHEAD_MIN also 30, EVERY slot is
+    # caught by the wake before it, and run.py holds the remainder so the upload
+    # lands ON the day's randomly-chosen minute. Verified across a simulated year:
+    # 711/711 slots caught. The randomness comes from scheduler.slots_for_date,
+    # which is UNCHANGED — this only makes sure the bot is awake to honour it.
+    #
+    # Hours: slots only ever fall in the BUCKETS (8-11am, 3-9pm ET), so waking
+    # outside them is pure waste. Listed for BOTH EDT and EST (the extra 2,16 UTC)
+    # so the clocks going back in November doesn't silently strand the morning and
+    # evening buckets. Times are UTC.
+    #
+    # ~26 wakes/day: ~24 idle at ~1 billed minute each, plus 2 posting runs at
+    # ~7 min build + ~14 min average hold. ~1990 min/month against a 2000 allowance,
+    # and overage is $0.008/min — so worst case this is cents, not a cliff.
+    - cron: "0,30 0-2,12-16,19-23 * * *"
   repository_dispatch:
     # cron-tick = upkeep poke; post-now = the worker firing just AFTER a slot time
     # passes, so the run builds and uploads born-public the moment it's done — no

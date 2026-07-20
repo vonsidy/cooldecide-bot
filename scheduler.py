@@ -24,13 +24,19 @@ MAX_PER_DAY = int(os.getenv("MAX_UPLOADS_PER_DAY", "2"))
 # build time — the day's carefully random slot minute was thrown away, and all
 # posts shared one machine-like timestamp. With look-ahead the bot builds early
 # and hands YouTube a publishAt for the REAL slot time instead.
-# 15 (was 90): the Cloudflare worker now fires a `post-now` dispatch ~7-12 min
-# before each slot (it reads schedule.upcoming), so the run starts close to the
-# slot and only holds the last few minutes — no more waking an hour early and
-# sleeping on the paid Actions clock. A small window also means the ~2-hourly
-# upkeep crons don't accidentally start a long hold; they just do upkeep unless a
-# slot happens to fall within 15 min of one (then they post as a safety net).
-LOOKAHEAD_MIN = float(os.getenv("PUBLISH_LOOKAHEAD_MIN", "15"))
+# 30, matched to the workflow's 30-minute wake spacing so EVERY slot is caught by
+# the wake before it and uploaded AT its own random minute.
+#
+# At 15 (sized for the Cloudflare worker's `post-now`, which fires ~7-12 min ahead)
+# an unaided wake caught only ~29% of slots; the rest arrived through the
+# already-passed fallback, which uploads at wake + build time. That put three posts
+# on the channel at exactly :25 — the machine timestamp this whole design exists to
+# avoid. Look-ahead >= wake spacing is what makes the random minute real without
+# any external trigger.
+#
+# The cost of look-ahead is held runner minutes (~14 min average), which is exactly
+# why the worker was built. This is the version that survives the worker being down.
+LOOKAHEAD_MIN = float(os.getenv("PUBLISH_LOOKAHEAD_MIN", "30"))
 
 # Windows worth posting in for a KIDS audience, in local time. Nothing before
 # school and nothing near bedtime — a Short posted at 3am gets its one shot at the
