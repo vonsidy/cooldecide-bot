@@ -44,6 +44,15 @@ MADE_FOR_KIDS = get("MADE_FOR_KIDS", "0") == "1"
 # Safety valve: never upload unless explicitly enabled (env or --upload flag).
 UPLOAD = get("UPLOAD", "0") == "1"
 
+# Channel self-commenting is OFF. A channel that comments on its own upload every
+# single time — same shape of question, always within the same window — is a
+# pattern YouTube can read as automation, and the account is worth more than the
+# engagement bump. The delay (10-30 min) made it look less mechanical but didn't
+# change that it happens on 100% of uploads. Owner's call: not worth the risk on a
+# young channel. Flip to AUTO_COMMENT=1 to bring it back; both the queueing and the
+# posting side check this, so turning it off also stops the queue growing.
+AUTO_COMMENT = get("AUTO_COMMENT", "0") == "1"
+
 # --- Video style --------------------------------------------------------------
 # Narration is OFF: the format is "point at your pick", which works silently and
 # reads as a game rather than a lecture. Audio is a music bed + countdown ticks +

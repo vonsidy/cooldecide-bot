@@ -74,8 +74,14 @@ def queue_comment(video_id: str, text: str) -> str:
     A comment from the channel seconds after its own upload is a bot tell — a real
     person hasn't even watched it back yet. The story bots already delay theirs;
     this is the same idea. Returns the ISO time it becomes due.
+
+    No-op while config.AUTO_COMMENT is off: nothing is queued, so nothing can go
+    out later if the flag is flipped back on for a different reason.
     """
     import random
+    import config
+    if not config.AUTO_COMMENT:
+        return ""
     data = _load()
     due = _now() + datetime.timedelta(minutes=random.randint(10, 30))
     data.setdefault("pending_comments", []).append({
@@ -93,6 +99,13 @@ def post_due_comments() -> int:
     on a transient failure so the next run retries.
     """
     import youtube_upload
+    import config
+
+    # Off by default (see config.AUTO_COMMENT). Anything already queued from before
+    # the switch is left in place, not dropped — flipping the flag back on should
+    # resume, not silently lose the backlog.
+    if not config.AUTO_COMMENT:
+        return 0
 
     data = _load()
     queue = data.get("pending_comments") or []

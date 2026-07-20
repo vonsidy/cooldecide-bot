@@ -165,10 +165,17 @@ jobs:
           DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
         run: python -u sync_dashboard.py || true
 
-      # The idle check-ins do the upkeep: post comments that came due, refresh view
-      # counts, and push the result to the dashboard. Without this the board would
-      # only ever move twice a day, when a video posts.
-      - name: Comments + refresh stats + dashboard
+      # The idle check-ins do the upkeep: refresh view counts and push the result to
+      # the dashboard. Without this the board would only ever move twice a day, when
+      # a video posts.
+      #
+      # This used to also run `run.py --comments-only`. That never worked: run.py
+      # imports card/art, which need Pillow, and this step installs only the Google
+      # libs — so every idle run died on ModuleNotFoundError, swallowed by `|| true`.
+      # Self-commenting is off now (config.AUTO_COMMENT), so the call is gone rather
+      # than fixed. Restoring it means installing the render deps too, not just
+      # putting the line back.
+      - name: Refresh stats + dashboard
         if: steps.gate.outputs.post != 'true'
         env:
           YT_CLIENT_SECRET_B64: ${{ secrets.YT_CLIENT_SECRET_B64 }}
@@ -178,7 +185,6 @@ jobs:
           pip install -q google-api-python-client google-auth google-auth-oauthlib
           echo "$YT_CLIENT_SECRET_B64" | base64 -d > client_secret.json
           echo "$YT_TOKEN_B64" | base64 -d > yt_token.json
-          python -u run.py --comments-only || true
           python -u -c "import dashboard; dashboard.refresh_stats()" || true
           python -u sync_dashboard.py || true
 
