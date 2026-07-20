@@ -140,10 +140,16 @@ _ART_RULE = (
 # recognisable, the viewer swipes before the hook lands. So the FIRST item must be
 # the most universally-known one, not a deep cut.
 _HOOK_RULE = (
-    "\nORDER MATTERS: make the FIRST item in your list the most universally famous and "
-    "instantly-recognisable one — the matchup or choice the widest audience knows on "
-    "sight. On Shorts the first two seconds decide whether a viewer stays, so lead "
-    "with your strongest, most-mainstream hook and save the more niche ones for later."
+    "\nORDER MATTERS — the FIRST item decides if a scroller stays in the first 2 "
+    "seconds. Do NOT lead with the most 'famous' one: recognising a topic is not the "
+    "same as having to answer it, and recognisability alone does not stop a scroll. "
+    "Lead with the single most DIVISIVE + RELATABLE choice — an everyday teen/kid "
+    "dilemma they have an INSTANT hot take on and suspect their pick is the minority "
+    "(crush, texting first / left on read, streaks, followers, going viral, phones, "
+    "group chat, friend drama, popularity, being embarrassed). It must be a REAL "
+    "near-50/50 split, totally clean, and never mean — no rage-bait, no fake claim. "
+    "Save the tamer or more niche ones for later. (For 'who would win', divisive "
+    "means a genuinely EVEN, argue-in-the-comments matchup — not a curbstomp.)"
 )
 
 

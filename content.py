@@ -1036,14 +1036,10 @@ def several(fmt: str, date: str | None = None, n: int = 3, avoid_repeats: bool =
         _save_used(fmt, used | picked_keys)
     built = [_build(fmt, row, random.Random()) for row in chosen]
 
-    # Round 1 is the HOOK. On Shorts the first two seconds decide whether a viewer
-    # stays, so the opener must be the most instantly-recognisable question — the
-    # generator is told to put its most famous one first (generate.py _HOOK_RULE), and
-    # we keep it in slot 1. The REMAINING rounds still escalate, with the most extreme
-    # "no way" reveal saved for last, so there's a reason to watch to the end.
-    if len(built) > 1:
-        built = [built[0]] + sorted(built[1:], key=_extremeness)
-    return built
+    # Round 1 is the HOOK — the first two seconds decide whether a viewer stays. The
+    # opener is the most divisive+relatable round (wyr) so they STOP to defend a side,
+    # and the rest escalate with the biggest "no way" reveal saved for last.
+    return _lead_with_hook(built)
 
 
 def ensure_art(items: list[Item], fmt: str) -> list[Item]:
@@ -1093,10 +1089,8 @@ def ensure_art(items: list[Item], fmt: str) -> list[Item]:
                 break
         else:
             out.append(it)                        # nothing has art: last-resort keep
-    # Re-impose the running order: the hook stays first, the rest escalate.
-    if len(out) > 1:
-        out = [out[0]] + sorted(out[1:], key=_extremeness)
-    return out
+    # Re-impose the running order after any art-swap: spicy hook first, rest escalate.
+    return _lead_with_hook(out)
 
 
 def _extremeness(it: Item) -> float:
@@ -1109,6 +1103,82 @@ def _extremeness(it: Item) -> float:
     if it.correct is not None:
         return 100 - (it.a_pct if it.correct == 0 else it.b_pct)
     return abs(it.a_pct - it.b_pct)
+
+
+# The round-1 card is the retention-decision frame. "Most famous" is the wrong
+# opener — a scroller has to WANT to answer, so we lead with the most divisive +
+# relatable teen dilemma. The wyr %s are fabricated (see _split), so the option
+# TEXT is the only real signal of how self-relevant/argue-worthy a question is.
+_SPICE_HOT = ("crush", "date", "text", "left on read", "streak", "snapchat",
+              "tiktok", "instagram", "follower", "viral", "phone", "group chat",
+              "popular", "best friend", "embarrass", "drama", "secret", "famous",
+              "rich", "school", "homework", "friend")
+_SPICE_LOSS = ("give up", "lose", "delete", "never ", "forever")     # loss-vs-loss stings
+_SPICE_COLD = ("dragon", "unicorn", "wizard", "magic", "portal", "genie", "phoenix",
+               "mermaid", "dinosaur", "superpower", "invisible")     # whimsy = weak opener
+
+
+def _spice(it: Item) -> float:
+    """How scroll-stopping an OPINION opener is: relatable + divisive + fast to read."""
+    t = f"{it.a} {it.b}".lower()
+    score = sum(2.0 for w in _SPICE_HOT if w in t)
+    score += sum(1.0 for w in _SPICE_LOSS if w in t)
+    score -= sum(2.0 for w in _SPICE_COLD if w in t)
+    # brevity tiebreak (small): a shorter pair parses in under a second.
+    score -= 0.02 * (len(it.a) + len(it.b))
+    return score
+
+
+def _lead_with_hook(built: list[Item]) -> list[Item]:
+    """Put the strongest opener first, then escalate the rest to the payoff.
+
+    For wyr the opener is the spiciest (most relatable/divisive) round; for other
+    formats the generator's famous-first order (built[0]) is kept. The remaining
+    rounds always escalate so the biggest 'no way' reveal lands last.
+    """
+    if len(built) < 2:
+        return built
+    if built[0].fmt == "wyr" and built[0].correct is None:
+        opener = max(built, key=_spice)
+    else:
+        opener = built[0]
+    rest = [x for x in built if x is not opener]
+    return [opener] + sorted(rest, key=_extremeness)
+
+
+# On-screen hook copy (the round-1 pill + the teaser flash). Rotated deterministically
+# per video and kept clean — NEVER a fake stat. An identity/side-pick prompt converts
+# a passive scroller into someone who reflexively answers, without any false claim.
+_HOOK_PILL_OPINION = ["BE HONEST", "PICK YOUR SIDE", "WHICH ONE ARE YOU?",
+                      "DON'T OVERTHINK IT", "MOST KIDS PICK ONE", "CHOOSE FAST",
+                      "NO WRONG ANSWER"]
+_HOOK_PILL_FACTUAL = ["THINK YOU'RE SMART?", "BET YOU CAN'T", "HOW MANY CAN YOU GET?"]
+_TEASE_OPINION = ["COULD YOU EVEN PICK THIS?", "NOBODY CAN CHOOSE THIS",
+                  "THE LAST ONE IS BRUTAL", "BET YOU CAN'T CHOOSE"]
+_TEASE_FACTUAL = ["CAN YOU GET THIS ONE?", "THIS ONE'S THE HARDEST",
+                  "MOST PEOPLE MISS THIS"]
+# Structural guard: clickbait overpromises spike the 2s hook but tank average-view-
+# duration (YouTube's fake-hook penalty) and read as bait-farming. Make them
+# impossible to ship even if someone edits a pool later.
+_BANNED_HOOK = ("99%", "FAIL", "WON'T BELIEVE", "GONE WRONG", "SHOCKING", "OR ELSE")
+
+
+def _pick_hook(pool: list[str], seed: str) -> str:
+    ok = [s for s in pool if not any(b in s.upper() for b in _BANNED_HOOK)]
+    if not ok:
+        return ""
+    h = int(hashlib.sha1(str(seed).encode("utf-8")).hexdigest()[:8], 16)
+    return ok[h % len(ok)]
+
+
+def onscreen_hook(seed: str, factual: bool = False) -> str:
+    """The round-1 pill line — deterministic per video, varied across videos."""
+    return _pick_hook(_HOOK_PILL_FACTUAL if factual else _HOOK_PILL_OPINION, seed)
+
+
+def teaser_hook(seed: str, factual: bool = False) -> str:
+    """The opening teaser-flash line (concrete curiosity over the visible options)."""
+    return _pick_hook(_TEASE_FACTUAL if factual else _TEASE_OPINION, seed)
 
 
 def format_label(fmt: str) -> str:

@@ -657,7 +657,11 @@ def teaser(item, out_path: str, text: str) -> str:
     """
     render(item, out_path, countdown=None)
     im = Image.open(out_path).convert("RGBA")
-    veil = Image.new("RGBA", im.size, (10, 12, 40, 150))
+    # Lighter veil (was 150): the first frame a scroller lands on must still read as
+    # the bright, fun quiz card — a near-opaque dark frame throws away the instant
+    # genre recognition exactly when they decide whether to stay. The gold promise
+    # line still owns the frame; the real options stay teasingly readable underneath.
+    veil = Image.new("RGBA", im.size, (10, 12, 40, 95))
     im = Image.alpha_composite(im, veil)
     draw = ImageDraw.Draw(im)
     cx = W // 2
