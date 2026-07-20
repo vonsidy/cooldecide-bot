@@ -24,10 +24,13 @@ MAX_PER_DAY = int(os.getenv("MAX_UPLOADS_PER_DAY", "2"))
 # build time — the day's carefully random slot minute was thrown away, and all
 # posts shared one machine-like timestamp. With look-ahead the bot builds early
 # and hands YouTube a publishAt for the REAL slot time instead.
-# 90 because the staggered cron (see the workflow) leaves up to ~86 minutes
-# between consecutive check-ins; anything smaller lets a slot slip through the
-# gap and fall back to an immediate (pattern-stamped) post.
-LOOKAHEAD_MIN = float(os.getenv("PUBLISH_LOOKAHEAD_MIN", "90"))
+# 15 (was 90): the Cloudflare worker now fires a `post-now` dispatch ~7-12 min
+# before each slot (it reads schedule.upcoming), so the run starts close to the
+# slot and only holds the last few minutes — no more waking an hour early and
+# sleeping on the paid Actions clock. A small window also means the ~2-hourly
+# upkeep crons don't accidentally start a long hold; they just do upkeep unless a
+# slot happens to fall within 15 min of one (then they post as a safety net).
+LOOKAHEAD_MIN = float(os.getenv("PUBLISH_LOOKAHEAD_MIN", "15"))
 
 # Windows worth posting in for a KIDS audience, in local time. Nothing before
 # school and nothing near bedtime — a Short posted at 3am gets its one shot at the
