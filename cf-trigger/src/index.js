@@ -14,7 +14,10 @@
  *     builds and uploads born-public the moment the build finishes (slot + build
  *     time — still a random minute, since the slot is random and builds vary),
  *     with ZERO held minutes — instead of waking hourly and sleeping to the slot
- *     (which burned ~5x the free tier).
+ *     (which burned ~5x the free tier). It also watches the queued channel
+ *     comments' due times (upload + random 10-30 min) the same way, and pokes a
+ *     cheap upkeep run when one passes — so comments go out at their own random
+ *     minute too, not stamped with the 2-hourly wake's fixed cron minutes.
  *  2. fetch(): /pause and /resume endpoints for the dashboard's pause buttons —
  *     they commit dashboard/controls.json in THIS repo, which
  *     scheduler.should_post() reads and obeys. /wake fires an upkeep poke
@@ -79,26 +82,38 @@ async function dispatch(env, eventType) {
   return r.status;
 }
 
-// The bot's committed upcoming slot times (ISO strings) as Date[].
-async function getUpcoming(env) {
+// The bot's committed dashboard: upcoming slot times AND queued-comment due
+// times (both ISO strings), each as Date[].
+async function getDash(env) {
   const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${DASH}`, {
     headers: gh(env),
   });
   if (!r.ok) throw new Error(`get ${DASH} ${r.status}`);
   const data = await r.json();
   const j = JSON.parse(atob(String(data.content).replace(/\n/g, "")));
-  const up = (j.schedule && j.schedule.upcoming) || [];
-  return up.map((s) => new Date(s)).filter((d) => !isNaN(d.getTime()));
+  const toDates = (arr) => arr.map((s) => new Date(s)).filter((d) => !isNaN(d.getTime()));
+  return {
+    upcoming: toDates((j.schedule && j.schedule.upcoming) || []),
+    commentDues: toDates((j.pending_comments || []).map((q) => q && q.due)),
+  };
 }
 
 async function fireIfDue(env, now) {
   try {
-    const upcoming = await getUpcoming(env);
-    const due = upcoming.some((t) => {
-      const min = (t.getTime() - now.getTime()) / 60000;   // negative = slot passed
+    const { upcoming, commentDues } = await getDash(env);
+    // "passed within the last tick" — one 5-min-wide window per timestamp, so each
+    // fires exactly once.
+    const justPassed = (t) => {
+      const min = (t.getTime() - now.getTime()) / 60000;   // negative = passed
       return min <= 0 && min > -SLOT_PAST_MAX;
-    });
-    if (due) await dispatch(env, "post-now");
+    };
+    if (upcoming.some(justPassed)) await dispatch(env, "post-now");
+    // A queued channel comment came due (upload + its random 10-30 min): poke a
+    // cheap upkeep run to send it NOW. Same algorithm as posting — the comment
+    // lands at ITS OWN random minute instead of whenever the next 2-hourly wake
+    // happens (which stamped every comment with the same cron minutes). If a
+    // posting run is in flight, GitHub's concurrency group just queues this poke.
+    if (commentDues.some(justPassed)) await dispatch(env, "cron-tick");
   } catch (e) {
     console.log("slot check FAILED:", String(e));
   }
