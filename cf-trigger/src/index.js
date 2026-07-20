@@ -9,10 +9,12 @@
  * Jobs:
  *  1. scheduled(): every 5 minutes (Cloudflare cron — effectively free, unlike
  *     GitHub Actions minutes) it reads the bot's committed schedule
- *     (dashboard/kids.json -> schedule.upcoming) and, when a slot is 7-12 minutes
- *     out, fires a `post-now` repository_dispatch. The GitHub run then builds and
- *     uploads born-public AT the slot minute with only a tiny hold — instead of
- *     waking hourly and sleeping to the slot (which burned ~5x the free tier).
+ *     (dashboard/kids.json -> schedule.upcoming) and, on the first tick after a
+ *     slot time passes, fires a `post-now` repository_dispatch. The GitHub run
+ *     builds and uploads born-public the moment the build finishes (slot + build
+ *     time — still a random minute, since the slot is random and builds vary),
+ *     with ZERO held minutes — instead of waking hourly and sleeping to the slot
+ *     (which burned ~5x the free tier).
  *  2. fetch(): /pause and /resume endpoints for the dashboard's pause buttons —
  *     they commit dashboard/controls.json in THIS repo, which
  *     scheduler.should_post() reads and obeys. /wake fires an upkeep poke
@@ -30,11 +32,14 @@ const CONTROLS = "dashboard/controls.json";
 const BOT_ID = "kids";                    // controls.json key scheduler checks
 const ALLOW_ORIGIN = "*";                 // pause is gated by PAUSE_SECRET, not origin
 
-// Fire post-now when a slot is this many minutes out. A ~5-min-wide window matched
-// to the 5-min cron, so each slot is caught ~once; a rare double-fire is harmless —
-// the second run finds the quota met (YouTube-verified) and just does upkeep.
-const SLOT_LEAD_LO = 7;   // don't fire earlier (keeps the GitHub hold short)
-const SLOT_LEAD_HI = 12;  // must stay <= the bot's scheduler.LOOKAHEAD_MIN (15)
+// Fire post-now on the first tick AT/AFTER the slot time (owner's call: exact-minute
+// uploads don't matter — random + insta-public does, and the slot itself is random).
+// Firing after the slot means run.py's hold is zero: the bot builds and uploads the
+// moment it's done, so every billed minute is real work. The upload lands at
+// slot + build time (~7-12 min), which still varies day to day. The window is one
+// cron-tick wide (5 min) so each slot fires exactly once; a rare double-fire is
+// harmless — the second run finds the quota met (YouTube-verified) and exits cheap.
+const SLOT_PAST_MAX = 5;  // fire when the slot passed less than this many min ago
 
 function gh(env) {
   return {
@@ -90,8 +95,8 @@ async function fireIfDue(env, now) {
   try {
     const upcoming = await getUpcoming(env);
     const due = upcoming.some((t) => {
-      const min = (t.getTime() - now.getTime()) / 60000;
-      return min > SLOT_LEAD_LO && min <= SLOT_LEAD_HI;
+      const min = (t.getTime() - now.getTime()) / 60000;   // negative = slot passed
+      return min <= 0 && min > -SLOT_PAST_MAX;
     });
     if (due) await dispatch(env, "post-now");
   } catch (e) {
