@@ -19,8 +19,9 @@ on:
     # still posts). Times are UTC (EDT, UTC-4).
     - cron: "11 0,2,12,14,16,18,20,22 * * *"
   repository_dispatch:
-    # cron-tick = hourly upkeep poke; post-now = the worker firing ~7-12 min before
-    # a slot so the run builds and uploads born-public AT the slot minute.
+    # cron-tick = upkeep poke; post-now = the worker firing just AFTER a slot time
+    # passes, so the run builds and uploads born-public the moment it's done — no
+    # held minutes at all (the slot is random, so the upload minute still is too).
     types: [cron-tick, post-now]
   workflow_dispatch:
     inputs:
