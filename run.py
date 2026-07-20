@@ -183,9 +183,10 @@ def main() -> None:
 
     # The engagement question is QUEUED, not posted now: a comment from the channel
     # seconds after its own upload is a bot tell. It goes out 10-30 minutes later,
-    # once the video is public (see dashboard.post_due_comments).
+    # once the video is public (see dashboard.post_due_comments). Off by default —
+    # config.AUTO_COMMENT explains why — in which case this queues nothing.
     due = dashboard.queue_comment(vid, info["comment"])
-    print(f"comment queued for {due} (10-30 min)")
+    print(f"comment queued for {due} (10-30 min)" if due else "self-commenting off")
 
     # `fmt`, not args.format — that's None unless it was forced on the command line,
     # which would log every video's format as null on the dashboard.
