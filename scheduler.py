@@ -22,8 +22,10 @@ MAX_PER_DAY = int(os.getenv("MAX_UPLOADS_PER_DAY", "2"))
 # How far ahead a slot may be for a check-in to act on it. The cloud only wakes
 # at fixed cron minutes, so without look-ahead every upload lands at wake-minute +
 # build time — the day's carefully random slot minute was thrown away, and all
-# posts shared one machine-like timestamp. With look-ahead the bot builds early
-# and hands YouTube a publishAt for the REAL slot time instead.
+# posts shared one machine-like timestamp. With look-ahead the bot builds early and
+# then HOLDS the finished video until the slot, uploading it born-public at that
+# minute (run.py). Deliberately not publishAt scheduling — the owner wants nothing
+# sitting on the channel as a scheduled/private upload, ever.
 # 30, matched to the workflow's 30-minute wake spacing so EVERY slot is caught by
 # the wake before it and uploaded AT its own random minute.
 #
@@ -125,11 +127,11 @@ def next_slot(now: dt.datetime | None = None) -> dt.datetime | None:
 def should_post(now: dt.datetime | None = None) -> bool:
     """True if a slot is due — or close enough ahead to build for.
 
-    Fires when the slot is within LOOKAHEAD_MIN (build now, publish AT the slot
-    via YouTube's publishAt — see run.py), or once it has already passed (the
-    fallback: a missed check-in still posts, just immediately). Without the
-    look-ahead, an hourly check-in meant every upload went live at wake-minute +
-    build time, erasing the day's random slot minute.
+    Fires when the slot is within LOOKAHEAD_MIN (build now, hold, then upload AT
+    the slot — see run.py), or once it has already passed (the fallback: a missed
+    check-in still posts, just immediately). Without the look-ahead, an hourly
+    check-in meant every upload went live at wake-minute + build time, erasing the
+    day's random slot minute.
     """
     now = (now or now_local()).astimezone(TZ)
     if dashboard.paused():
