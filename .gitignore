@@ -21,3 +21,4 @@ __pycache__/
 client_secret.json
 yt_token.json
 yt_token.json.bak
+output/factory/

@@ -1,0 +1,86 @@
+name: Video factory (build only — you upload)
+
+# Builds the day's videos WITHOUT posting them, then publishes the finished .mp4s
+# + copy-paste titles/descriptions as a GitHub Release you can download on your
+# phone. Nothing is uploaded to YouTube — you do that yourself in the app (add a
+# trending sound!). Runs alongside the auto-poster without touching it: no YouTube
+# credentials, no dashboard writes, no daily-quota state.
+
+on:
+  schedule:
+    # Once a day, 7am Eastern (11:00 UTC, EDT) — videos are ready when you wake up.
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "How many videos to build"
+        default: "2"
+        type: string
+      date:
+        description: "Date YYYY-MM-DD (blank = today)"
+        default: ""
+        type: string
+
+# Never two factory runs building into the same release at once.
+concurrency:
+  group: cooldecide-factory
+  cancel-in-progress: false
+
+permissions:
+  contents: write        # create the Release that holds the downloadable videos
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ffmpeg + emoji font
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-noto-color-emoji
+
+      - name: Install deps
+        run: pip install -q -r requirements.txt
+
+      - name: Build the day's videos (no upload)
+        env:
+          # Same optional keys the poster uses — richer questions + real art. The
+          # factory still builds (from the built-in pool) if they're unset.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          POLLINATIONS_TOKEN: ${{ secrets.POLLINATIONS_TOKEN }}
+          FACTORY_COUNT: ${{ github.event.inputs.count || '2' }}
+        run: |
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            python -u factory.py --date "${{ github.event.inputs.date }}"
+          else
+            python -u factory.py
+          fi
+
+      - name: Publish the videos as a downloadable Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DATE=$(python -c "import json;print(json.load(open('output/factory/manifest.json'))['date'])")
+          TAG="videos-$DATE"
+          # Replace any earlier release for the same day so re-runs don't pile up.
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" \
+            output/factory/video_*.mp4 \
+            output/factory/video_*.txt \
+            output/factory/manifest.json \
+            --title "🎬 Videos for $DATE — download & upload" \
+            --notes-file output/factory/release_notes.md
+
+      # Also keep them as a workflow artifact (belt-and-suspenders; 14-day retention).
+      - name: Upload artifact copy
+        uses: actions/upload-artifact@v4
+        with:
+          name: cooldecide-videos
+          path: output/factory/
+          retention-days: 14
+          if-no-files-found: error
