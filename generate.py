@@ -295,7 +295,10 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
                      "a new pairing — both options must be new:\n- "
                      + "\n- ".join((avoid or [])[-40:])) if avoid else ""
         prompt = (
-            f"Write {n + 3} original {kind} for a kids' YouTube Shorts channel. {_SAFE}\n"
+            # "for a kids' channel" used to sit here, above every other instruction,
+            # and quietly outranked the teen brief below it. The channel's audience
+            # is teenagers; _SAFE still keeps the content clean.
+            f"Write {n + 3} original {kind} for a teen YouTube Shorts channel. {_SAFE}\n"
             f"Each needs two short options (2-6 words) and one fitting emoji per option. "
             f"Use clear object emojis, never plain colored squares/circles. Be creative and varied."
             f"{_DILEMMA if fmt == 'wyr' else ''}"
