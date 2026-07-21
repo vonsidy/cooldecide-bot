@@ -120,12 +120,25 @@ ENABLE_OUTRO = get("ENABLE_OUTRO", "0") == "1"
 # that lingers on a static end card just gets swiped.
 OUTRO_SECONDS = float(get("OUTRO_SECONDS", "1.7"))
 OUTRO_TAIL = float(get("OUTRO_TAIL", "0.3"))
-# Retention teaser: flash the FINAL (hardest) round's card for this long before
-# round 1. Opens a loop ("can you get #3?") AND makes the Short loop seamlessly —
-# the end card's "which did you pick?" wraps straight back into the tease of the
-# question you just saw. Shorts counts rewatches, so loopability is pure reach.
-# 0 disables it.
-TEASER_SECONDS = float(get("TEASER_SECONDS", "0.8"))
+# Retention teaser: flash the FINAL round's card before round 1. OFF (0).
+#
+# It was meant to open a curiosity loop, but it spends the single most valuable
+# frame on the wrong thing. The viewer's first sight is a question they can't
+# answer yet, with a "BET YOU CAN'T CHOOSE" line over it — a hook that announces
+# itself as a hook, which a scroller is trained to swipe. Then at 0.8s it vanishes
+# and a DIFFERENT question appears, so anyone who did start reading is interrupted
+# and has to start over. Owner's call, and the right one: open on round 1: a real
+# question they can answer immediately, about their phone or their crush or school,
+# earns the stop on relevance instead of asking for it.
+#
+# Removing the outro made it redundant anyway. The loop used to be
+# end-card -> teaser; now it is final reveal -> teaser, which showed the last
+# round's question again immediately after revealing its answer. Without the teaser
+# the loop lands on round 1 — a new question right after a resolved one, which is
+# the wrap that actually invites a rewatch.
+#
+# Set to 0.8 to bring it back.
+TEASER_SECONDS = float(get("TEASER_SECONDS", "0"))
 # Owner's rule: every option panel shows REAL art — never an emoji stand-in. When
 # a round's art can't be produced, the round itself is swapped for one whose art
 # already exists (content.ensure_art) before anything renders.
