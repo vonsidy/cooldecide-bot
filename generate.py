@@ -37,7 +37,13 @@ _IMAGINATIVE = (
 # WYR lives or dies on the AGONY of the choice, not the whimsy of the options.
 # "Pet dragon vs pet dinosaur" is cute but easy; "never do homework again vs go on
 # a date with your crush" starts an argument in the comments. Owner's brief: make
-# picking hurt, and let a slice skew slightly older so teens argue too.
+# picking hurt, and write for TEENAGERS.
+#
+# Teen used to be a slice ("skew a good slice slightly older") sitting inside a brief
+# that said "kid" everywhere else — so the model averaged the two and landed young.
+# 13-17 is now the default and little-kid framing is banned outright. The fallback
+# pool already worked this way (content.several draws untopiced wyr from WYR_TEEN);
+# this makes the AI agree with it instead of contradicting it.
 _DILEMMA = (
     "\nMake every one GENUINELY HARD to choose — picking must HURT. Two shapes "
     "work:\n"
@@ -45,20 +51,24 @@ _DILEMMA = (
     "homework again' vs 'go on a date with your crush'.\n"
     "  * loss vs loss: two things they'd HATE to give up — 'give up YouTube "
     "forever' vs 'give up Instagram forever'.\n"
-    "STAY IN THE REAL WORLD teens and kids actually live in — that is what makes "
-    "them argue. AT LEAST 4 of every 5 must be real-life stakes they care about "
-    "TODAY: social media (Instagram vs TikTok vs Snapchat, losing your streak, "
-    "going viral, follower count), phones/screen time, school (homework, tests, "
-    "skipping, a strict teacher), friendships and popularity, gaming (rank, skins, "
-    "your main account), money/allowance, and an innocent crush (texting first, "
-    "sitting next to them, asking them out). Skew a good slice slightly OLDER "
-    "(13-18): crush, clout, streaks, driving, first job, being left on read. Keep "
-    "it totally clean. At most 1 in 5 may be imaginative (a power or a wish) — and "
-    "only if the choice still genuinely HURTS. NEVER whimsical creatures/pets "
-    "(dragons, unicorns, talking animals, magic genies): kids don't care about a "
-    "dragon that tells 500-year-old stories, they care about their phone and their "
-    "crush.\n"
-    "The test: imagine 100 kids voting — if it wouldn't split close to 50/50, "
+    "STAY IN THE REAL WORLD TEENAGERS actually live in — that is what makes them "
+    "argue. Write for 13-17 BY DEFAULT, not for little kids: the voter is in high "
+    "school, has a phone, a group chat and an opinion about who's fake. AT LEAST 4 "
+    "of every 5 must be real-life stakes they care about TODAY: social media "
+    "(Instagram vs TikTok vs Snapchat, losing your streak, going viral, follower "
+    "count, getting exposed in the comments), phones/screen time, school (tests, "
+    "grades, a strict teacher, group projects), friendships, popularity and social "
+    "standing (being talked about, getting left out of plans, the group chat), "
+    "gaming (rank, skins, your main account), money and a first job, independence "
+    "(driving, staying out, your own room), and an innocent crush (texting first, "
+    "sitting next to them, being left on read). Keep it totally clean. At most 1 in "
+    "5 may be imaginative (a power or a wish) — and only if the choice still "
+    "genuinely HURTS. NEVER whimsical creatures/pets (dragons, unicorns, talking "
+    "animals, magic genies) and never little-kid framing (recess, the playground, "
+    "your teacher's sticker chart, losing a tooth): a 15-year-old does not care "
+    "about a dragon that tells 500-year-old stories, they care about their phone, "
+    "their friends and their crush.\n"
+    "The test: imagine 100 TEENAGERS voting — if it wouldn't split close to 50/50, "
     "it's too easy, throw it away. 'Summer vs winter', 'dogs vs cats', 'pizza vs "
     "burgers' are failures: everyone already has an answer.\n"
     "BOTH options must point the SAME WAY: two things they WANT (dream vs dream) or "
@@ -69,7 +79,7 @@ _DILEMMA = (
     "something over, the question answers itself and the video is dead. Pair a cost "
     "with a COST ('text your crush first' vs 'wait forever for them to text you') "
     "and a gift with a GIFT.\n"
-    "BIGGEST failure to avoid — two nice-to-haves with NO downside, where a kid "
+    "BIGGEST failure to avoid — two nice-to-haves with NO downside, where a teen "
     "would be thrilled with EITHER and just shrug ('both are awesome, whatever'): "
     "'pet dragon vs pet unicorn', 'talking dog vs talking cat', 'fly vs be "
     "invisible', 'pet dragon vs pet phoenix'. Two cool things is NOT a dilemma. The "
@@ -80,11 +90,12 @@ _DILEMMA = (
 
 _PROMPTS = {
     # opinion formats: two fun options, each with one fitting emoji
-    "wyr": ("fun 'would you rather' dilemmas kids would genuinely argue about, where "
-            "picking one means painfully giving up the other (superpowers, gaming, "
-            "phones/social media, school, friendships, money, secret worlds)",
-            '{"a":"Never do homework again","a_emoji":"\\ud83c\\udf92","a_art":"a happy kid tossing homework papers into the air",'
-            '"b":"Get every video game for free","b_emoji":"\\ud83c\\udfae","b_art":"a kid surrounded by tall stacks of video games"}'),
+    "wyr": ("'would you rather' dilemmas TEENAGERS would genuinely argue about, where "
+            "picking one means painfully giving up the other (social media and clout, "
+            "the group chat, school, friendships and popularity, gaming, money and a "
+            "first job, independence, an innocent crush)",
+            '{"a":"Wake up with 1M followers","a_emoji":"\\ud83d\\udcc8","a_art":"a phone screen showing a million followers",'
+            '"b":"Your crush texts you first every day","b_emoji":"\\ud83d\\udcac","b_art":"a phone screen showing a text from a crush"}'),
     "this_or_that": ("quick 'this or that' preferences (one word or short each)",
                      '{"a":"Pizza","a_emoji":"\\ud83c\\udf55","a_art":"a slice of pizza",'
                      '"b":"Burgers","b_emoji":"\\ud83c\\udf54","b_art":"a cheeseburger"}'),
@@ -284,7 +295,10 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
                      "a new pairing — both options must be new:\n- "
                      + "\n- ".join((avoid or [])[-40:])) if avoid else ""
         prompt = (
-            f"Write {n + 3} original {kind} for a kids' YouTube Shorts channel. {_SAFE}\n"
+            # "for a kids' channel" used to sit here, above every other instruction,
+            # and quietly outranked the teen brief below it. The channel's audience
+            # is teenagers; _SAFE still keeps the content clean.
+            f"Write {n + 3} original {kind} for a teen YouTube Shorts channel. {_SAFE}\n"
             f"Each needs two short options (2-6 words) and one fitting emoji per option. "
             f"Use clear object emojis, never plain colored squares/circles. Be creative and varied."
             f"{_DILEMMA if fmt == 'wyr' else ''}"

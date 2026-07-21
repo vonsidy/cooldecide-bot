@@ -61,6 +61,15 @@ on:
         description: "Diagnose: probe the art endpoint (no video, no post), print results to the log"
         default: false
         type: boolean
+      preview_questions:
+        # Answers "did my prompt change work?", which a dry run CANNOT: dry runs
+        # blank ANTHROPIC_API_KEY to stay free, so they always render the fallback
+        # pool instead of AI output. Tuning a prompt and dry-running it shows you
+        # the pool you didn't touch. This makes one short Haiku call and prints the
+        # questions — no render, no upload, no state commit.
+        description: "Preview questions: print what the CURRENT prompt writes (no video, no post)"
+        default: false
+        type: boolean
 
 concurrency:
   group: cooldecide-bot       # never two uploads at once
@@ -120,18 +129,18 @@ jobs:
 
       # ---- everything below only runs when it's actually time --------------
       - name: Install ffmpeg + emoji font
-        if: steps.gate.outputs.post == 'true'
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.preview_questions != 'true'
         # fonts-noto-color-emoji is the fallback artwork on every art-less panel
         # (card._emoji). Without it those panels render blank on the Linux runner.
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-noto-color-emoji
 
       - name: Install deps
-        if: steps.gate.outputs.post == 'true'
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.preview_questions != 'true'
         run: pip install -q -r requirements.txt
 
       - name: Restore credentials
         # Not needed for a dry run — it never talks to YouTube.
-        if: steps.gate.outputs.post == 'true' && github.event.inputs.dry_run != 'true'
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.dry_run != 'true' && github.event.inputs.preview_questions != 'true'
         env:
           YT_CLIENT_SECRET_B64: ${{ secrets.YT_CLIENT_SECRET_B64 }}
           YT_TOKEN_B64: ${{ secrets.YT_TOKEN_B64 }}
@@ -146,8 +155,17 @@ jobs:
           POLLINATIONS_TOKEN: ${{ secrets.POLLINATIONS_TOKEN }}
         run: python -u tools/diag_art.py
 
+      - name: Preview questions
+        # Only the generator's own dependency — no ffmpeg, no Pillow, no render.
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.preview_questions == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          pip install -q anthropic
+          python -u tools/preview_questions.py 8
+
       - name: Build (and post unless dry run)
-        if: steps.gate.outputs.post == 'true' && github.event.inputs.diagnose != 'true'
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.diagnose != 'true' && github.event.inputs.preview_questions != 'true'
         env:
           # Optional: without it the bot uses its 161 built-in questions instead
           # of writing fresh ones. It still posts either way.
@@ -182,7 +200,7 @@ jobs:
       # The dashboard lives in a DIFFERENT repo, so this bot's own commit doesn't
       # reach it. Without this it silently freezes while the bot keeps posting.
       - name: Update the dashboard
-        if: steps.gate.outputs.post == 'true' && github.event.inputs.dry_run != 'true' && github.event.inputs.diagnose != 'true'
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.dry_run != 'true' && github.event.inputs.diagnose != 'true' && github.event.inputs.preview_questions != 'true'
         env:
           DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
         run: python -u sync_dashboard.py || true
@@ -216,8 +234,8 @@ jobs:
         run: rm -f client_secret.json yt_token.json
 
       - name: Save dashboard data
-        # A dry run / diagnose is a throwaway test — don't commit anything back.
-        if: always() && github.event.inputs.dry_run != 'true' && github.event.inputs.diagnose != 'true'
+        # A dry run / diagnose / preview is a throwaway test — don't commit anything back.
+        if: always() && github.event.inputs.dry_run != 'true' && github.event.inputs.diagnose != 'true' && github.event.inputs.preview_questions != 'true'
         # No `|| true`. This step used to swallow every failure into a green check:
         # a conflicted `pull --rebase` left a detached HEAD, the push failed, and the
         # `|| echo` fallback exited 0 — which is how a live video (JUFdeYK8DJ4) ended
