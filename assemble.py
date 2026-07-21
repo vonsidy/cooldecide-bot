@@ -457,11 +457,35 @@ def build(items, out_path: str, background: str | None = None) -> str:
             # this the music and the (quiet) TTS sit at the same level and neither
             # wins — measured at 0.9dB apart, i.e. inaudible.
             windows = "+".join(f"between(t,{a:.2f},{b:.2f})" for a, b in ducks)
-            parts.append(
-                f"[{idx}:a]volume='if(gt({windows},0),{config.MUSIC_DUCK},"
-                f"{config.MUSIC_VOLUME})':eval=frame[m]")
+            vol = (f"volume='if(gt({windows},0),{config.MUSIC_DUCK},"
+                   f"{config.MUSIC_VOLUME})':eval=frame")
         else:
-            parts.append(f"[{idx}:a]volume={config.MUSIC_VOLUME}[m]")
+            vol = f"volume={config.MUSIC_VOLUME}"
+
+        xf = config.MUSIC_LOOP_XFADE
+        if xf > 0 and total > xf * 2:
+            # Make the BED loop as cleanly as the video does.
+            #
+            # The Short is built to run back into its own opening, but the music was
+            # simply cut at `total`: an 18.5s loop under a ~24s video is severed
+            # 6s into its second pass, so a rewatch jumps from mid-phrase to the
+            # downbeat. Video length is set by how long the questions take to read,
+            # so it will essentially never be a whole number of music loops — this
+            # cannot be fixed by picking a better length.
+            #
+            # Instead the bed is grown by `xf` seconds and that overflow is faded
+            # back OVER its own opening. The tail and the head then contain the same
+            # audio summed in complementary ramps, so the moment the video restarts
+            # the music continues rather than restarts. normalize=0 keeps the sum at
+            # constant power instead of halving both halves.
+            parts.append(f"[{idx}:a]asplit=2[mraw1][mraw2]")
+            parts.append(f"[mraw1]atrim=0:{total:.3f},afade=t=in:st=0:d={xf}[mhead]")
+            parts.append(f"[mraw2]atrim={total:.3f}:{total + xf:.3f},"
+                         f"asetpts=PTS-STARTPTS,afade=t=out:st=0:d={xf}[mtail]")
+            parts.append(f"[mhead][mtail]amix=inputs=2:normalize=0[mlooped]")
+            parts.append(f"[mlooped]{vol}[m]")
+        else:
+            parts.append(f"[{idx}:a]{vol}[m]")
         labels.append("[m]")
         idx += 1
 

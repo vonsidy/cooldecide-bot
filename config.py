@@ -73,6 +73,12 @@ ENABLE_MUSIC = get("ENABLE_MUSIC", "1") == "1"
 # Music is the whole audio bed now (no voice competing), so it can sit up front —
 # but under the ticks/ding, which carry the timing.
 MUSIC_VOLUME = float(get("MUSIC_VOLUME", "0.55"))
+# The video loops, so the bed should too. The music is a ~18.5s loop under a ~24s
+# video, so cutting at the end severs it mid-phrase and a rewatch hears the jump.
+# Video length follows question length, so it will never be a whole number of music
+# loops — instead the bed's overflow is crossfaded back over its own opening (see
+# assemble.build). This is how long that blend takes. 0 disables it.
+MUSIC_LOOP_XFADE = float(get("MUSIC_LOOP_XFADE", "1.2"))
 SFX_VOLUME = float(get("SFX_VOLUME", "0.85"))
 # The spoken title needs to win its 1 second: edge-tts lands ~-24dB mean, so it
 # gets a lift AND the music drops out from under it.
