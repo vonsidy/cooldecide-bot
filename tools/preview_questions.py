@@ -12,7 +12,15 @@ from outside. So this makes the call ITSELF here, with the error visible, and on
 then hands off to the real function. When the two disagree, the fault is in parsing
 or validation rather than the API.
 
-    python tools/preview_questions.py [n] [fmt]
+    python tools/preview_questions.py [n] [fmt] [topic]
+
+`topic` matters more than it looks. content.several() calls generate() with a topic
+AND an avoid-list; this tool used to call it with neither, so the two disagreed about
+what the prompt does. Untopiced, the model has nothing steering it and reaches for
+whatever characters the prompt names — a rank preview came back 6/10 verbatim
+examples, which reads as a broken prompt but is an artifact of previewing it in a way
+production never runs it. Pass a topic to see what actually ships. Left off, it still
+shows the unsteered baseline, which is the honest worst case.
 """
 from __future__ import annotations
 import os
@@ -25,6 +33,7 @@ import generate  # noqa: E402
 
 n = int(sys.argv[1]) if len(sys.argv) > 1 else 8
 fmt = sys.argv[2] if len(sys.argv) > 2 else "wyr"
+topic = sys.argv[3] if len(sys.argv) > 3 else None
 
 key = generate._api_key()
 if not key:
@@ -51,8 +60,9 @@ except Exception:
     raise SystemExit(1)
 
 # ---- 2. what does the real function produce? ------------------------------
-print(f"asking for {n} '{fmt}' questions with the CURRENT prompt...\n")
-rows = generate.generate(fmt, n)
+_steer = f", topic={topic!r}" if topic else ", NO topic (unsteered baseline)"
+print(f"asking for {n} '{fmt}' questions with the CURRENT prompt{_steer}...\n")
+rows = generate.generate(fmt, n, topic=topic)
 
 if not rows:
     print("API works, but generate() still returned [] — so the model replied and")

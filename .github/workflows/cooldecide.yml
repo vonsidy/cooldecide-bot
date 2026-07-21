@@ -80,6 +80,16 @@ on:
         default: "wyr"
         type: choice
         options: [wyr, rank, this_or_that, trivia, higher_lower]
+      preview_topic:
+        # Real posts always pass a topic (content.several -> generate(topic=...)).
+        # Previewing without one is not the same call, and the difference is not
+        # cosmetic: unsteered, the model reaches for whatever characters the prompt
+        # names and returns the examples back. Pick a topic to see what ships;
+        # leave it blank for the unsteered baseline.
+        description: "Topic to steer the preview (blank = unsteered baseline)"
+        default: ""
+        type: choice
+        options: ["", food, powers, animals, gaming, magic, space, money, school]
 
 concurrency:
   group: cooldecide-bot       # never two uploads at once
@@ -172,7 +182,9 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           pip install -q anthropic
-          python -u tools/preview_questions.py 8 "${{ github.event.inputs.preview_format || 'wyr' }}"
+          python -u tools/preview_questions.py 8 \
+            "${{ github.event.inputs.preview_format || 'wyr' }}" \
+            "${{ github.event.inputs.preview_topic }}"
 
       - name: Build (and post unless dry run)
         if: steps.gate.outputs.post == 'true' && github.event.inputs.diagnose != 'true' && github.event.inputs.preview_questions != 'true'
