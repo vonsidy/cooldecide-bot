@@ -319,7 +319,12 @@ def build(items, out_path: str, background: str | None = None) -> str:
         seg_specs += [(f_vote, round(intro - ent_used, 3), not ent_frames),
                       (f3, cd, True), (f2, cd, True), (f1, cd, True)]
         seg_specs += [(p, step, False) for p in anim]
-        seg_specs.append((f_reveal, max(hold, 0.6), True))
+        # The reveal does NOT bounce. It used to, and it landed wrong: the count-up
+        # frames deliberately don't retrigger, so the whole run-up is smooth, and
+        # then a bounce fired on the final frame — a jolt arriving out of nowhere
+        # exactly where the eye is fixed on the number. The reveal already has its
+        # payoff in the ding and the bar filling; it doesn't need a shove too.
+        seg_specs.append((f_reveal, max(hold, 0.6), False))
         if has_sfx:
             cues += [(tick, clock + intro), (tick, clock + intro + cd),
                      (tick, clock + intro + 2 * cd), (ding, clock + intro + 3 * cd)]
