@@ -808,22 +808,25 @@ FORMATS = {
     "rank": ("WHO WOULD WIN", "Who would win", RANK, "opinion"),
 }
 
-# One format per weekday cycle, so the channel rotates through all five.
-# Which format each day gets. Would-you-rather appears 3x because it's the
-# flagship and has by far the deepest question pool; the rest get one slot each.
-# Which formats are LIVE, smallest-surface-first. Only would-you-rather has a pool
-# where every airing row carries a reviewed art hint, so only it goes out. The other
-# four are built and their bugs are fixed, but their pictures haven't been eyeballed
-# yet — and this channel's failures have all come from shipping something nobody
-# looked at. A format goes live when it has earned it, not when it exists.
+# What this channel posts, in order. Both formats are OPINION formats: two things
+# you'd want, and picking one costs you the other. That argument is the product —
+# it is what people comment on and what makes a short worth finishing.
 #
-# To bring one back: review its pictures (tools/contact_sheet.py), then add it here
-# or set ENABLED_FORMATS="wyr,trivia" in the environment. Adding a name is all it
-# takes; the rotation, topics and scheduling already handle it.
-ENABLED_FORMATS = [f.strip() for f in os.getenv("ENABLED_FORMATS", "wyr,rank").split(",") if f.strip()]
-
-_FULL_ROTATION = ["wyr", "this_or_that", "wyr", "higher_lower", "wyr", "rank", "trivia"]
-FORMAT_ROTATION = [f for f in _FULL_ROTATION if f in ENABLED_FORMATS] or ["wyr"]
+# wyr takes 3 of 4 slots as the flagship (127-row pool, deepest by far); rank is the
+# 'WHO WOULD WIN' fights. Both are written for 13-17.
+#
+# This is the whole list on purpose. It used to be a 7-slot pattern filtered by an
+# ENABLED_FORMATS env var, which meant the rotation you could read was not the
+# rotation that ran, and the two were only ever reconciled by tracing three
+# constants. There is one constant now and it says what airs.
+#
+# The other three formats in FORMATS still exist and still work — they are kept for
+# a separate channel, not dead code. this_or_that is opinion but toothless by this
+# channel's standard ("Dragon vs Unicorn" — everyone already has an answer, which
+# _DILEMMA names as a failure). trivia and higher_lower are FACTUAL: one answer is
+# right, so there is nothing to argue about. To air one here, add it to this list —
+# but teen-frame its prompt first, or it drags the channel back to little kids.
+FORMAT_ROTATION = ["wyr", "wyr", "wyr", "rank"]
 
 
 def format_for(date: str, slot: int = 0) -> str:
