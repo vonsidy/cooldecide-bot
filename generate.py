@@ -102,22 +102,31 @@ _PROMPTS = {
     # "matchups" alone wasn't enough — with a money theme it produced "Who would
     # win: owning every video game vs owning every pizza restaurant", which is a
     # would-you-rather wearing a battle's label. Both sides must be able to FIGHT.
-    "rank": ("'who would win' FIGHTS kids are obsessed with, between FAMOUS, instantly "
-             "recognisable characters a kid knows today: superheroes and villains "
-             "(Spider-Man, Batman, Hulk, Venom, Iron Man), video-game and cartoon "
-             "characters (Mario, Sonic, Pikachu, Goku, Minecraft Steve), or famous "
-             "giant monsters (Godzilla, King Kong, a dragon, a T-rex). Mix BOTH kinds "
-             "of matchup: (1) classic 1-vs-1 dream fights (Spider-Man vs Batman, Mario "
-             "vs Sonic, Goku vs Superman); and (2) 'numbers vs power' battles pitting "
-             "many weaker famous characters against a few strong ones (100 Minions vs "
-             "1 Hulk, 1,000 Stormtroopers vs 5 Jedi, 20 Goombas vs 3 Marios) — for "
+    #
+    # Written for TEENAGERS, matching _DILEMMA. This spec said "kids" and "a kid
+    # knows today" while wyr had already moved to 13-17, so the channel alternated
+    # registers: three teen videos, then Harry Potter vs Elsa. The rotation is
+    # wyr/wyr/wyr/rank, so this was a quarter of everything posted. The examples do
+    # the real work here — the model reaches for whoever is named, and Minions and
+    # Goombas were pulling it young no matter what the adjective said.
+    "rank": ("'who would win' FIGHTS TEENAGERS argue about, between FAMOUS, instantly "
+             "recognisable characters a teenager knows today: anime heavyweights "
+             "(Goku, Naruto, Luffy, Saitama), superheroes and villains "
+             "(Spider-Man, Batman, Hulk, Venom, Thanos), video-game icons (Master "
+             "Chief, Bowser, the Ender Dragon, Sonic), or famous giant "
+             "monsters (Godzilla, King Kong, a dragon, a T-rex). Mix BOTH kinds "
+             "of matchup: (1) classic 1-vs-1 dream fights (Goku vs Superman, "
+             "Spider-Man vs Batman, Godzilla vs King Kong); and (2) 'numbers vs "
+             "power' battles pitting many weaker famous characters against a few "
+             "strong ones (1,000 Stormtroopers vs 5 Jedi, 100 Creepers vs 1 Hulk, "
+             "50 Pikachus vs 1 Godzilla) — for "
              "these keep the count in the option text and make the art show a CROWD vs "
              "a SINGLE or FEW (image models can't draw an exact number). Both sides "
              "must be FIGHTERS that can square up — never possessions, places, foods, "
              "or wishes. Cross-universe matchups are great; use real, well-known "
              "characters, never made-up ones",
-             '{"a":"100 Minions","a_emoji":"👾","a_art":"a big crowd of little yellow cartoon henchmen",'
-             '"b":"1 Hulk","b_emoji":"💚","b_art":"one huge green muscular superhero"}'),
+             '{"a":"1,000 Stormtroopers","a_emoji":"🤖","a_art":"a huge crowd of white-armoured soldiers",'
+             '"b":"5 Jedi","b_emoji":"⚔️","b_art":"five robed warriors holding glowing swords"}'),
     # Factual formats — a different JSON shape, because one answer is RIGHT.
     "trivia": ("fun general-knowledge quiz questions kids would enjoy guessing",
                '{"question":"Which planet is the biggest?","correct":"Jupiter",'
