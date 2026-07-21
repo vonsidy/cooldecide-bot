@@ -452,6 +452,7 @@ def build(items, out_path: str, background: str | None = None) -> str:
     if config.ENABLE_MUSIC and os.path.exists(music):
         # -stream_loop repeats the ~18s loop to cover any length; -t below cuts it.
         cmd += ["-stream_loop", "-1", "-i", music]
+        music_idx = idx
         if ducks:
             # Drop the bed under every spoken question, then bring it back. Without
             # this the music and the (quiet) TTS sit at the same level and neither
@@ -478,14 +479,32 @@ def build(items, out_path: str, background: str | None = None) -> str:
             # audio summed in complementary ramps, so the moment the video restarts
             # the music continues rather than restarts. normalize=0 keeps the sum at
             # constant power instead of halving both halves.
-            parts.append(f"[{idx}:a]asplit=2[mraw1][mraw2]")
-            parts.append(f"[mraw1]atrim=0:{total:.3f},afade=t=in:st=0:d={xf}[mhead]")
-            parts.append(f"[mraw2]atrim={total:.3f}:{total + xf:.3f},"
+            #
+            # The tail is a SECOND decode of the same file, not an asplit of the
+            # first. asplit looks cheaper and is what this did originally, but the
+            # two branches consume at wildly different rates: [mhead] wants frames
+            # from t=0 immediately, while [mtail] must discard ~`total` seconds
+            # before it emits anything. Nothing buffers a 20-second divergence, and
+            # on the GitHub runner's ffmpeg the split dropped frames instead — the
+            # bed came out in bursts with stretches of pure digital silence between
+            # them (measured: 29% of windows at -180 dB, vs 0% locally). It rendered
+            # fine on this Mac's ffmpeg, so it shipped, and three videos went out
+            # with no music before anyone heard it.
+            #
+            # Two inputs means two independent decoders, so neither branch waits on
+            # the other. Decoding the file twice costs a few MB and no meaningful
+            # time; a silent bed costs the whole video.
+            cmd += ["-stream_loop", "-1", "-i", music]
+            tail_idx = idx + 1
+            parts.append(f"[{music_idx}:a]atrim=0:{total:.3f},"
+                         f"afade=t=in:st=0:d={xf}[mhead]")
+            parts.append(f"[{tail_idx}:a]atrim={total:.3f}:{total + xf:.3f},"
                          f"asetpts=PTS-STARTPTS,afade=t=out:st=0:d={xf}[mtail]")
             parts.append(f"[mhead][mtail]amix=inputs=2:normalize=0[mlooped]")
             parts.append(f"[mlooped]{vol}[m]")
+            idx += 1                      # the extra music input consumed a slot
         else:
-            parts.append(f"[{idx}:a]{vol}[m]")
+            parts.append(f"[{music_idx}:a]{vol}[m]")
         labels.append("[m]")
         idx += 1
 
