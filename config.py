@@ -152,12 +152,25 @@ ART_REQUIRED = get("ART_REQUIRED", "1") == "1"
 # copy entirely. Keep it SUBTLE — this should register as "alive", not as a zoom
 # effect.
 #
-# The drift is ONE continuous cycle across the whole video, driven by absolute
-# time (see assemble._motion_vf) — not a per-segment ramp. A per-segment ramp
-# snapped back to 1.0 at every cut, which showed up as a skip between cards and as
-# a shake on the reveal, where the count-up is six segments inside half a second.
-# MOTION_MAX is the peak zoom; MOTION_PERIOD is how long one in-and-out breath
-# takes. Longer period = calmer. Both are safe to tune without touching code.
-MOTION_MAX = float(get("MOTION_MAX", "1.06"))       # peak zoom (6%)
-MOTION_PERIOD = float(get("MOTION_PERIOD", "16"))   # seconds per in+out cycle
+# The motion is a JELLY BOUNCE on each beat, not a slow drift. A new card or a
+# countdown tick pops in slightly oversized and wobbles down to rest — the springy
+# feel of a hand-edited Short, rather than a documentary pan. Owner's call: the
+# slow zoom read as tasteful but sleepy.
+#
+# Beats are marked per segment in assemble.build (the 3rd element of seg_specs).
+# The reveal count-up is deliberately NOT a beat: it is REVEAL_FRAMES segments
+# inside half a second, and bouncing each one is what read as a shake. Those frames
+# ride the tail of the preceding bounce.
+#
+#   zoom = MOTION_BASE + JELLY_POP * e^(-t/JELLY_DECAY) * cos(2*PI*t/JELLY_WOBBLE)
+#
+# JELLY_POP must stay BELOW MOTION_BASE-1.0: zoompan clamps zoom to >= 1, so a
+# trough under 1.0 flattens into a stutter on exactly the springy frames.
+#   bigger POP    = more bounce
+#   longer DECAY  = wobbles for longer before settling
+#   longer WOBBLE = slower, looser jelly; shorter = tighter, snappier
+MOTION_BASE = float(get("MOTION_BASE", "1.035"))    # resting zoom between bounces
+JELLY_POP = float(get("JELLY_POP", "0.03"))         # overshoot on the beat
+JELLY_DECAY = float(get("JELLY_DECAY", "0.26"))     # seconds to settle
+JELLY_WOBBLE = float(get("JELLY_WOBBLE", "0.38"))   # seconds per wobble
 MOTION_FPS = int(get("MOTION_FPS", "30"))

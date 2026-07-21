@@ -69,6 +69,28 @@ _CTA_FACTUAL = [
 ]
 
 
+# Homographs the TTS gets wrong, respelled for the EAR only. These never touch the
+# on-screen text — card.render draws item.a / item.b directly, so the caption stays
+# spelled correctly while the voice says the right word.
+#
+# "left on read" is the live example: `read` here is the past participle and should
+# rhyme with "red", but nothing in the spelling tells edge-tts that, so it says
+# "reed" and the line lands wrong. It came from the generator rather than the
+# curated bank, so it can reappear in any freshly-written question — which is why
+# this is a rule and not a one-off edit to a pool entry.
+_SAY_AS = [
+    (re.compile(r"\bon read\b", re.I), "on red"),          # left/leave someone on read
+    (re.compile(r"\bread receipts?\b", re.I), "red receipts"),
+]
+
+
+def _say(text: str) -> str:
+    """Respell for pronunciation. Audio only — never the caption."""
+    for pattern, replacement in _SAY_AS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
 def _spoken(item: content.Item, idx: int = 0, total: int = 1) -> tuple[str, str]:
     """(question read during vote, result read on reveal).
 
@@ -104,7 +126,7 @@ def _spoken(item: content.Item, idx: int = 0, total: int = 1) -> tuple[str, str]
             q = f"{rng.choice(_HOOKS_FACTUAL if factual else _HOOKS_OPINION)} {q}"
         if idx == total - 1:
             r = f"{r} {rng.choice(_CTA_FACTUAL if factual else _CTA_OPINION)}"
-    return q, r
+    return _say(q), _say(r)
 
 
 # One spoken line at the very start, naming the game. Everything after it is
@@ -166,7 +188,7 @@ def build(items, out_path: str, background: str | None = None) -> str:
             # "#3" ordinal — the scroller's first frame gets a real question, not noise.
             tease = content.teaser_hook(last.a, last.correct is not None)
             f_tease = card.teaser(last, os.path.join(work, "teaser.png"), tease)
-            seg_specs.append((f_tease, config.TEASER_SECONDS))
+            seg_specs.append((f_tease, config.TEASER_SECONDS, True))
             clock += config.TEASER_SECONDS
         except Exception as e:  # noqa: BLE001
             print("  (teaser skipped:", e, ")")
@@ -250,9 +272,13 @@ def build(items, out_path: str, background: str | None = None) -> str:
         # for retention if it drags. The tick/ding SFX and the running clock use the
         # same step so audio stays locked to the visual countdown.
         cd = config.COUNTDOWN_STEP
-        seg_specs += [(f_vote, intro), (f3, cd), (f2, cd), (f1, cd)]
-        seg_specs += [(p, step) for p in anim]
-        seg_specs.append((f_reveal, max(hold, 0.6)))
+        # 3rd element = "this is a new beat, bounce it". The count-up frames are the
+        # one place it must be False: they are REVEAL_FRAMES segments inside half a
+        # second, and re-triggering the bounce on each is what read as a shake.
+        # They ride the tail of the "1" bounce instead.
+        seg_specs += [(f_vote, intro, True), (f3, cd, True), (f2, cd, True), (f1, cd, True)]
+        seg_specs += [(p, step, False) for p in anim]
+        seg_specs.append((f_reveal, max(hold, 0.6), True))
         if has_sfx:
             cues += [(tick, clock + intro), (tick, clock + intro + cd),
                      (tick, clock + intro + 2 * cd), (ding, clock + intro + 3 * cd)]
@@ -275,44 +301,36 @@ def build(items, out_path: str, background: str | None = None) -> str:
             except Exception as e:  # noqa: BLE001
                 print("  (outro voice skipped:", e, ")")
         outro_len = round(max(olen + config.OUTRO_TAIL, config.OUTRO_SECONDS), 2)
-        seg_specs.append((f_out, outro_len))
+        seg_specs.append((f_out, outro_len, True))
         clock += outro_len
 
     total = round(clock, 2)
 
-    def _motion_vf(start_s: float) -> str:
-        """One continuous breathing zoom across the WHOLE video.
+    def _motion_vf(since_beat: float) -> str:
+        """A jelly bounce on each beat, settling to a slight resting zoom.
 
-        Every segment used to be a dead still, so nothing on screen moved for the
-        first 3.1 seconds — the teaser flash and then round 1's card, both frozen
-        while the question is read. On Shorts that reads as an image post rather
-        than a video, and the thumb moves before the question has been taken in;
-        the hook copy never gets a chance to do its job.
+        `since_beat` is seconds elapsed since the last thing that should bounce —
+        0.0 on a new card or countdown tick, and still counting up through the
+        reveal count-up frames, which ride the tail of the previous bounce instead
+        of retriggering (six retriggers inside half a second is what read as a
+        shake before).
 
-        The zoom is a function of ABSOLUTE video time, not of position within a
-        segment. That distinction is the whole fix. Ramping each segment
-        independently meant the zoom snapped back to 1.0 at every cut — visible as
-        a skip between cards, and much worse on the reveal, where the count-up is
-        REVEAL_FRAMES separate segments inside REVEAL_ANIM seconds: six zoom
-        restarts in half a second, which reads as a shake exactly when the number
-        lands. Driving off absolute time means neither can happen; there is no
-        per-segment state to reset.
+        The curve is a damped spring: an overshoot that wobbles down and settles.
 
-        Shape is a raised cosine rather than a linear ramp: its derivative is zero
-        at both turning points, so the drift eases in and out instead of reversing
-        with a visible snap. One period is MOTION_PERIOD seconds, so the frame
-        drifts in and back out slowly enough to feel alive but never to read as an
-        effect.
+            zoom = BASE + POP * e^(-t/DECAY) * cos(2*PI*t/WOBBLE)
+
+        POP is kept strictly below BASE so the trough never dips under 1.0 —
+        zoompan clamps zoom to >= 1, and a clamped trough flattens the bounce into
+        a stutter on exactly the frames meant to feel springy.
 
         The source is upscaled first because zoompan quantises its offsets to whole
-        source pixels — zooming a 1080-wide still directly visibly judders.
+        source pixels — bouncing a 1080-wide still directly visibly judders.
         """
         big_w, big_h = W * 2, H * 2
-        amp = config.MOTION_MAX - 1.0
-        fps, period = config.MOTION_FPS, config.MOTION_PERIOD
-        # t = this segment's start + elapsed within it; `on` is the output frame index.
-        t = f"({start_s:.3f}+on/{fps})"
-        z = f"1+{amp:.4f}*(0.5-0.5*cos(2*PI*{t}/{period}))"
+        base, pop = config.MOTION_BASE, config.JELLY_POP
+        decay, wobble, fps = config.JELLY_DECAY, config.JELLY_WOBBLE, config.MOTION_FPS
+        t = f"({since_beat:.3f}+on/{fps})"
+        z = f"{base:.4f}+{pop:.4f}*exp(-{t}/{decay})*cos(2*PI*{t}/{wobble})"
         return (
             f"scale={big_w}:{big_h},"
             f"zoompan=z='{z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
@@ -324,12 +342,14 @@ def build(items, out_path: str, background: str | None = None) -> str:
     # duration, and -loop image inputs into a concat *filter* only emitted the
     # first frame — both dead ends, hence per-segment clips).
     seg_list = os.path.join(work, "segs.txt")
-    seg_start = 0.0          # absolute position of this segment — feeds the zoom
+    since_beat = 0.0         # seconds since the last bounce — resets on beat segments
     with open(seg_list, "w") as lst:
-        for i, (path, d) in enumerate(seg_specs):
+        for i, (path, d, beat) in enumerate(seg_specs):
+            if beat:
+                since_beat = 0.0
             seg = os.path.join(work, f"seg{i}.mp4")
             r = subprocess.run([FF, "-y", "-loop", "1", "-i", path, "-t", f"{d}", "-r", "30",
-                                "-vf", _motion_vf(seg_start), "-pix_fmt", "yuv420p",
+                                "-vf", _motion_vf(since_beat), "-pix_fmt", "yuv420p",
                                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", seg],
                                capture_output=True, text=True)
             if not os.path.exists(seg):
@@ -345,7 +365,7 @@ def build(items, out_path: str, background: str | None = None) -> str:
             if not os.path.exists(seg):
                 raise RuntimeError(f"segment {i} failed:\n{r.stderr[-800:]}")
             lst.write(f"file '{seg.replace(os.sep, '/')}'\n")
-            seg_start += d
+            since_beat += d
 
     # ---- audio: music bed + tick/ding cues (+ voice only if re-enabled) -------
     cmd = [FF, "-y", "-f", "concat", "-safe", "0", "-i", seg_list]
