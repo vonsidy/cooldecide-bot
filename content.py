@@ -829,20 +829,38 @@ FORMATS = {
 FORMAT_ROTATION = ["wyr", "wyr", "wyr", "rank"]
 
 
+# Posts per day. Must match scheduler.MAX_PER_DAY. Deliberately a literal and not
+# an import of it: MAX_PER_DAY reads an env var, and the rotation should not be
+# reshapeable by a value you cannot see from here.
+POSTS_PER_DAY = 2
+
+# The cycle restarts on this date, at FORMAT_ROTATION[0]. An anchor makes "what
+# airs next" a matter of counting posts from a fixed point, instead of whatever a
+# raw date ordinal happens to land on.
+_ROTATION_START = (2026, 7, 22)
+
+
 def format_for(date: str, slot: int = 0) -> str:
-    """The format for a given day.
+    """The format for one post — `slot` is which post of the day it is.
 
     run.py used to default to "wyr" and nothing ever called this, so the channel
-    would have posted would-you-rather EVERY day forever and the other four
-    formats would never have aired. Stepping the date through the rotation is what
-    actually makes it a five-format channel.
+    would have posted would-you-rather EVERY day forever. Stepping through the
+    rotation is what actually makes it a multi-format channel.
+
+    Advances ONE step per POST. It used to be `(day + slot)`, which advanced per
+    day AND per slot — so the last post of a day and the first post of the next
+    computed the same index, and every format aired twice back-to-back and then
+    disappeared. The 3:1 wyr:rank ratio was right on paper and arrived as two rank
+    videos in a row followed by three days without one, which reads as a channel
+    that changed its mind rather than one with a format.
     """
     import datetime as _dt
     try:
         day = _dt.date.fromisoformat(str(date)[:10]).toordinal()
     except ValueError:
         day = sum(ord(c) for c in str(date))
-    return FORMAT_ROTATION[(day + slot) % len(FORMAT_ROTATION)]
+    step = (day - _dt.date(*_ROTATION_START).toordinal()) * POSTS_PER_DAY + slot
+    return FORMAT_ROTATION[step % len(FORMAT_ROTATION)]
 
 
 # Which topic a built-in question belongs to. Only the FALLBACK pool needs this —
