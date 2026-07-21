@@ -186,3 +186,23 @@ DRIFT_PERIOD = float(get("DRIFT_PERIOD", "7"))      # seconds per breath
 SWAY_PIXELS = float(get("SWAY_PIXELS", "26"))       # x/y float, in 2x source pixels
 SWAY_PERIOD = float(get("SWAY_PERIOD", "9"))        # seconds per sway cycle
 MOTION_FPS = int(get("MOTION_FPS", "30"))
+
+# --- Panel entrance ------------------------------------------------------------
+# The frame-level motion above moves the card as one flat image, so both boxes
+# always travel together. This slides them in from OPPOSITE sides a beat apart, so
+# they read as two separate objects — the thing that actually makes a Short look
+# edited rather than animated.
+#
+# Sideways on purpose: the panels sit 16px under the header and just above the
+# footer pill, so a vertical entrance slides a box straight over the title (tried
+# it; it looks broken). Off the sides there is nothing to collide with.
+#
+# Frames are rendered by card.render rather than moved by a filter, because only
+# card.render knows where the panels are. A cached render is ~35ms, so this costs
+# about a second on a build that already takes minutes. Set PANEL_ENTRANCE=0 to
+# turn it off. Skipped automatically when a round's intro is too short to hold it.
+PANEL_ENTRANCE = float(get("PANEL_ENTRANCE", "0.6"))   # seconds of entrance (must cover STAGGER + settle)
+PANEL_SLIDE_PX = float(get("PANEL_SLIDE_PX", "680"))   # how far off-frame it starts
+PANEL_STAGGER = float(get("PANEL_STAGGER", "0.09"))    # how far B lags A
+PANEL_SPRING = float(get("PANEL_SPRING", "0.10"))      # settle time — must land ~0 by PANEL_ENTRANCE or the static card snaps
+PANEL_WOBBLE = float(get("PANEL_WOBBLE", "0.42"))      # overshoot period

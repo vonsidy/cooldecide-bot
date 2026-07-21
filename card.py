@@ -738,8 +738,34 @@ def outro(item, out_path: str) -> str:
     return out_path
 
 
+def _shift(canvas, dx: float, fn, *args, **kwargs) -> None:
+    """Draw a panel horizontally offset by dx, without touching _panel's geometry.
+
+    _panel positions a dozen things off `cx` and off literal x constants; threading
+    an offset through every one of them is a lot of surface for a cosmetic effect.
+    Instead the panel is drawn to a transparent full-size layer and composited back
+    shifted, so the box, its artwork, its label, its percentage and its bar all move
+    together as one object and anything pushed past the frame edge simply clips.
+
+    Vertical was the obvious axis and is the wrong one: panels sit 16px under the
+    header and just above the footer, so any meaningful dy slides a box straight
+    over the title or the "POINT AT YOUR PICK" pill. Sideways has nothing to hit.
+    """
+    dx = int(dx)
+    if dx == 0:
+        fn(canvas, *args, **kwargs)
+        return
+    layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    fn(layer, *args, **kwargs)
+    # dest/source pair does the shift and the clipping in one step, either direction.
+    canvas.alpha_composite(layer,
+                           dest=(max(0, dx), 0),
+                           source=(max(0, -dx), 0))
+
+
 def render(item, out_path: str, countdown: int | None = None, reveal: bool = False,
-           grow: float = 1.0, round_label: str = "") -> str:
+           grow: float = 1.0, round_label: str = "",
+           a_dx: float = 0.0, b_dx: float = 0.0) -> str:
     """`round_label` stamps an escalation promise under the header ("GETS HARDER",
     "SPLITS EVERYONE") — the on-screen version of the narrated hook, because a
     promise the viewer can't SEE can't hold them. Text only: the label renders in
@@ -822,9 +848,9 @@ def render(item, out_path: str, countdown: int | None = None, reveal: bool = Fal
         a_photo = b_photo = None            # see _is_number: nothing can draw "7"
         a_emoji = b_emoji = ""
 
-    _panel(canvas, a_top, panel_h, A_COLOR, item.a, a_emoji, item.a_pct,
+    _shift(canvas, a_dx, _panel, a_top, panel_h, A_COLOR, item.a, a_emoji, item.a_pct,
            reveal, a_win, item.correct == 0, factual, a_photo, grow)
-    _panel(canvas, b_top, panel_h, B_COLOR, item.b, b_emoji, item.b_pct,
+    _shift(canvas, b_dx, _panel, b_top, panel_h, B_COLOR, item.b, b_emoji, item.b_pct,
            reveal, not a_win, item.correct == 1, factual, b_photo, grow)
 
     # center chip: bright white badge with a colored ring + big number

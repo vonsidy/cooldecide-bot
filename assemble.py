@@ -140,6 +140,21 @@ _INTRO_LINE = {
 }
 
 
+def _slide_in(t: float) -> float:
+    """How far off-centre a panel still is, t seconds into its entrance.
+
+    Starts a full PANEL_SLIDE_PX out and springs to 0 with a slight overshoot, so
+    the box arrives with weight instead of gliding to a stop. Before its own start
+    (t < 0, the staggered second panel) it is still parked off-frame.
+    """
+    import math
+    if t <= 0:
+        return config.PANEL_SLIDE_PX
+    off = (config.PANEL_SLIDE_PX * math.exp(-t / config.PANEL_SPRING)
+           * math.cos(2 * math.pi * t / config.PANEL_WOBBLE))
+    return off if abs(off) > 1 else 0.0
+
+
 def _read_seconds(item: content.Item) -> float:
     """How long to hold the vote card, sized to how much there is to READ.
 
@@ -272,11 +287,37 @@ def build(items, out_path: str, background: str | None = None) -> str:
         # for retention if it drags. The tick/ding SFX and the running clock use the
         # same step so audio stays locked to the visual countdown.
         cd = config.COUNTDOWN_STEP
+
+        # ---- staggered panel entrance ---------------------------------------
+        # The frame-level motion moves the card as ONE flat image, so both boxes
+        # always travel together. Sliding them in from opposite sides, a beat
+        # apart, is the thing that makes them read as two separate objects.
+        # Rendered frames rather than an ffmpeg filter because only card.render
+        # knows where the panels are; a cached render is ~35ms, so a dozen frames
+        # a round costs about a second on a 5-minute build.
+        ent_frames, ent_used = [], 0.0
+        if config.PANEL_ENTRANCE > 0 and intro > config.PANEL_ENTRANCE + 0.3:
+            step_s = 1.0 / config.MOTION_FPS
+            for k in range(max(1, int(round(config.PANEL_ENTRANCE * config.MOTION_FPS)))):
+                t = k * step_s
+                f_ent = card.render(
+                    item, os.path.join(work, f"{n}_ent{k}.png"),
+                    countdown=(3 if n == 0 else None), round_label=round_label,
+                    a_dx=-_slide_in(t),
+                    b_dx=_slide_in(t - config.PANEL_STAGGER),
+                )
+                ent_frames.append((f_ent, step_s, k == 0))
+                ent_used += step_s
+        seg_specs += ent_frames
+
         # 3rd element = "this is a new beat, bounce it". The count-up frames are the
         # one place it must be False: they are REVEAL_FRAMES segments inside half a
         # second, and re-triggering the bounce on each is what read as a shake.
         # They ride the tail of the "1" bounce instead.
-        seg_specs += [(f_vote, intro, True), (f3, cd, True), (f2, cd, True), (f1, cd, True)]
+        # The vote card holds for whatever the entrance didn't use, so the round's
+        # total length — and every SFX cue timed off it — is unchanged.
+        seg_specs += [(f_vote, round(intro - ent_used, 3), not ent_frames),
+                      (f3, cd, True), (f2, cd, True), (f1, cd, True)]
         seg_specs += [(p, step, False) for p in anim]
         seg_specs.append((f_reveal, max(hold, 0.6), True))
         if has_sfx:
