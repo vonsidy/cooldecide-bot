@@ -280,36 +280,43 @@ def build(items, out_path: str, background: str | None = None) -> str:
 
     total = round(clock, 2)
 
-    def _motion_vf(i: int) -> str:
-        """A slow drift over each frame, alternating in and out.
+    def _motion_vf(start_s: float) -> str:
+        """One continuous breathing zoom across the WHOLE video.
 
         Every segment used to be a dead still, so nothing on screen moved for the
         first 3.1 seconds — the teaser flash and then round 1's card, both frozen
         while the question is read. On Shorts that reads as an image post rather
         than a video, and the thumb moves before the question has been taken in;
-        the hook copy never gets a chance to do its job. This costs nothing and
-        makes the frame feel alive.
+        the hook copy never gets a chance to do its job.
 
-        Alternating direction so consecutive cuts don't pulse identically, and the
-        source is upscaled first because zoompan quantises its offsets to whole
+        The zoom is a function of ABSOLUTE video time, not of position within a
+        segment. That distinction is the whole fix. Ramping each segment
+        independently meant the zoom snapped back to 1.0 at every cut — visible as
+        a skip between cards, and much worse on the reveal, where the count-up is
+        REVEAL_FRAMES separate segments inside REVEAL_ANIM seconds: six zoom
+        restarts in half a second, which reads as a shake exactly when the number
+        lands. Driving off absolute time means neither can happen; there is no
+        per-segment state to reset.
+
+        Shape is a raised cosine rather than a linear ramp: its derivative is zero
+        at both turning points, so the drift eases in and out instead of reversing
+        with a visible snap. One period is MOTION_PERIOD seconds, so the frame
+        drifts in and back out slowly enough to feel alive but never to read as an
+        effect.
+
+        The source is upscaled first because zoompan quantises its offsets to whole
         source pixels — zooming a 1080-wide still directly visibly judders.
-
-        The zoom is driven off `on` (the output frame counter), NOT by accumulating
-        zoompan's own `zoom` variable. Feeding a looped still gives one input frame
-        per output frame, and at d=1 zoompan restarts its cycle every input frame,
-        so `zoom+rate` re-evaluates from the base every time and never builds:
-        measured 0.04/255 mean change across 2 seconds, i.e. a still with extra
-        steps. Off `on` the ramp is linear and, more usefully, exact.
         """
         big_w, big_h = W * 2, H * 2
-        if i % 2 == 0:
-            z = f"min(1+{config.MOTION_RATE}*on,{config.MOTION_MAX})"
-        else:
-            z = f"max({config.MOTION_MAX}-{config.MOTION_RATE}*on,1.0)"
+        amp = config.MOTION_MAX - 1.0
+        fps, period = config.MOTION_FPS, config.MOTION_PERIOD
+        # t = this segment's start + elapsed within it; `on` is the output frame index.
+        t = f"({start_s:.3f}+on/{fps})"
+        z = f"1+{amp:.4f}*(0.5-0.5*cos(2*PI*{t}/{period}))"
         return (
             f"scale={big_w}:{big_h},"
             f"zoompan=z='{z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-            f":s={W}x{H}:fps={config.MOTION_FPS},setsar=1"
+            f":s={W}x{H}:fps={fps},setsar=1"
         )
 
     # Each frame becomes its own short clip, then the CLIPS are concatenated. The
@@ -317,11 +324,12 @@ def build(items, out_path: str, background: str | None = None) -> str:
     # duration, and -loop image inputs into a concat *filter* only emitted the
     # first frame — both dead ends, hence per-segment clips).
     seg_list = os.path.join(work, "segs.txt")
+    seg_start = 0.0          # absolute position of this segment — feeds the zoom
     with open(seg_list, "w") as lst:
         for i, (path, d) in enumerate(seg_specs):
             seg = os.path.join(work, f"seg{i}.mp4")
             r = subprocess.run([FF, "-y", "-loop", "1", "-i", path, "-t", f"{d}", "-r", "30",
-                                "-vf", _motion_vf(i), "-pix_fmt", "yuv420p",
+                                "-vf", _motion_vf(seg_start), "-pix_fmt", "yuv420p",
                                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", seg],
                                capture_output=True, text=True)
             if not os.path.exists(seg):
@@ -337,6 +345,7 @@ def build(items, out_path: str, background: str | None = None) -> str:
             if not os.path.exists(seg):
                 raise RuntimeError(f"segment {i} failed:\n{r.stderr[-800:]}")
             lst.write(f"file '{seg.replace(os.sep, '/')}'\n")
+            seg_start += d
 
     # ---- audio: music bed + tick/ding cues (+ voice only if re-enabled) -------
     cmd = [FF, "-y", "-f", "concat", "-safe", "0", "-i", seg_list]

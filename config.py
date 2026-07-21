@@ -102,9 +102,19 @@ REVEAL_SECONDS = float(get("REVEAL_SECONDS", "1.9"))
 # Taken from REVEAL_SECONDS, not added to it, so pacing doesn't regress.
 REVEAL_FRAMES = int(get("REVEAL_FRAMES", "6"))
 REVEAL_ANIM = float(get("REVEAL_ANIM", "0.5"))
-# End card. The video used to just stop on the last reveal — a dead beat exactly
-# when the viewer has an opinion and nothing to do with it.
-ENABLE_OUTRO = get("ENABLE_OUTRO", "1") == "1"
+# End card ("Comment which ones you picked!"). OFF: the Short is built to LOOP.
+#
+# A call-to-action card is a wall — it tells the viewer the video is over, and they
+# swipe. Ending on the final reveal instead means the last frame runs straight back
+# into the opening teaser, so a viewer who doesn't consciously decide to leave
+# watches it twice. Shorts counts rewatches as watch time, so a clean loop is worth
+# more reach than the comments the card was asking for — and the loop still asks
+# the question, just by starting over instead of by saying so.
+#
+# The teaser at the top (TEASER_SECONDS) is the other half of this: it flashes the
+# final round, which is exactly what the viewer has just seen resolved. Set to 1 to
+# put the ask back.
+ENABLE_OUTRO = get("ENABLE_OUTRO", "0") == "1"
 # Floor only — the card actually lasts as long as the spoken ask plus OUTRO_TAIL.
 # Keep it tight: once the ask has been said the card is doing nothing, and a Short
 # that lingers on a static end card just gets swiped.
@@ -127,7 +137,14 @@ ART_REQUIRED = get("ART_REQUIRED", "1") == "1"
 # card while the question is read). A motionless opening frame reads as an image
 # post on Shorts and gets swiped before the question lands, which wastes the hook
 # copy entirely. Keep it SUBTLE — this should register as "alive", not as a zoom
-# effect. MOTION_MAX is the zoom reached at the end of a segment.
-MOTION_RATE = float(get("MOTION_RATE", "0.0009"))   # zoom added per frame
-MOTION_MAX = float(get("MOTION_MAX", "1.075"))      # ~7.5% over a ~3s segment
+# effect.
+#
+# The drift is ONE continuous cycle across the whole video, driven by absolute
+# time (see assemble._motion_vf) — not a per-segment ramp. A per-segment ramp
+# snapped back to 1.0 at every cut, which showed up as a skip between cards and as
+# a shake on the reveal, where the count-up is six segments inside half a second.
+# MOTION_MAX is the peak zoom; MOTION_PERIOD is how long one in-and-out breath
+# takes. Longer period = calmer. Both are safe to tune without touching code.
+MOTION_MAX = float(get("MOTION_MAX", "1.06"))       # peak zoom (6%)
+MOTION_PERIOD = float(get("MOTION_PERIOD", "16"))   # seconds per in+out cycle
 MOTION_FPS = int(get("MOTION_FPS", "30"))
