@@ -306,22 +306,31 @@ def build(items, out_path: str, background: str | None = None) -> str:
 
     total = round(clock, 2)
 
-    def _motion_vf(since_beat: float) -> str:
-        """A jelly bounce on each beat, settling to a slight resting zoom.
+    def _motion_vf(since_beat: float, abs_s: float) -> str:
+        """Jelly bounce on the beat, over a float that never stops.
 
-        `since_beat` is seconds elapsed since the last thing that should bounce —
-        0.0 on a new card or countdown tick, and still counting up through the
-        reveal count-up frames, which ride the tail of the previous bounce instead
-        of retriggering (six retriggers inside half a second is what read as a
-        shake before).
+        Three layers, because a bounce alone is not enough. The spring settles in
+        about 0.8s, but a card is on screen for 2.3s — so with only a bounce the
+        frame is DEAD STILL for most of the time the viewer is looking at it, which
+        is the "boring text just standing there" this is meant to fix. The drift and
+        the sway carry the frame through the gap so it is never motionless.
 
-        The curve is a damped spring: an overshoot that wobbles down and settles.
+          BOUNCE  damped spring, retriggered on each beat — the punch
+                    POP * e^(-t_beat/DECAY) * cos(2*PI*t_beat/WOBBLE)
+          DRIFT   slow breathing that never stops, on ABSOLUTE time
+                    DRIFT * sin(2*PI*t_abs/DRIFT_PERIOD)
+          SWAY    gentle x/y float, two different periods so the path is a slow
+                  figure-of-eight rather than a line — reads as floating rather
+                  than as a zoom, which is most of what sells "alive"
 
-            zoom = BASE + POP * e^(-t/DECAY) * cos(2*PI*t/WOBBLE)
+        Both continuous layers run on absolute time, so they carry across cuts
+        without a seam; only the bounce resets, and only where a beat is marked
+        (never on the reveal count-up — see seg_specs).
 
-        POP is kept strictly below BASE so the trough never dips under 1.0 —
-        zoompan clamps zoom to >= 1, and a clamped trough flattens the bounce into
-        a stutter on exactly the frames meant to feel springy.
+        MOTION_BASE must exceed DRIFT+POP so the trough never dips under 1.0:
+        zoompan clamps zoom to >= 1, and a clamped trough turns the springiest
+        frames into a stutter. Peak zoom also has to stay off the card's margins —
+        MOTION_BASE+DRIFT+POP is a crop, and cropping too hard eats the title.
 
         The source is upscaled first because zoompan quantises its offsets to whole
         source pixels — bouncing a 1080-wide still directly visibly judders.
@@ -329,11 +338,19 @@ def build(items, out_path: str, background: str | None = None) -> str:
         big_w, big_h = W * 2, H * 2
         base, pop = config.MOTION_BASE, config.JELLY_POP
         decay, wobble, fps = config.JELLY_DECAY, config.JELLY_WOBBLE, config.MOTION_FPS
-        t = f"({since_beat:.3f}+on/{fps})"
-        z = f"{base:.4f}+{pop:.4f}*exp(-{t}/{decay})*cos(2*PI*{t}/{wobble})"
+        drift, dper = config.DRIFT_AMOUNT, config.DRIFT_PERIOD
+        sway, sper = config.SWAY_PIXELS, config.SWAY_PERIOD
+        tb = f"({since_beat:.3f}+on/{fps})"          # since the last beat
+        ta = f"({abs_s:.3f}+on/{fps})"               # absolute video time
+        z = (f"{base:.4f}"
+             f"+{pop:.4f}*exp(-{tb}/{decay})*cos(2*PI*{tb}/{wobble})"
+             f"+{drift:.4f}*sin(2*PI*{ta}/{dper})")
+        # Different periods on x and y, so the drift traces a figure-of-eight.
+        x = f"iw/2-(iw/zoom/2)+{sway:.1f}*sin(2*PI*{ta}/{sper})"
+        y = f"ih/2-(ih/zoom/2)+{sway:.1f}*cos(2*PI*{ta}/{sper * 1.6:.2f})"
         return (
             f"scale={big_w}:{big_h},"
-            f"zoompan=z='{z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+            f"zoompan=z='{z}':d=1:x='{x}':y='{y}'"
             f":s={W}x{H}:fps={fps},setsar=1"
         )
 
@@ -343,13 +360,14 @@ def build(items, out_path: str, background: str | None = None) -> str:
     # first frame — both dead ends, hence per-segment clips).
     seg_list = os.path.join(work, "segs.txt")
     since_beat = 0.0         # seconds since the last bounce — resets on beat segments
+    abs_s = 0.0              # absolute video time — the drift/sway never reset
     with open(seg_list, "w") as lst:
         for i, (path, d, beat) in enumerate(seg_specs):
             if beat:
                 since_beat = 0.0
             seg = os.path.join(work, f"seg{i}.mp4")
             r = subprocess.run([FF, "-y", "-loop", "1", "-i", path, "-t", f"{d}", "-r", "30",
-                                "-vf", _motion_vf(since_beat), "-pix_fmt", "yuv420p",
+                                "-vf", _motion_vf(since_beat, abs_s), "-pix_fmt", "yuv420p",
                                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", seg],
                                capture_output=True, text=True)
             if not os.path.exists(seg):
@@ -366,6 +384,7 @@ def build(items, out_path: str, background: str | None = None) -> str:
                 raise RuntimeError(f"segment {i} failed:\n{r.stderr[-800:]}")
             lst.write(f"file '{seg.replace(os.sep, '/')}'\n")
             since_beat += d
+            abs_s += d
 
     # ---- audio: music bed + tick/ding cues (+ voice only if re-enabled) -------
     cmd = [FF, "-y", "-f", "concat", "-safe", "0", "-i", seg_list]

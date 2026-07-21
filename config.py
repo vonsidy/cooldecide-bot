@@ -169,8 +169,20 @@ ART_REQUIRED = get("ART_REQUIRED", "1") == "1"
 #   bigger POP    = more bounce
 #   longer DECAY  = wobbles for longer before settling
 #   longer WOBBLE = slower, looser jelly; shorter = tighter, snappier
-MOTION_BASE = float(get("MOTION_BASE", "1.035"))    # resting zoom between bounces
-JELLY_POP = float(get("JELLY_POP", "0.03"))         # overshoot on the beat
-JELLY_DECAY = float(get("JELLY_DECAY", "0.26"))     # seconds to settle
-JELLY_WOBBLE = float(get("JELLY_WOBBLE", "0.38"))   # seconds per wobble
+# A bounce alone still left the frame dead: the spring settles in ~0.8s but a card
+# is up for ~2.3s, so most of its screen time was motionless — the "boring text
+# just standing there" problem. DRIFT and SWAY run on absolute time and never
+# settle, so the frame is always moving; the bounce rides on top as the punch.
+#
+# Peak zoom is MOTION_BASE+DRIFT_AMOUNT+JELLY_POP and is a CROP — push it too far
+# and it eats the title. Trough is MOTION_BASE-DRIFT_AMOUNT-JELLY_POP and must stay
+# above 1.0 or zoompan clamps it and the bounce stutters.
+MOTION_BASE = float(get("MOTION_BASE", "1.055"))    # zoom the motion oscillates around
+JELLY_POP = float(get("JELLY_POP", "0.035"))        # overshoot on the beat
+JELLY_DECAY = float(get("JELLY_DECAY", "0.26"))     # seconds for the bounce to settle
+JELLY_WOBBLE = float(get("JELLY_WOBBLE", "0.36"))   # seconds per wobble
+DRIFT_AMOUNT = float(get("DRIFT_AMOUNT", "0.014"))  # never-stopping breath
+DRIFT_PERIOD = float(get("DRIFT_PERIOD", "7"))      # seconds per breath
+SWAY_PIXELS = float(get("SWAY_PIXELS", "26"))       # x/y float, in 2x source pixels
+SWAY_PERIOD = float(get("SWAY_PERIOD", "9"))        # seconds per sway cycle
 MOTION_FPS = int(get("MOTION_FPS", "30"))
