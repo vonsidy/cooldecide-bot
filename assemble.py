@@ -69,6 +69,28 @@ _CTA_FACTUAL = [
 ]
 
 
+# Homographs the TTS gets wrong, respelled for the EAR only. These never touch the
+# on-screen text — card.render draws item.a / item.b directly, so the caption stays
+# spelled correctly while the voice says the right word.
+#
+# "left on read" is the live example: `read` here is the past participle and should
+# rhyme with "red", but nothing in the spelling tells edge-tts that, so it says
+# "reed" and the line lands wrong. It came from the generator rather than the
+# curated bank, so it can reappear in any freshly-written question — which is why
+# this is a rule and not a one-off edit to a pool entry.
+_SAY_AS = [
+    (re.compile(r"\bon read\b", re.I), "on red"),          # left/leave someone on read
+    (re.compile(r"\bread receipts?\b", re.I), "red receipts"),
+]
+
+
+def _say(text: str) -> str:
+    """Respell for pronunciation. Audio only — never the caption."""
+    for pattern, replacement in _SAY_AS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
 def _spoken(item: content.Item, idx: int = 0, total: int = 1) -> tuple[str, str]:
     """(question read during vote, result read on reveal).
 
@@ -104,7 +126,7 @@ def _spoken(item: content.Item, idx: int = 0, total: int = 1) -> tuple[str, str]
             q = f"{rng.choice(_HOOKS_FACTUAL if factual else _HOOKS_OPINION)} {q}"
         if idx == total - 1:
             r = f"{r} {rng.choice(_CTA_FACTUAL if factual else _CTA_OPINION)}"
-    return q, r
+    return _say(q), _say(r)
 
 
 # One spoken line at the very start, naming the game. Everything after it is
@@ -116,6 +138,68 @@ _INTRO_LINE = {
     "higher_lower": "Which one is bigger?",
     "trivia": "Quiz time!",
 }
+
+
+def _link_or_copy(src: str, dst: str) -> None:
+    """Cheap duplicate for frames that don't change (teaser / outro stills)."""
+    import shutil
+    try:
+        os.link(src, dst)
+    except OSError:
+        shutil.copyfile(src, dst)
+
+
+def _panel_dy(abs_s: float, since_beat: float, which: int) -> float:
+    """Vertical offset for one panel — its own float, plus the shared beat squash.
+
+    Two layers, and the point of both is that the boxes are never doing the same
+    thing at the same moment:
+
+      BOB    a slow rise-and-fall on its own period per panel, on ABSOLUTE time.
+             The periods are deliberately not multiples of each other, so the two
+             boxes drift in and out of phase instead of locking together.
+      SQUASH on each beat the panels move TOWARD each other and spring back —
+             panel A down, panel B up — like the card compressing. Toward, because
+             that is where the room is: the 200px VS gap. Outward would push panel
+             A into the title and panel B into the footer pill within a few pixels.
+
+    Both layers are RECTIFIED so each panel only ever moves into the gap — panel A
+    strictly down, panel B strictly up, never past its resting position. That is not
+    a stylistic choice: a signed oscillation of this size sends panel A 25px up into
+    a 16px gap and it clips the title. Rectifying keeps every pixel of travel inside
+    the 200px the layout actually has spare.
+
+    Kept deliberately small. The whole point of the effect is that the frame feels
+    alive; the moment a box moves far enough to make its label hard to track, it has
+    cost more than it bought.
+    """
+    import math
+    period = config.BOB_PERIOD_A if which == 0 else config.BOB_PERIOD_B
+    phase = 0.0 if which == 0 else math.pi / 2          # never peak together
+    # 0.5-0.5cos: a sine rectified to 0..1, so the float only ever goes gap-ward.
+    bob = config.BOB_PIXELS * (0.5 - 0.5 * math.cos(
+        2 * math.pi * abs_s / period + phase))
+    # (1+cos) likewise: starts at full squash, wobbles down to nothing, never negative.
+    squash = (config.SQUASH_PIXELS
+              * math.exp(-since_beat / config.SQUASH_DECAY)
+              * (1 + math.cos(2 * math.pi * since_beat / config.SQUASH_WOBBLE)))
+    total = bob + squash
+    return total if which == 0 else -total
+
+
+def _slide_in(t: float) -> float:
+    """How far off-centre a panel still is, t seconds into its entrance.
+
+    Starts a full PANEL_SLIDE_PX out and springs to 0 with a slight overshoot, so
+    the box arrives with weight instead of gliding to a stop. Before its own start
+    (t < 0, the staggered second panel) it is still parked off-frame.
+    """
+    import math
+    if t <= 0:
+        return config.PANEL_SLIDE_PX
+    off = (config.PANEL_SLIDE_PX * math.exp(-t / config.PANEL_SPRING)
+           * math.cos(2 * math.pi * t / config.PANEL_WOBBLE))
+    return off if abs(off) > 1 else 0.0
 
 
 def _read_seconds(item: content.Item) -> float:
@@ -166,7 +250,7 @@ def build(items, out_path: str, background: str | None = None) -> str:
             # "#3" ordinal — the scroller's first frame gets a real question, not noise.
             tease = content.teaser_hook(last.a, last.correct is not None)
             f_tease = card.teaser(last, os.path.join(work, "teaser.png"), tease)
-            seg_specs.append((f_tease, config.TEASER_SECONDS))
+            seg_specs.append((f_tease, config.TEASER_SECONDS, True))
             clock += config.TEASER_SECONDS
         except Exception as e:  # noqa: BLE001
             print("  (teaser skipped:", e, ")")
@@ -189,25 +273,35 @@ def build(items, out_path: str, background: str | None = None) -> str:
             round_label = "GETS HARDER"
         else:
             round_label = ""
-        f_vote = card.render(item, os.path.join(work, f"{n}_vote.png"), countdown=None,
-                             round_label=round_label)
-        f3 = card.render(item, os.path.join(work, f"{n}_c3.png"), countdown=3,
-                         round_label=round_label)
-        f2 = card.render(item, os.path.join(work, f"{n}_c2.png"), countdown=2,
-                         round_label=round_label)
-        f1 = card.render(item, os.path.join(work, f"{n}_c1.png"), countdown=1,
-                         round_label=round_label)
+        # Round 1 opens with the clock ALREADY RUNNING instead of a neutral "VS".
+        # The countdown was the only thing on screen creating urgency and it did not
+        # appear until ~3.1s — after the stay/swipe decision has been made. The chip
+        # is the same size and position either way (card.render just swaps the glyph),
+        # so nothing jumps when it starts ticking; the viewer simply meets a timer on
+        # frame 1 rather than a label. Later rounds keep "VS" — they already have the
+        # viewer, and the versus framing is the format's identity.
+        def _state(**kw):
+            """A frame's worth of card.render arguments, minus the motion offsets.
+
+            Nothing is rendered here any more. Each panel now carries its own
+            motion, so a state can no longer be a single still held for N frames —
+            every frame is a fresh render with its own offsets (see the frame walk
+            below). This just records WHAT to draw; when and where is decided later.
+            """
+            return dict(item=item, round_label=round_label, **kw)
+
+        st_vote = _state(countdown=(3 if n == 0 else None), slide=True)
+        st_3 = _state(countdown=3)
+        st_2 = _state(countdown=2)
+        st_1 = _state(countdown=1)
         # Opinion reveals COUNT UP: a few frames of the bar growing and the number
         # climbing, so the result lands as an event instead of just being there.
         # Factual reveals are a single frame — CORRECT!/NOPE has nothing to count.
         anim = []
         if item.correct is None and config.REVEAL_FRAMES > 1:
             for k in range(1, config.REVEAL_FRAMES):
-                anim.append(card.render(item, os.path.join(work, f"{n}_rev{k}.png"),
-                                        reveal=True, grow=k / config.REVEAL_FRAMES,
-                                        round_label=round_label))
-        f_reveal = card.render(item, os.path.join(work, f"{n}_reveal.png"), reveal=True,
-                               round_label=round_label)
+                anim.append(_state(reveal=True, grow=k / config.REVEAL_FRAMES))
+        st_reveal = _state(reveal=True)
 
         if config.ENABLE_VOICE:
             q_text, r_text = _spoken(item, n, len(items))
@@ -242,9 +336,21 @@ def build(items, out_path: str, background: str | None = None) -> str:
         # for retention if it drags. The tick/ding SFX and the running clock use the
         # same step so audio stays locked to the visual countdown.
         cd = config.COUNTDOWN_STEP
-        seg_specs += [(f_vote, intro), (f3, cd), (f2, cd), (f1, cd)]
-        seg_specs += [(p, step) for p in anim]
-        seg_specs.append((f_reveal, max(hold, 0.6)))
+
+
+        # 3rd element = "this is a beat" — the panels squash toward each other and
+        # spring back. The count-up frames are the one place it must be False: they
+        # are REVEAL_FRAMES states inside half a second, and re-triggering on each
+        # is what read as a shake. They ride the tail of the "1" beat instead.
+        seg_specs += [(st_vote, intro, True),
+                      (st_3, cd, True), (st_2, cd, True), (st_1, cd, True)]
+        seg_specs += [(p, step, False) for p in anim]
+        # The reveal does NOT bounce. It used to, and it landed wrong: the count-up
+        # frames deliberately don't retrigger, so the whole run-up is smooth, and
+        # then a bounce fired on the final frame — a jolt arriving out of nowhere
+        # exactly where the eye is fixed on the number. The reveal already has its
+        # payoff in the ding and the bar filling; it doesn't need a shove too.
+        seg_specs.append((st_reveal, max(hold, 0.6), False))
         if has_sfx:
             cues += [(tick, clock + intro), (tick, clock + intro + cd),
                      (tick, clock + intro + 2 * cd), (ding, clock + intro + 3 * cd)]
@@ -267,29 +373,78 @@ def build(items, out_path: str, background: str | None = None) -> str:
             except Exception as e:  # noqa: BLE001
                 print("  (outro voice skipped:", e, ")")
         outro_len = round(max(olen + config.OUTRO_TAIL, config.OUTRO_SECONDS), 2)
-        seg_specs.append((f_out, outro_len))
+        seg_specs.append((f_out, outro_len, True))
         clock += outro_len
 
     total = round(clock, 2)
 
-    # Each frame becomes its own short clip, then the CLIPS are concatenated. The
-    # concat *demuxer* handles videos correctly (it silently drops an image's
-    # duration, and -loop image inputs into a concat *filter* only emitted the
-    # first frame — both dead ends, hence per-segment clips).
-    seg_list = os.path.join(work, "segs.txt")
-    with open(seg_list, "w") as lst:
-        for i, (path, d) in enumerate(seg_specs):
-            seg = os.path.join(work, f"seg{i}.mp4")
-            r = subprocess.run([FF, "-y", "-loop", "1", "-i", path, "-t", f"{d}", "-r", "30",
-                                "-vf", f"scale={W}:{H},setsar=1", "-pix_fmt", "yuv420p",
-                                "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", seg],
-                               capture_output=True, text=True)
-            if not os.path.exists(seg):
-                raise RuntimeError(f"segment {i} failed:\n{r.stderr[-800:]}")
-            lst.write(f"file '{seg.replace(os.sep, '/')}'\n")
+    def _frame_motion() -> str:
+        """Slow drift and sway over the finished frame sequence.
+
+        The BOUNCE used to live here and no longer does — it moved onto the panels,
+        which is the whole point of rendering per frame: a filter over the finished
+        frame can only move the card as one flat image, so anything applied here is
+        something both boxes do identically. What is left is the gentle whole-frame
+        float that carries the composition; the character comes from the panels.
+
+        Runs on `on`, the absolute output frame index, so there is nothing to reset
+        and no seam anywhere — the segment boundaries that used to need careful
+        offsetting are gone entirely.
+
+        The source is upscaled first because zoompan quantises its offsets to whole
+        source pixels — drifting a 1080-wide still directly visibly judders.
+        """
+        fps = config.MOTION_FPS
+        base, drift, dper = config.MOTION_BASE, config.DRIFT_AMOUNT, config.DRIFT_PERIOD
+        sway, sper = config.SWAY_PIXELS, config.SWAY_PERIOD
+        t = f"(on/{fps})"
+        z = f"{base:.4f}+{drift:.4f}*sin(2*PI*{t}/{dper})"
+        x = f"iw/2-(iw/zoom/2)+{sway:.1f}*sin(2*PI*{t}/{sper})"
+        y = f"ih/2-(ih/zoom/2)+{sway:.1f}*cos(2*PI*{t}/{sper * 1.6:.2f})"
+        return (f"scale={W * 2}:{H * 2},"
+                f"zoompan=z='{z}':d=1:x='{x}':y='{y}'"
+                f":s={W}x{H}:fps={fps},setsar=1")
+
+    fps = config.MOTION_FPS
+    since_beat = 0.0         # since the last beat — the panels' squash rides this
+    abs_s = 0.0              # absolute video time — the bob and the drift never reset
+    frame_i = 0
+    for st, dur, beat in seg_specs:
+        if beat:
+            since_beat = 0.0
+        n_frames = max(1, int(round(dur * fps)))
+        for k in range(n_frames):
+            t_in = k / fps
+            dst = os.path.join(work, f"f{frame_i:05d}.png")
+            if isinstance(st, str):
+                # Teaser / outro are pre-rendered by a different card function and
+                # have no panels to move — hold the still.
+                if k == 0:
+                    _link_or_copy(st, dst)
+                else:
+                    _link_or_copy(os.path.join(work, f"f{frame_i - 1:05d}.png"), dst)
+            else:
+                kw = {k2: v for k2, v in st.items() if k2 not in ("item", "slide")}
+                # Entrance only exists on the vote state, and only at its start.
+                slide = st.get("slide") and t_in < config.PANEL_ENTRANCE
+                card.render(
+                    st["item"], dst, **kw,
+                    a_dx=-_slide_in(t_in) if slide else 0.0,
+                    b_dx=_slide_in(t_in - config.PANEL_STAGGER) if slide else 0.0,
+                    a_dy=_panel_dy(abs_s, since_beat, 0),
+                    b_dy=_panel_dy(abs_s, since_beat, 1),
+                )
+            frame_i += 1
+            since_beat += 1.0 / fps
+            abs_s += 1.0 / fps
 
     # ---- audio: music bed + tick/ding cues (+ voice only if re-enabled) -------
-    cmd = [FF, "-y", "-f", "concat", "-safe", "0", "-i", seg_list]
+    # One encode over the rendered frame sequence, instead of a clip per segment.
+    # Every frame is already its own PNG (the panels move per frame), so there is
+    # nothing left to hold or concatenate — and this drops hundreds of ffmpeg
+    # invocations to one.
+    cmd = [FF, "-y", "-framerate", str(config.MOTION_FPS),
+           "-i", os.path.join(work, "f%05d.png")]
     parts, labels = [], []
     idx = 1
 
@@ -340,12 +495,15 @@ def build(items, out_path: str, background: str | None = None) -> str:
         labels.append(f"[s{idx}]")
         idx += 1
 
+    vf = f"[0:v]{_frame_motion()}[v]"
     if labels:
         parts.append("".join(labels) + f"amix=inputs={len(labels)}:normalize=0[mixed]")
         parts.append("[mixed]alimiter=limit=0.95[a]")   # stop the mix clipping
-        cmd += ["-filter_complex", ";".join(parts), "-map", "0:v", "-map", "[a]"]
+        # -vf and -filter_complex are mutually exclusive, so the video chain joins
+        # the complex graph rather than sitting alongside it.
+        cmd += ["-filter_complex", ";".join([vf] + parts), "-map", "[v]", "-map", "[a]"]
     else:
-        cmd += ["-map", "0:v", "-an"]
+        cmd += ["-filter_complex", vf, "-map", "[v]", "-an"]
     cmd += ["-t", str(total), "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
             "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-movflags", "+faststart", out_path]
     res = subprocess.run(cmd, capture_output=True, text=True)

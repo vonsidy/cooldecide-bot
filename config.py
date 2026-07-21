@@ -102,21 +102,131 @@ REVEAL_SECONDS = float(get("REVEAL_SECONDS", "1.9"))
 # Taken from REVEAL_SECONDS, not added to it, so pacing doesn't regress.
 REVEAL_FRAMES = int(get("REVEAL_FRAMES", "6"))
 REVEAL_ANIM = float(get("REVEAL_ANIM", "0.5"))
-# End card. The video used to just stop on the last reveal — a dead beat exactly
-# when the viewer has an opinion and nothing to do with it.
-ENABLE_OUTRO = get("ENABLE_OUTRO", "1") == "1"
+# End card ("Comment which ones you picked!"). OFF: the Short is built to LOOP.
+#
+# A call-to-action card is a wall — it tells the viewer the video is over, and they
+# swipe. Ending on the final reveal instead means the last frame runs straight back
+# into the opening teaser, so a viewer who doesn't consciously decide to leave
+# watches it twice. Shorts counts rewatches as watch time, so a clean loop is worth
+# more reach than the comments the card was asking for — and the loop still asks
+# the question, just by starting over instead of by saying so.
+#
+# The teaser at the top (TEASER_SECONDS) is the other half of this: it flashes the
+# final round, which is exactly what the viewer has just seen resolved. Set to 1 to
+# put the ask back.
+ENABLE_OUTRO = get("ENABLE_OUTRO", "0") == "1"
 # Floor only — the card actually lasts as long as the spoken ask plus OUTRO_TAIL.
 # Keep it tight: once the ask has been said the card is doing nothing, and a Short
 # that lingers on a static end card just gets swiped.
 OUTRO_SECONDS = float(get("OUTRO_SECONDS", "1.7"))
 OUTRO_TAIL = float(get("OUTRO_TAIL", "0.3"))
-# Retention teaser: flash the FINAL (hardest) round's card for this long before
-# round 1. Opens a loop ("can you get #3?") AND makes the Short loop seamlessly —
-# the end card's "which did you pick?" wraps straight back into the tease of the
-# question you just saw. Shorts counts rewatches, so loopability is pure reach.
-# 0 disables it.
-TEASER_SECONDS = float(get("TEASER_SECONDS", "0.8"))
+# Retention teaser: flash the FINAL round's card before round 1. OFF (0).
+#
+# It was meant to open a curiosity loop, but it spends the single most valuable
+# frame on the wrong thing. The viewer's first sight is a question they can't
+# answer yet, with a "BET YOU CAN'T CHOOSE" line over it — a hook that announces
+# itself as a hook, which a scroller is trained to swipe. Then at 0.8s it vanishes
+# and a DIFFERENT question appears, so anyone who did start reading is interrupted
+# and has to start over. Owner's call, and the right one: open on round 1: a real
+# question they can answer immediately, about their phone or their crush or school,
+# earns the stop on relevance instead of asking for it.
+#
+# Removing the outro made it redundant anyway. The loop used to be
+# end-card -> teaser; now it is final reveal -> teaser, which showed the last
+# round's question again immediately after revealing its answer. Without the teaser
+# the loop lands on round 1 — a new question right after a resolved one, which is
+# the wrap that actually invites a rewatch.
+#
+# Set to 0.8 to bring it back.
+TEASER_SECONDS = float(get("TEASER_SECONDS", "0"))
 # Owner's rule: every option panel shows REAL art — never an emoji stand-in. When
 # a round's art can't be produced, the round itself is swapped for one whose art
 # already exists (content.ensure_art) before anything renders.
 ART_REQUIRED = get("ART_REQUIRED", "1") == "1"
+
+# --- Motion -------------------------------------------------------------------
+# Every frame drifts slowly instead of sitting still. The video was a slideshow of
+# stills: nothing moved for the first 3.1s (the 0.8s teaser flash, then round 1's
+# card while the question is read). A motionless opening frame reads as an image
+# post on Shorts and gets swiped before the question lands, which wastes the hook
+# copy entirely. Keep it SUBTLE — this should register as "alive", not as a zoom
+# effect.
+#
+# The motion is a JELLY BOUNCE on each beat, not a slow drift. A new card or a
+# countdown tick pops in slightly oversized and wobbles down to rest — the springy
+# feel of a hand-edited Short, rather than a documentary pan. Owner's call: the
+# slow zoom read as tasteful but sleepy.
+#
+# Beats are marked per segment in assemble.build (the 3rd element of seg_specs).
+# The reveal count-up is deliberately NOT a beat: it is REVEAL_FRAMES segments
+# inside half a second, and bouncing each one is what read as a shake. Those frames
+# ride the tail of the preceding bounce.
+#
+#   zoom = MOTION_BASE + JELLY_POP * e^(-t/JELLY_DECAY) * cos(2*PI*t/JELLY_WOBBLE)
+#
+# JELLY_POP must stay BELOW MOTION_BASE-1.0: zoompan clamps zoom to >= 1, so a
+# trough under 1.0 flattens into a stutter on exactly the springy frames.
+#   bigger POP    = more bounce
+#   longer DECAY  = wobbles for longer before settling
+#   longer WOBBLE = slower, looser jelly; shorter = tighter, snappier
+# A bounce alone still left the frame dead: the spring settles in ~0.8s but a card
+# is up for ~2.3s, so most of its screen time was motionless — the "boring text
+# just standing there" problem. DRIFT and SWAY run on absolute time and never
+# settle, so the frame is always moving; the bounce rides on top as the punch.
+#
+# Peak zoom is MOTION_BASE+DRIFT_AMOUNT+JELLY_POP and is a CROP — push it too far
+# and it eats the title. Trough is MOTION_BASE-DRIFT_AMOUNT-JELLY_POP and must stay
+# above 1.0 or zoompan clamps it and the bounce stutters.
+MOTION_BASE = float(get("MOTION_BASE", "1.055"))    # zoom the motion oscillates around
+JELLY_POP = float(get("JELLY_POP", "0.035"))        # overshoot on the beat
+JELLY_DECAY = float(get("JELLY_DECAY", "0.26"))     # seconds for the bounce to settle
+JELLY_WOBBLE = float(get("JELLY_WOBBLE", "0.36"))   # seconds per wobble
+DRIFT_AMOUNT = float(get("DRIFT_AMOUNT", "0.014"))  # never-stopping breath
+DRIFT_PERIOD = float(get("DRIFT_PERIOD", "7"))      # seconds per breath
+SWAY_PIXELS = float(get("SWAY_PIXELS", "26"))       # x/y float, in 2x source pixels
+SWAY_PERIOD = float(get("SWAY_PERIOD", "9"))        # seconds per sway cycle
+MOTION_FPS = int(get("MOTION_FPS", "30"))
+
+# --- Panel entrance ------------------------------------------------------------
+# The frame-level motion above moves the card as one flat image, so both boxes
+# always travel together. This slides them in from OPPOSITE sides a beat apart, so
+# they read as two separate objects — the thing that actually makes a Short look
+# edited rather than animated.
+#
+# Sideways on purpose: the panels sit 16px under the header and just above the
+# footer pill, so a vertical entrance slides a box straight over the title (tried
+# it; it looks broken). Off the sides there is nothing to collide with.
+#
+# Frames are rendered by card.render rather than moved by a filter, because only
+# card.render knows where the panels are. A cached render is ~35ms, so this costs
+# about a second on a build that already takes minutes. Set PANEL_ENTRANCE=0 to
+# turn it off. Skipped automatically when a round's intro is too short to hold it.
+# --- Per-panel motion ----------------------------------------------------------
+# Each box carries its own physics. This is the reason every frame is rendered
+# rather than 10 stills being held: a filter over a finished frame can only move
+# the card as one flat image, so both boxes would always do the same thing.
+#
+# BOB is a slow rise-and-fall, one period per panel. The periods are deliberately
+# NOT multiples of each other, so the boxes drift in and out of phase forever
+# instead of locking into step.
+#
+# SQUASH fires on each beat: the panels move TOWARD each other and spring back.
+# Toward, because that is where the room is — the 200px VS gap. Outward would put
+# panel A into the title and panel B into the footer pill within a few pixels.
+#
+# Both are small on purpose. The frame should feel alive; the moment a box travels
+# far enough to make its label hard to track, the effect has cost more than it
+# bought. BOB_PIXELS + SQUASH_PIXELS is the worst-case excursion — keep the sum
+# under about 30px.
+BOB_PIXELS = float(get("BOB_PIXELS", "9"))          # idle float, per panel
+BOB_PERIOD_A = float(get("BOB_PERIOD_A", "2.7"))    # seconds, panel A
+BOB_PERIOD_B = float(get("BOB_PERIOD_B", "3.4"))    # seconds, panel B (not a multiple)
+SQUASH_PIXELS = float(get("SQUASH_PIXELS", "8"))    # beat squash (rectified: peak is 2x this)
+SQUASH_DECAY = float(get("SQUASH_DECAY", "0.20"))   # seconds to settle
+SQUASH_WOBBLE = float(get("SQUASH_WOBBLE", "0.34")) # seconds per wobble
+
+PANEL_ENTRANCE = float(get("PANEL_ENTRANCE", "0.6"))   # seconds of entrance (must cover STAGGER + settle)
+PANEL_SLIDE_PX = float(get("PANEL_SLIDE_PX", "680"))   # how far off-frame it starts
+PANEL_STAGGER = float(get("PANEL_STAGGER", "0.09"))    # how far B lags A
+PANEL_SPRING = float(get("PANEL_SPRING", "0.10"))      # settle time — must land ~0 by PANEL_ENTRANCE or the static card snaps
+PANEL_WOBBLE = float(get("PANEL_WOBBLE", "0.42"))      # overshoot period

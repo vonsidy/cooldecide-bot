@@ -159,7 +159,14 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             echo "DRY RUN — building only, will NOT post to YouTube"
-            python -u run.py
+            # No API key on a dry run. A dry run exists to check the RENDER — the
+            # motion, the layout, the timing — and freshly-written questions are
+            # thrown away with the artifact. generate.generate() returns [] without
+            # a key and content.several() falls back to the curated pool, so the
+            # build is identical in every way that a dry run is testing, and free.
+            # Eight dry runs in one evening otherwise costs real balance for
+            # questions nobody ever reads.
+            ANTHROPIC_API_KEY= python -u run.py
           else
             python -u run.py --upload
           fi
