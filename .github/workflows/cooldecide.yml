@@ -70,6 +70,16 @@ on:
         description: "Preview questions: print what the CURRENT prompt writes (no video, no post)"
         default: false
         type: boolean
+      preview_format:
+        # tools/preview_questions.py has always taken a format argument; the step
+        # just never passed one, so every preview showed wyr. That made rank's
+        # prompt effectively unpreviewable — which is how it stayed kid-framed
+        # after wyr moved to teen, unnoticed until a video came out Harry Potter
+        # vs Elsa. Only meaningful alongside preview_questions.
+        description: "Which format to preview (only used with preview_questions)"
+        default: "wyr"
+        type: choice
+        options: [wyr, rank, this_or_that, trivia, higher_lower]
 
 concurrency:
   group: cooldecide-bot       # never two uploads at once
@@ -162,7 +172,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           pip install -q anthropic
-          python -u tools/preview_questions.py 8
+          python -u tools/preview_questions.py 8 "${{ github.event.inputs.preview_format || 'wyr' }}"
 
       - name: Build (and post unless dry run)
         if: steps.gate.outputs.post == 'true' && github.event.inputs.diagnose != 'true' && github.event.inputs.preview_questions != 'true'
