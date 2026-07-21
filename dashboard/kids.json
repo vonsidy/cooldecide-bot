@@ -18,8 +18,8 @@
       "privacy": "public",
       "local_time": "03:23 PM",
       "manual": false,
-      "views": 92,
-      "likes": 0,
+      "views": 223,
+      "likes": 4,
       "comments": 0,
       "clipcheck": {
         "reportId": "d388fb07-3203-4be5-bb7d-737cf75b446f",
@@ -141,7 +141,7 @@
       "privacy": "public",
       "local_time": "10:39 AM",
       "manual": false,
-      "views": 31,
+      "views": 51,
       "likes": 1,
       "comments": 0,
       "clipcheck": {
@@ -771,11 +771,11 @@
       "d": "2026-07-21",
       "subs": 9,
       "views": 4182,
-      "likes": 42
+      "likes": 46
     }
   ],
   "started": null,
-  "updated": "2026-07-21T21:16:14+00:00",
+  "updated": "2026-07-21T22:14:32+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
