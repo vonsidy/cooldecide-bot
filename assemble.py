@@ -189,7 +189,15 @@ def build(items, out_path: str, background: str | None = None) -> str:
             round_label = "GETS HARDER"
         else:
             round_label = ""
-        f_vote = card.render(item, os.path.join(work, f"{n}_vote.png"), countdown=None,
+        # Round 1 opens with the clock ALREADY RUNNING instead of a neutral "VS".
+        # The countdown was the only thing on screen creating urgency and it did not
+        # appear until ~3.1s — after the stay/swipe decision has been made. The chip
+        # is the same size and position either way (card.render just swaps the glyph),
+        # so nothing jumps when it starts ticking; the viewer simply meets a timer on
+        # frame 1 rather than a label. Later rounds keep "VS" — they already have the
+        # viewer, and the versus framing is the format's identity.
+        f_vote = card.render(item, os.path.join(work, f"{n}_vote.png"),
+                             countdown=(3 if n == 0 else None),
                              round_label=round_label)
         f3 = card.render(item, os.path.join(work, f"{n}_c3.png"), countdown=3,
                          round_label=round_label)
@@ -272,6 +280,38 @@ def build(items, out_path: str, background: str | None = None) -> str:
 
     total = round(clock, 2)
 
+    def _motion_vf(i: int) -> str:
+        """A slow drift over each frame, alternating in and out.
+
+        Every segment used to be a dead still, so nothing on screen moved for the
+        first 3.1 seconds — the teaser flash and then round 1's card, both frozen
+        while the question is read. On Shorts that reads as an image post rather
+        than a video, and the thumb moves before the question has been taken in;
+        the hook copy never gets a chance to do its job. This costs nothing and
+        makes the frame feel alive.
+
+        Alternating direction so consecutive cuts don't pulse identically, and the
+        source is upscaled first because zoompan quantises its offsets to whole
+        source pixels — zooming a 1080-wide still directly visibly judders.
+
+        The zoom is driven off `on` (the output frame counter), NOT by accumulating
+        zoompan's own `zoom` variable. Feeding a looped still gives one input frame
+        per output frame, and at d=1 zoompan restarts its cycle every input frame,
+        so `zoom+rate` re-evaluates from the base every time and never builds:
+        measured 0.04/255 mean change across 2 seconds, i.e. a still with extra
+        steps. Off `on` the ramp is linear and, more usefully, exact.
+        """
+        big_w, big_h = W * 2, H * 2
+        if i % 2 == 0:
+            z = f"min(1+{config.MOTION_RATE}*on,{config.MOTION_MAX})"
+        else:
+            z = f"max({config.MOTION_MAX}-{config.MOTION_RATE}*on,1.0)"
+        return (
+            f"scale={big_w}:{big_h},"
+            f"zoompan=z='{z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+            f":s={W}x{H}:fps={config.MOTION_FPS},setsar=1"
+        )
+
     # Each frame becomes its own short clip, then the CLIPS are concatenated. The
     # concat *demuxer* handles videos correctly (it silently drops an image's
     # duration, and -loop image inputs into a concat *filter* only emitted the
@@ -281,9 +321,19 @@ def build(items, out_path: str, background: str | None = None) -> str:
         for i, (path, d) in enumerate(seg_specs):
             seg = os.path.join(work, f"seg{i}.mp4")
             r = subprocess.run([FF, "-y", "-loop", "1", "-i", path, "-t", f"{d}", "-r", "30",
-                                "-vf", f"scale={W}:{H},setsar=1", "-pix_fmt", "yuv420p",
+                                "-vf", _motion_vf(i), "-pix_fmt", "yuv420p",
                                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", seg],
                                capture_output=True, text=True)
+            if not os.path.exists(seg):
+                # Motion is a retention nicety; the upload is not. Fall back to the
+                # plain still rather than lose the day's video to a filter problem.
+                print(f"  (motion failed on segment {i}, using a still: "
+                      f"{r.stderr.strip()[-200:]})")
+                r = subprocess.run([FF, "-y", "-loop", "1", "-i", path, "-t", f"{d}",
+                                    "-r", "30", "-vf", f"scale={W}:{H},setsar=1",
+                                    "-pix_fmt", "yuv420p", "-c:v", "libx264",
+                                    "-preset", "veryfast", "-crf", "20", seg],
+                                   capture_output=True, text=True)
             if not os.path.exists(seg):
                 raise RuntimeError(f"segment {i} failed:\n{r.stderr[-800:]}")
             lst.write(f"file '{seg.replace(os.sep, '/')}'\n")

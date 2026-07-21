@@ -120,3 +120,14 @@ TEASER_SECONDS = float(get("TEASER_SECONDS", "0.8"))
 # a round's art can't be produced, the round itself is swapped for one whose art
 # already exists (content.ensure_art) before anything renders.
 ART_REQUIRED = get("ART_REQUIRED", "1") == "1"
+
+# --- Motion -------------------------------------------------------------------
+# Every frame drifts slowly instead of sitting still. The video was a slideshow of
+# stills: nothing moved for the first 3.1s (the 0.8s teaser flash, then round 1's
+# card while the question is read). A motionless opening frame reads as an image
+# post on Shorts and gets swiped before the question lands, which wastes the hook
+# copy entirely. Keep it SUBTLE — this should register as "alive", not as a zoom
+# effect. MOTION_MAX is the zoom reached at the end of a segment.
+MOTION_RATE = float(get("MOTION_RATE", "0.0009"))   # zoom added per frame
+MOTION_MAX = float(get("MOTION_MAX", "1.075"))      # ~7.5% over a ~3s segment
+MOTION_FPS = int(get("MOTION_FPS", "30"))
