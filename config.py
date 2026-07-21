@@ -201,6 +201,30 @@ MOTION_FPS = int(get("MOTION_FPS", "30"))
 # card.render knows where the panels are. A cached render is ~35ms, so this costs
 # about a second on a build that already takes minutes. Set PANEL_ENTRANCE=0 to
 # turn it off. Skipped automatically when a round's intro is too short to hold it.
+# --- Per-panel motion ----------------------------------------------------------
+# Each box carries its own physics. This is the reason every frame is rendered
+# rather than 10 stills being held: a filter over a finished frame can only move
+# the card as one flat image, so both boxes would always do the same thing.
+#
+# BOB is a slow rise-and-fall, one period per panel. The periods are deliberately
+# NOT multiples of each other, so the boxes drift in and out of phase forever
+# instead of locking into step.
+#
+# SQUASH fires on each beat: the panels move TOWARD each other and spring back.
+# Toward, because that is where the room is — the 200px VS gap. Outward would put
+# panel A into the title and panel B into the footer pill within a few pixels.
+#
+# Both are small on purpose. The frame should feel alive; the moment a box travels
+# far enough to make its label hard to track, the effect has cost more than it
+# bought. BOB_PIXELS + SQUASH_PIXELS is the worst-case excursion — keep the sum
+# under about 30px.
+BOB_PIXELS = float(get("BOB_PIXELS", "9"))          # idle float, per panel
+BOB_PERIOD_A = float(get("BOB_PERIOD_A", "2.7"))    # seconds, panel A
+BOB_PERIOD_B = float(get("BOB_PERIOD_B", "3.4"))    # seconds, panel B (not a multiple)
+SQUASH_PIXELS = float(get("SQUASH_PIXELS", "8"))    # beat squash (rectified: peak is 2x this)
+SQUASH_DECAY = float(get("SQUASH_DECAY", "0.20"))   # seconds to settle
+SQUASH_WOBBLE = float(get("SQUASH_WOBBLE", "0.34")) # seconds per wobble
+
 PANEL_ENTRANCE = float(get("PANEL_ENTRANCE", "0.6"))   # seconds of entrance (must cover STAGGER + settle)
 PANEL_SLIDE_PX = float(get("PANEL_SLIDE_PX", "680"))   # how far off-frame it starts
 PANEL_STAGGER = float(get("PANEL_STAGGER", "0.09"))    # how far B lags A
