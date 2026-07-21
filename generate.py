@@ -124,10 +124,7 @@ _PROMPTS = {
              "a SINGLE or FEW (image models can't draw an exact number). Both sides "
              "must be FIGHTERS that can square up — never possessions, places, foods, "
              "or wishes. Cross-universe matchups are great; use real, well-known "
-             "characters, never made-up ones. The names above are the REGISTER to "
-             "aim at, not a menu — do NOT return the example matchups themselves. "
-             "Build fresh pairings, and reach past the listed characters to others "
-             "the same audience knows",
+             "characters, never made-up ones",
              '{"a":"1,000 Stormtroopers","a_emoji":"🤖","a_art":"a huge crowd of white-armoured soldiers",'
              '"b":"5 Jedi","b_emoji":"⚔️","b_art":"five robed warriors holding glowing swords"}'),
     # Factual formats — a different JSON shape, because one answer is RIGHT.
