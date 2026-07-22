@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "03:23 PM",
       "manual": false,
-      "views": 314,
+      "views": 377,
       "likes": 5,
       "comments": 1,
       "clipcheck": {
@@ -727,14 +727,20 @@
   },
   "learning": {
     "ready": false,
-    "trained_on": 0,
+    "trained_on": 3,
     "needs": 4,
     "min_age_days": 3.0,
     "min_per_option": 2,
-    "themes": {},
+    "themes": {
+      "Would You Rather": 1.0
+    },
     "counts": {
-      "theme": {}
-    }
+      "theme": {
+        "Who Would Win": 1,
+        "Would You Rather": 2
+      }
+    },
+    "best_theme": "Would You Rather"
   },
   "history": [
     {
@@ -781,7 +787,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-22T00:16:07+00:00",
+  "updated": "2026-07-22T01:16:11+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
