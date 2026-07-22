@@ -729,7 +729,7 @@
   },
   "learning": {
     "ready": true,
-    "trained_on": 4,
+    "trained_on": 5,
     "needs": 4,
     "min_age_days": 3.0,
     "min_per_option": 2,
@@ -738,7 +738,7 @@
     },
     "counts": {
       "theme": {
-        "Would You Rather": 3,
+        "Would You Rather": 4,
         "Who Would Win": 1
       }
     },
@@ -789,7 +789,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-22T13:16:06+00:00",
+  "updated": "2026-07-22T14:16:09+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
