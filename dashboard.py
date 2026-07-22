@@ -188,6 +188,68 @@ def _empty_learning() -> dict:
             "min_per_option": 2, "themes": {}, "counts": {"theme": {}}}
 
 
+# A video is only scored once it has had this long to accumulate views, so a
+# video posted an hour ago cannot lose to one posted last week purely on age.
+MIN_AGE_DAYS = 3.0
+NEEDS = 4              # scored videos before the panel calls itself ready
+MIN_PER_OPTION = 2     # scored videos per theme before that theme gets a weight
+
+
+def compute_learning(videos: list) -> dict:
+    """Score the posted videos and report which themes actually perform.
+
+    This was never implemented. `data.setdefault("learning", _empty_learning())`
+    was the ONLY write, and setdefault only fires when the key is absent — so
+    the hardcoded zeros were written once and then frozen. The dashboard panel
+    rendered them faithfully, which is why it read "0 old enough to score" with
+    three qualifying videos sitting in the same file, and would have kept
+    reading that forever no matter how many were posted.
+
+    Themes are compared on MEAN views per video, not total. Totals just rank
+    whichever theme was posted most, which is the bias the age gate above exists
+    to remove — reintroducing it on the other axis would be pointless.
+    """
+    now = datetime.datetime.now(datetime.timezone.utc)
+    scored = []
+    for v in videos or []:
+        raw = v.get("date")
+        if not raw or not v.get("theme"):
+            continue
+        try:
+            posted = datetime.datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if posted.tzinfo is None:
+            posted = posted.replace(tzinfo=datetime.timezone.utc)
+        if (now - posted).total_seconds() / 86400.0 >= MIN_AGE_DAYS:
+            scored.append((v["theme"], int(v.get("views") or 0)))
+
+    counts: dict = {}
+    totals: dict = {}
+    for theme, views in scored:
+        counts[theme] = counts.get(theme, 0) + 1
+        totals[theme] = totals.get(theme, 0) + views
+
+    # Only themes with enough scored videos get a weight. One lucky video is a
+    # coincidence, and publishing it as "your best style" would steer the bot
+    # off a sample of one.
+    means = {t: totals[t] / counts[t] for t in counts if counts[t] >= MIN_PER_OPTION}
+    total_mean = sum(means.values())
+    themes = ({t: m / total_mean for t, m in means.items()} if total_mean
+              else {t: 0.0 for t in means})
+
+    return {
+        "ready": len(scored) >= NEEDS and bool(themes),
+        "trained_on": len(scored),
+        "needs": NEEDS,
+        "min_age_days": MIN_AGE_DAYS,
+        "min_per_option": MIN_PER_OPTION,
+        "themes": dict(sorted(themes.items(), key=lambda kv: -kv[1])),
+        "counts": {"theme": counts},
+        "best_theme": max(themes, key=themes.get) if themes else "",
+    }
+
+
 def _fill_schedule(data: dict) -> None:
     """Write the next few post times so the dashboard's 'NEXT SHORT DROPS IN'
     countdown has something to count to. It was always [], so the timer was blank.
@@ -261,6 +323,12 @@ def refresh_stats() -> dict:
             hist[-1] = snap
         else:
             hist.append(snap)
+
+    # Recompute learning from the view counts we just pulled — AFTER the loop
+    # above writes them, not before, or it would score the previous refresh's
+    # numbers. Plain assignment, not setdefault: setdefault is what froze this
+    # block at zeros in the first place, since the key exists from run one.
+    data["learning"] = compute_learning(data["videos"])
 
     _fill_schedule(data)
     data["updated"] = _iso()
