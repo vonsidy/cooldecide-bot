@@ -18,9 +18,9 @@
       "privacy": "public",
       "local_time": "10:47 AM",
       "manual": false,
-      "views": 0,
-      "likes": 0,
-      "comments": 0,
+      "views": 14,
+      "likes": 1,
+      "comments": 1,
       "clipcheck": {
         "reportId": "747ac39b-c585-42d1-b4a2-20298fb63583",
         "botId": "kids",
@@ -913,11 +913,11 @@
       "d": "2026-07-22",
       "subs": 9,
       "views": 4218,
-      "likes": 46
+      "likes": 47
     }
   ],
   "started": null,
-  "updated": "2026-07-22T14:47:27+00:00",
+  "updated": "2026-07-22T15:16:07+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
