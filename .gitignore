@@ -21,3 +21,6 @@ __pycache__/
 client_secret.json
 yt_token.json
 yt_token.json.bak
+
+# Local virtualenv for running card.py / the tools on a laptop.
+.venv/

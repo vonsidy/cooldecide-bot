@@ -43,6 +43,22 @@ EMOJI_FONT = next((p for p in _EMOJI_FONT_CANDIDATES if os.path.exists(p)), "")
 SAFE_TOP = 160
 SAFE_BOTTOM = 1660
 FOOTER_H = 120
+
+# The same argument as SAFE_TOP/SAFE_BOTTOM, for the sides. The panels used to be
+# drawn at a flat 60px inset — 5.6% of the frame — which looks like a deliberate
+# margin in the PNG and like nothing at all on a phone, where the panel edge lands
+# under the like/comment/share rail and the card reads as bleeding off the screen.
+# 96px (8.9%) clears the rail and, more to the point, is wide enough to be legible
+# AS a margin at thumb size. Everything drawn on the card is measured from this, so
+# widening it later is one number and not a hunt through a dozen literals.
+SAFE_SIDE = 96
+# The panel's white sticker border eats 12px, and its label sits 33px inside that.
+# Kept as derived names so the label can never drift back over the border.
+PANEL_BORDER = 12
+PANEL_TEXT_INSET = 33
+# Max width for text centred on the frame: margin on BOTH sides, so twice the inset.
+TEXT_MAX_W = W - 2 * SAFE_SIDE
+PANEL_TEXT_MAX_W = W - 2 * (SAFE_SIDE + PANEL_BORDER + PANEL_TEXT_INSET)
 VS_GAP = 200        # gap between panels — must clear the countdown chip (max 198)
 FOOTER_GAP = 36     # air between panel B and the CTA pill, so it reads as its own thing
 
@@ -590,8 +606,15 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     # bright rounded panel with a thick white "sticker" border
     dim = reveal and factual and not is_correct
     fill = tuple(int(c + (255 - c) * 0.45) for c in color) if dim else color
-    draw.rounded_rectangle((60, top_y, W - 60, top_y + height), radius=52, fill=WHITE)
-    draw.rounded_rectangle((72, top_y + 12, W - 72, top_y + height - 12), radius=44, fill=fill + (255,))
+    _in = SAFE_SIDE + PANEL_BORDER
+    # -1 on the right: rounded_rectangle draws INCLUSIVE of its end coordinate, so
+    # ending at exactly W - SAFE_SIDE lights the first column of the reserved band.
+    # Same reason footer_top subtracts from SAFE_BOTTOM. Ink then spans 96..983 —
+    # 96 clear columns on each side, symmetric.
+    draw.rounded_rectangle((SAFE_SIDE, top_y, W - SAFE_SIDE - 1, top_y + height),
+                           radius=52, fill=WHITE)
+    draw.rounded_rectangle((_in, top_y + PANEL_BORDER, W - _in - 1, top_y + height - PANEL_BORDER),
+                           radius=44, fill=fill + (255,))
 
     # A photo counts as art even with no emoji — trivia rows carry no emoji at all
     # ("Cheetah"/"Lion"), so keying this off the emoji alone left quiz cards bare.
@@ -603,7 +626,7 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
     # below pulls it back for anything long.
     tsize = 62 if has_pic else int(height * 0.32)
     tf = _font("Anton-Regular.ttf", tsize)
-    while draw.textlength(text.upper(), font=tf) > W - 210 and tf.size > 30:
+    while draw.textlength(text.upper(), font=tf) > PANEL_TEXT_MAX_W and tf.size > 30:
         tf = _font("Anton-Regular.ttf", tf.size - 2)
     # bar_gap is measured from the % text's BOX, and Anton's digits don't fill it,
     # so the visual gap always lands tighter than the number suggests — hence the
@@ -631,7 +654,7 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
 
     if has_pic:
         _picture(canvas, cx, y, em, text, emoji, photo)
-    _shadow_text(draw, cx, y + em + gap, text.upper(), tf, WHITE, off=4, max_w=W - 210)
+    _shadow_text(draw, cx, y + em + gap, text.upper(), tf, WHITE, off=4, max_w=PANEL_TEXT_MAX_W)
 
     if reveal and factual:
         # A question with a RIGHT ANSWER gets no percentage. The number is made up,
@@ -652,18 +675,23 @@ def _panel(canvas, top_y, height, color, text, emoji, pct, reveal, winner, is_co
         _shadow_text(draw, cx, num_y, f"{shown}%", _font("Anton-Regular.ttf", num_sz), WHITE, off=5)
         by0 = num_y + num_sz + bar_gap
         by1 = by0 + bar_h
-        draw.rounded_rectangle((140, by0, W - 140, by1), radius=bar_h // 2, fill=(255, 255, 255, 120))
-        fillw = int((W - 280) * shown / 100)
+        # Inset from the panel's INNER edge, not the frame, so the bar keeps the same
+        # air around it whatever SAFE_SIDE is set to. Measured from the frame it drew
+        # through the white border the moment the panel moved inwards.
+        bar_x = _in + 68
+        draw.rounded_rectangle((bar_x, by0, W - bar_x - 1, by1), radius=bar_h // 2,
+                               fill=(255, 255, 255, 120))
+        fillw = int((W - 2 * bar_x) * shown / 100)
         if fillw > 2:
-            draw.rounded_rectangle((140, by0, 140 + max(fillw, bar_h), by1),
+            draw.rounded_rectangle((bar_x, by0, bar_x + max(fillw, bar_h), by1),
                                    radius=bar_h // 2, fill=GOLD + (255,))
     # winner crown / correct check pinned to the panel corner
     if reveal and factual and is_correct:
-        _emoji_c(canvas, W - 172, top_y + 30, "✅", 80)
+        _emoji_c(canvas, W - (_in + 100), top_y + 30, "✅", 80)
     # Crown only once the count-up has landed — showing it at 24% crowns the winner
     # before the numbers finish climbing, which gives the result away.
     if reveal and not factual and winner and grow >= 0.999:
-        _emoji_c(canvas, W - 172, top_y + 30, "👑", 80)
+        _emoji_c(canvas, W - (_in + 100), top_y + 30, "👑", 80)
 
 
 def teaser(item, out_path: str, text: str) -> str:
@@ -711,21 +739,23 @@ def outro(item, out_path: str) -> str:
     line2 = "DID YOU GET?" if factual else "DID YOU PICK?"
 
     # big playful headline
-    _shadow_text(draw, cx, 470, head, _font("Anton-Regular.ttf", 138), WHITE, off=7, max_w=W - 90)
-    _shadow_text(draw, cx, 620, line2, _font("Anton-Regular.ttf", 138), GOLD, off=7, max_w=W - 90)
+    _shadow_text(draw, cx, 470, head, _font("Anton-Regular.ttf", 138), WHITE, off=7, max_w=TEXT_MAX_W)
+    _shadow_text(draw, cx, 620, line2, _font("Anton-Regular.ttf", 138), GOLD, off=7, max_w=TEXT_MAX_W)
 
     # Identity bait: people comment to claim who they are, not to report a vote —
     # it reframes the ask from "answer" to "say who you are". Plain words, not the
     # cryptic "PICKS = PERSONALITY" that read as a riddle. Score-framed for quizzes.
     tagline = "PROVE YOU'RE ACTUALLY SMART" if factual else "YOUR PICKS SAY A LOT ABOUT YOU"
     _shadow_text(draw, cx, 788, tagline,
-                 _font("Anton-Regular.ttf", 46), WHITE, off=4, max_w=W - 120)
+                 _font("Anton-Regular.ttf", 46), WHITE, off=4, max_w=TEXT_MAX_W)
 
     # the ask, in a fat pill
-    draw.rounded_rectangle((cx - 470, 880, cx + 470, 1050), radius=54, fill=WHITE)
-    draw.rounded_rectangle((cx - 456, 894, cx + 456, 1036), radius=46, fill=A_COLOR + (255,))
+    _pill = W // 2 - SAFE_SIDE                      # half-width at the frame margin
+    draw.rounded_rectangle((cx - _pill, 880, cx + _pill - 1, 1050), radius=54, fill=WHITE)
+    draw.rounded_rectangle((cx - _pill + 14, 894, cx + _pill - 15, 1036), radius=46,
+                           fill=A_COLOR + (255,))
     _text_cc(draw, cx, (894 + 1036) // 2, "COMMENT BELOW!",
-             _font("Anton-Regular.ttf", 84), WHITE, max_w=860)
+             _font("Anton-Regular.ttf", 84), WHITE, max_w=2 * _pill - 80)
 
     _emoji_c(canvas, cx, 1120, "👇", 210)
 

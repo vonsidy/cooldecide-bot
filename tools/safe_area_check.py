@@ -26,18 +26,31 @@ OUT = os.path.join(os.path.dirname(__file__), "..", "output", "_safecheck")
 
 
 def violations(png: str) -> dict:
-    """Rows of drawn content inside the reserved bands, per edge."""
+    """Drawn content inside the reserved bands, per edge.
+
+    The sides were unchecked for a long time and it showed: the panels sat at a flat
+    60px inset, which reads as a margin in the PNG and as none at all on a phone,
+    where the like/comment/share rail covers the right edge. Nothing here objected,
+    because nothing here looked left or right. It does now.
+    """
     im = Image.open(png).convert("RGB")
     bare = card._gradient(card.BG_TOP, card.BG_BOT).convert("RGB")
     diff = ImageChops.difference(im, bare).convert("L").point(lambda v: 255 if v > TOL else 0)
     out = {}
     for name, box in (("top", (0, 0, card.W, card.SAFE_TOP)),
-                      ("bottom", (0, card.SAFE_BOTTOM, card.W, card.H))):
+                      ("bottom", (0, card.SAFE_BOTTOM, card.W, card.H)),
+                      ("left", (0, 0, card.SAFE_SIDE, card.H)),
+                      ("right", (card.W - card.SAFE_SIDE, 0, card.W, card.H))):
         region = diff.crop(box)
         bbox = region.getbbox()
-        if bbox:
-            out[name] = {"px": sum(region.point(lambda v: v // 255).getdata()),
-                         "worst_row": (bbox[1] + box[1]) if name == "top" else (bbox[3] + box[1])}
+        if not bbox:
+            continue
+        # Report the worst offending edge in FRAME coordinates, so a failure says
+        # where to move the thing rather than just that something is wrong.
+        worst = {"top": bbox[1] + box[1], "bottom": bbox[3] + box[1],
+                 "left": bbox[0] + box[0], "right": bbox[2] + box[0]}[name]
+        out[name] = {"px": sum(region.point(lambda v: v // 255).getdata()),
+                     "worst_row" if name in ("top", "bottom") else "worst_col": worst}
     return out
 
 
@@ -74,7 +87,8 @@ def main() -> int:
             print(f"  ok    outro {fmt:9}")
 
     print()
-    print(f"safe box: y {card.SAFE_TOP} .. {card.SAFE_BOTTOM}   ->  "
+    print(f"safe box: x {card.SAFE_SIDE} .. {card.W - card.SAFE_SIDE}, "
+          f"y {card.SAFE_TOP} .. {card.SAFE_BOTTOM}   ->  "
           + ("ALL CLEAR" if not fails else f"{fails} FRAMES DRAW UNDER YOUTUBE'S UI"))
     return 1 if fails else 0
 
