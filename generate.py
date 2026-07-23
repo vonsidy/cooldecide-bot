@@ -47,55 +47,58 @@ _IMAGINATIVE = (
 _DILEMMA = (
     "\nMake every one GENUINELY HARD to choose — picking must HURT. Two shapes "
     "work:\n"
-    "  * dream vs dream: two things they'd BOTH desperately want — 'never do "
-    "homework again' vs 'go on a date with your crush'.\n"
-    "  * loss vs loss: two things they'd HATE to give up — 'give up YouTube "
-    "forever' vs 'give up Instagram forever'.\n"
-    "STAY IN THE REAL WORLD TEENAGERS actually live in — that is what makes them "
-    "argue. Write for 13-17 BY DEFAULT, not for little kids: the voter is in high "
-    "school, has a phone, a group chat and an opinion about who's fake. AT LEAST 4 "
-    "of every 5 must be real-life stakes they care about TODAY: social media "
-    "(Instagram vs TikTok vs Snapchat, losing your streak, going viral, follower "
-    "count, getting exposed in the comments), phones/screen time, school (tests, "
-    "grades, a strict teacher, group projects), friendships, popularity and social "
-    "standing (being talked about, getting left out of plans, the group chat), "
-    "gaming (rank, skins, your main account), money and a first job, independence "
-    "(driving, staying out, your own room), and an innocent crush (texting first, "
-    "sitting next to them, being left on read). Keep it totally clean. At most 1 in "
-    "5 may be imaginative (a power or a wish) — and only if the choice still "
-    "genuinely HURTS. NEVER whimsical creatures/pets (dragons, unicorns, talking "
-    "animals, magic genies) and never little-kid framing (recess, the playground, "
-    "your teacher's sticker chart, losing a tooth): a 15-year-old does not care "
-    "about a dragon that tells 500-year-old stories, they care about their phone, "
-    "their friends and their crush.\n"
+    "  * dream vs dream: two things they'd BOTH desperately want.\n"
+    "  * loss vs loss: two things they'd HATE to give up.\n"
+    "Those are SHAPES, not a menu. Build your own pairs — see the warning about "
+    "echoing examples at the end of this brief.\n"
+    "Write for 13-17, never for little kids: the voter is in high school, has a "
+    "phone, a group chat and an opinion about who's fake. Keep it totally clean. "
+    "NEVER little-kid framing (recess, the playground, your teacher's sticker "
+    "chart, losing a tooth, a magic genie who grants wishes) — that is a different "
+    "channel.\n"
+    "GO BIG. Roughly HALF must be a premise with SCALE — money, fame, power, "
+    "access, a whole world: never work again, wake up with a mansion, a private "
+    "jet, be the most famous person alive, live inside your favourite game, "
+    "teleport anywhere, stop time. The other half can be everyday teen stakes "
+    "(social media and clout, the group chat, school, friendships, gaming, a first "
+    "job, independence, an innocent crush) — but only where the choice genuinely "
+    "COSTS something. A small premise is not automatically relatable and a big one "
+    "is not automatically childish: 'private island vs private jet' is a teenager's "
+    "daydream, 'do your homework vs do your chores' is nobody's.\n"
     "The test: imagine 100 TEENAGERS voting — if it wouldn't split close to 50/50, "
-    "it's too easy, throw it away. 'Summer vs winter', 'dogs vs cats', 'pizza vs "
-    "burgers' are failures: everyone already has an answer.\n"
+    "it's too easy, throw it away. A settled matter of taste is a failure, because "
+    "everyone already has an answer and there is nothing to argue about.\n"
     "BOTH options must point the SAME WAY: two things they WANT (dream vs dream) or "
-    "two things they'd HATE (loss vs loss) — NEVER one of each. 'Text your crush "
-    "first' (a scary thing you have to DO) against 'never get left on read' (a gift "
-    "you RECEIVE) is not a dilemma, it's a free choice: the gift wins and nobody "
-    "hesitates for a second. If one side costs something and the other hands "
-    "something over, the question answers itself and the video is dead. Pair a cost "
-    "with a COST ('text your crush first' vs 'wait forever for them to text you') "
-    "and a gift with a GIFT.\n"
+    "two things they'd HATE (loss vs loss) — NEVER one of each. A scary thing you "
+    "have to DO, set against a gift you simply RECEIVE, is not a dilemma: the gift "
+    "wins and nobody hesitates for a second. If one side costs something and the "
+    "other hands something over, the question answers itself and the video is dead. "
+    "Pair a cost with a COST and a gift with a GIFT.\n"
     "BIGGEST failure to avoid — two nice-to-haves with NO downside, where a teen "
-    "would be thrilled with EITHER and just shrug ('both are awesome, whatever'): "
-    "'pet dragon vs pet unicorn', 'talking dog vs talking cat', 'fly vs be "
-    "invisible', 'pet dragon vs pet phoenix'. Two cool things is NOT a dilemma. The "
-    "AGONY of LOSING the one you don't pick is the entire point — if giving it up "
-    "doesn't sting, the question is dead. Every option must be something you could "
-    "draw."
+    "would be thrilled with EITHER and just shrug ('both are awesome, whatever'). "
+    "Two cool things is NOT a dilemma. The AGONY of LOSING the one you don't pick is "
+    "the entire point — if giving it up doesn't sting, the question is dead. This is "
+    "about the STRUCTURE of the pair, not the subject: a big fantasy premise is fine "
+    "when losing it stings, and dull when both sides are free.\n"
+    "Every option must be something you could draw."
 )
 
 _PROMPTS = {
     # opinion formats: two fun options, each with one fitting emoji
+    # The example used to be "Wake up with 1M followers" / "Your crush texts you
+    # first every day" and both came back near-verbatim on air — the same leak
+    # rank had with Goku vs Superman. An example placed next to "return JSON like
+    # this" is read as content, not just shape, so the fields are filled with
+    # obvious placeholders now. Keep them unusable: the moment this reads like a
+    # real question, it becomes one.
     "wyr": ("'would you rather' dilemmas TEENAGERS would genuinely argue about, where "
-            "picking one means painfully giving up the other (social media and clout, "
-            "the group chat, school, friendships and popularity, gaming, money and a "
-            "first job, independence, an innocent crush)",
-            '{"a":"Wake up with 1M followers","a_emoji":"\\ud83d\\udcc8","a_art":"a phone screen showing a million followers",'
-            '"b":"Your crush texts you first every day","b_emoji":"\\ud83d\\udcac","b_art":"a phone screen showing a text from a crush"}'),
+            "picking one means painfully giving up the other — reach across money and "
+            "luxury, fame, powers, whole worlds to live in, AND everyday teen stakes "
+            "(social media and clout, the group chat, school, friendships, gaming, a "
+            "first job, independence, an innocent crush). Range across that whole span "
+            "rather than settling into one corner of it",
+            '{"a":"<first option, 2-6 words>","a_emoji":"<one object emoji>","a_art":"<what to draw for option A>",'
+            '"b":"<second option, 2-6 words>","b_emoji":"<one object emoji>","b_art":"<what to draw for option B>"}'),
     "this_or_that": ("quick 'this or that' preferences (one word or short each)",
                      '{"a":"Pizza","a_emoji":"\\ud83c\\udf55","a_art":"a slice of pizza",'
                      '"b":"Burgers","b_emoji":"\\ud83c\\udf54","b_art":"a cheeseburger"}'),
@@ -159,9 +162,13 @@ _FACT_RULE = (
 _ART_RULE = (
     "\nEach option also needs \"a_art\"/\"b_art\": a short, CONCRETE description of a "
     "single picture that represents it, for a cartoon illustrator. It must be "
-    "physically drawable — never an abstract phrase. Bad: \"never do homework again\". "
-    "Good: \"a happy kid throwing homework papers into the air\". If the option is "
-    "already a thing you can draw (a dragon, pizza), just describe that thing."
+    # This example leaked too: "never do homework again" was the ART rule's BAD case
+    # and it aired as an option on 22 July. Even a negative example, anywhere in the
+    # brief, is a phrase the model will reach for. Phrased as a rule now, not a pair.
+    "physically drawable — never an abstract phrase. Turn the idea into the MOMENT "
+    "you would photograph: who is in frame, what are they doing, what is around them. "
+    "If the option is already a thing you can draw (a dragon, pizza), just describe "
+    "that thing."
 )
 
 # The opening decides everything on Shorts: if the first card isn't instantly
@@ -171,13 +178,17 @@ _HOOK_RULE = (
     "\nORDER MATTERS — the FIRST item decides if a scroller stays in the first 2 "
     "seconds. Do NOT lead with the most 'famous' one: recognising a topic is not the "
     "same as having to answer it, and recognisability alone does not stop a scroll. "
-    "Lead with the single most DIVISIVE + RELATABLE choice — an everyday teen/kid "
-    "dilemma they have an INSTANT hot take on and suspect their pick is the minority "
-    "(crush, texting first / left on read, streaks, followers, going viral, phones, "
-    "group chat, friend drama, popularity, being embarrassed). It must be a REAL "
-    "near-50/50 split, totally clean, and never mean — no rage-bait, no fake claim. "
-    "Save the tamer or more niche ones for later. (For 'who would win', divisive "
-    "means a genuinely EVEN, argue-in-the-comments matchup — not a curbstomp.)"
+    "Lead with the single most DIVISIVE choice — the one they have an INSTANT hot "
+    "take on and suspect their pick is the minority. Judge that by the PROPERTY, not "
+    "the subject: how fast does an answer arrive, and how badly do they want to "
+    "defend it? A huge premise qualifies whenever the loss stings — what a teenager "
+    "would give up to be rich, famous, powerful, or to live somewhere else is as "
+    "divisive as anything about their group chat, and it is easier to draw. Do not "
+    "default to everyday school-and-phone material for this slot; pick whichever of "
+    "your questions is genuinely hardest to answer. It must be a REAL near-50/50 "
+    "split, totally clean, and never mean — no rage-bait, no fake claim. Save the "
+    "tamer or more niche ones for later. (For 'who would win', divisive means a "
+    "genuinely EVEN, argue-in-the-comments matchup — not a curbstomp.)"
 )
 
 
@@ -316,6 +327,15 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
             f"{_ART_RULE}"
             f"{_HOOK_RULE}"
             f"{avoid_txt}\n\n"
+            # Anything sitting next to "return JSON like this" gets read as content
+            # and handed straight back — it is how "Your crush texts you first" and
+            # "1,000 Stormtroopers vs 5 Jedi" both aired verbatim off the examples.
+            # The wyr example is placeholders now; this says so out loud, because the
+            # other formats still carry real values in theirs.
+            f"The object below shows the FIELDS and their shape ONLY. Anything inside "
+            f"angle brackets is a placeholder to replace. Never copy a value out of it, "
+            f"and never reuse any example named anywhere above — those illustrate the "
+            f"pattern, they are not questions to return.\n"
             f'Return ONLY a JSON array of objects like: {example}'
         )
         msg = client.messages.create(
