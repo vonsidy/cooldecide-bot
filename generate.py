@@ -98,19 +98,28 @@ _DILEMMA = (
 _PROMPTS = {
     # opinion formats: two fun options, each with one fitting emoji
     # The example used to be "Wake up with 1M followers" / "Your crush texts you
-    # first every day" and both came back near-verbatim on air — the same leak
-    # rank had with Goku vs Superman. An example placed next to "return JSON like
-    # this" is read as content, not just shape, so the fields are filled with
-    # obvious placeholders now. Keep them unusable: the moment this reads like a
-    # real question, it becomes one.
+    # first every day", and both came back near-verbatim on air — the same leak rank
+    # had with Goku vs Superman.
+    #
+    # Replacing the values with <angle-bracket placeholders> fixed the echo and broke
+    # generation twice over: the model stopped seeing a and b as halves of one thing
+    # and emitted them as separate objects (8 of 11 rows dropped), then as malformed
+    # JSON that closed the object after a_art. Placeholders cannot teach structure —
+    # that is the one job this example has, and concrete values are how it does it.
+    #
+    # So it keeps real values, chosen to be harmless if they DO leak: three words a
+    # side, opposing halves of one dilemma, big-premise, and drawable in under twelve
+    # words. The other three leaks are the ones that mattered anyway — _DILEMMA's
+    # finished pairs, _ART_RULE's worked example, and _HOOK_RULE's topic list — and
+    # none of those touch JSON shape.
     "wyr": ("'would you rather' dilemmas TEENAGERS would genuinely argue about, where "
             "picking one means painfully giving up the other — reach across money and "
             "luxury, fame, powers, whole worlds to live in, AND everyday teen stakes "
             "(social media and clout, the group chat, school, friendships, gaming, a "
             "first job, independence, an innocent crush). Range across that whole span "
             "rather than settling into one corner of it",
-            '{"a":"<one side of the dilemma, 2-6 words>","a_emoji":"<object emoji for it>","a_art":"<what to draw for it>",'
-            '"b":"<the OPPOSING side of the SAME dilemma, 2-6 words>","b_emoji":"<object emoji for it>","b_art":"<what to draw for it>"}'),
+            '{"a":"Never work again","a_emoji":"\\ud83c\\udf34","a_art":"a hammock between two palm trees",'
+            '"b":"Be famous forever","b_emoji":"\\u2b50","b_art":"a gold star on a walk of fame"}'),
     "this_or_that": ("quick 'this or that' preferences (one word or short each)",
                      '{"a":"Pizza","a_emoji":"\\ud83c\\udf55","a_art":"a slice of pizza",'
                      '"b":"Burgers","b_emoji":"\\ud83c\\udf54","b_art":"a cheeseburger"}'),
@@ -346,10 +355,9 @@ def build_prompt(fmt: str, n: int, avoid: list[str] | None = None,
         # "1,000 Stormtroopers vs 5 Jedi" both aired verbatim off the examples.
         # The wyr example is placeholders now; this says so out loud, because the
         # other formats still carry real values in theirs.
-        f"The object below shows the FIELDS and their shape ONLY. Anything inside "
-        f"angle brackets is a placeholder to replace. Never copy a value out of it, "
-        f"and never reuse any example named anywhere above — those illustrate the "
-        f"pattern, they are not questions to return.\n"
+        f"The object below shows the FIELDS, the SHAPE, and how SHORT each value "
+        f"should be. Copy its structure exactly and none of its wording — it is a "
+        f"format, not a question. Never reuse it or any example named above.\n"
         # Placeholders cost this: with real values in the example it was obvious both
         # options belonged to one question, and with "<first option>"/"<second option>"
         # the model read them as separate items and emitted {a…},{b…} as two objects.
