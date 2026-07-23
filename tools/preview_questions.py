@@ -65,9 +65,28 @@ print(f"asking for {n} '{fmt}' questions with the CURRENT prompt{_steer}...\n")
 rows = generate.generate(fmt, n, topic=topic)
 
 if not rows:
-    print("API works, but generate() still returned [] — so the model replied and")
-    print("every row was rejected by _rows_from_json/validation. That is a PROMPT or")
-    print("PARSING problem, not a connectivity one.")
+    print("API works, but generate() still returned [] — so the fault is in the")
+    print("prompt, the reply, or the parsing. Re-running the SAME call with the")
+    print("error visible to say which:\n")
+    prompt = generate.build_prompt(fmt, n, topic=topic)
+    msg = client.messages.create(
+        model=generate.MODEL, max_tokens=1400,
+        temperature=0.4 if fmt in generate.FACTUAL else 1.0,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    raw = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
+    print(f"--- stop_reason: {msg.stop_reason} | output tokens: {msg.usage.output_tokens}")
+    print(f"--- RAW REPLY ({len(raw)} chars) " + "-" * 44)
+    print(raw if len(raw) <= 4000 else raw[:4000] + "\n…[truncated]")
+    print("-" * 70)
+    try:
+        parsed = generate._rows_from_json(raw, fmt)
+        print(f"\n_rows_from_json parsed {len(parsed)} rows from that.")
+        if not parsed:
+            print("So the JSON was readable but every row lacked the required fields.")
+    except Exception:
+        print("\n_rows_from_json RAISED on that reply — this is the swallowed error:\n")
+        traceback.print_exc()
     raise SystemExit(1)
 
 print(f"{len(rows)} questions:\n")

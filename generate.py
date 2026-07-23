@@ -285,6 +285,57 @@ def _fight_check(rows: list[tuple], key: str) -> list[tuple]:
         return []
 
 
+def build_prompt(fmt: str, n: int, avoid: list[str] | None = None,
+                 topic: str | None = None) -> str:
+    """The exact prompt generate() sends, built without sending it.
+
+    Split out so tools/preview_questions.py can show the real prompt and the raw
+    reply when a row fails validation. It used to have to guess: generate() ends in
+    a bare `except Exception: return []`, so "the model wrote prose", "the JSON was
+    malformed" and "every row was rejected" arrived identical and empty. Rebuilding
+    the prompt in the tool would have let the two drift apart, which is the failure
+    that would matter most precisely when you are debugging a prompt.
+    """
+    import content
+    kind, example = _PROMPTS[fmt]
+    if topic and topic in content.TOPICS:
+        kind = (f"{kind}. EVERY question must be about ONE theme — "
+                f"{content.TOPICS[topic][1]}")
+    # `avoid` arrives OLDEST FIRST (content._load_used_list), so the tail really
+    # is the most recent history — it used to be sorted alphabetically, making
+    # this slice an arbitrary s-z window.
+    # Naming both halves matters: repeating ONE option in a new pairing is the
+    # recycling that slipped through, since dedup upstream only matches whole pairs.
+    avoid_txt = ("\nThese exact questions have already been used. Do NOT repeat or "
+                 "closely echo any of them, and do NOT reuse EITHER SIDE of one in "
+                 "a new pairing — both options must be new:\n- "
+                 + "\n- ".join((avoid or [])[-40:])) if avoid else ""
+    return (
+        # "for a kids' channel" used to sit here, above every other instruction,
+        # and quietly outranked the teen brief below it. The channel's audience
+        # is teenagers; _SAFE still keeps the content clean.
+        f"Write {n + 3} original {kind} for a teen YouTube Shorts channel. {_SAFE}\n"
+        f"Each needs two short options (2-6 words) and one fitting emoji per option. "
+        f"Use clear object emojis, never plain colored squares/circles. Be creative and varied."
+        f"{_DILEMMA if fmt == 'wyr' else ''}"
+        f"{_IMAGINATIVE if fmt == 'this_or_that' else ''}"
+        f"{_FACT_RULE if fmt in FACTUAL else ''}"
+        f"{_ART_RULE}"
+        f"{_HOOK_RULE}"
+        f"{avoid_txt}\n\n"
+        # Anything sitting next to "return JSON like this" gets read as content
+        # and handed straight back — it is how "Your crush texts you first" and
+        # "1,000 Stormtroopers vs 5 Jedi" both aired verbatim off the examples.
+        # The wyr example is placeholders now; this says so out loud, because the
+        # other formats still carry real values in theirs.
+        f"The object below shows the FIELDS and their shape ONLY. Anything inside "
+        f"angle brackets is a placeholder to replace. Never copy a value out of it, "
+        f"and never reuse any example named anywhere above — those illustrate the "
+        f"pattern, they are not questions to return.\n"
+        f'Return ONLY a JSON array of objects like: {example}'
+    )
+
+
 def generate(fmt: str, n: int, avoid: list[str] | None = None,
              topic: str | None = None) -> list[tuple]:
     """Returns rows in the same shape as content.py's pools, or [] on any failure.
@@ -297,47 +348,10 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
         return []
     try:
         import anthropic
-        import content
         # Bounded so a slow Anthropic can't hang the CI job; on error this returns []
         # and the caller falls back to the curated pool, so the bot still posts.
         client = anthropic.Anthropic(api_key=key, max_retries=1, timeout=60.0)
-        kind, example = _PROMPTS[fmt]
-        if topic and topic in content.TOPICS:
-            kind = (f"{kind}. EVERY question must be about ONE theme — "
-                    f"{content.TOPICS[topic][1]}")
-        # `avoid` arrives OLDEST FIRST (content._load_used_list), so the tail really
-        # is the most recent history — it used to be sorted alphabetically, making
-        # this slice an arbitrary s-z window.
-        # Naming both halves matters: repeating ONE option in a new pairing is the
-        # recycling that slipped through, since dedup upstream only matches whole pairs.
-        avoid_txt = ("\nThese exact questions have already been used. Do NOT repeat or "
-                     "closely echo any of them, and do NOT reuse EITHER SIDE of one in "
-                     "a new pairing — both options must be new:\n- "
-                     + "\n- ".join((avoid or [])[-40:])) if avoid else ""
-        prompt = (
-            # "for a kids' channel" used to sit here, above every other instruction,
-            # and quietly outranked the teen brief below it. The channel's audience
-            # is teenagers; _SAFE still keeps the content clean.
-            f"Write {n + 3} original {kind} for a teen YouTube Shorts channel. {_SAFE}\n"
-            f"Each needs two short options (2-6 words) and one fitting emoji per option. "
-            f"Use clear object emojis, never plain colored squares/circles. Be creative and varied."
-            f"{_DILEMMA if fmt == 'wyr' else ''}"
-            f"{_IMAGINATIVE if fmt == 'this_or_that' else ''}"
-            f"{_FACT_RULE if fmt in FACTUAL else ''}"
-            f"{_ART_RULE}"
-            f"{_HOOK_RULE}"
-            f"{avoid_txt}\n\n"
-            # Anything sitting next to "return JSON like this" gets read as content
-            # and handed straight back — it is how "Your crush texts you first" and
-            # "1,000 Stormtroopers vs 5 Jedi" both aired verbatim off the examples.
-            # The wyr example is placeholders now; this says so out loud, because the
-            # other formats still carry real values in theirs.
-            f"The object below shows the FIELDS and their shape ONLY. Anything inside "
-            f"angle brackets is a placeholder to replace. Never copy a value out of it, "
-            f"and never reuse any example named anywhere above — those illustrate the "
-            f"pattern, they are not questions to return.\n"
-            f'Return ONLY a JSON array of objects like: {example}'
-        )
+        prompt = build_prompt(fmt, n, avoid, topic)
         msg = client.messages.create(
             model=MODEL, max_tokens=1400,
             # Facts don't benefit from creativity — turn the temperature down so it
