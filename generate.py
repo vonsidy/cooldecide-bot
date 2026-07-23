@@ -80,7 +80,19 @@ _DILEMMA = (
     "the entire point — if giving it up doesn't sting, the question is dead. This is "
     "about the STRUCTURE of the pair, not the subject: a big fantasy premise is fine "
     "when losing it stings, and dull when both sides are free.\n"
-    "Every option must be something you could draw."
+    "Every option must be something you could draw.\n"
+    # Both learned from a preview: options ran to 8-9 words and shrank the card text
+    # to fit, and one came back as "Your first paycheck vs. proving you're pro-level"
+    # — a whole matchup crammed into one side, which renders as gibberish on a card
+    # that already prints "A or B". The 2-6 word cap is stated once up top and was
+    # quietly ignored, so it is repeated here where the dilemma rules actually land.
+    "LENGTH IS A HARD LIMIT: 2-6 words per option, and shorter reads better on a "
+    "phone. Each option is ONE side, stated plainly — never put 'vs', 'or', or both "
+    "halves of the choice inside a single option. The card already prints them "
+    "against each other.\n"
+    "The two options must be genuinely DIFFERENT things. Two wordings of the same "
+    "wish ('get paid to play games' vs 'game full-time for a living') is one option "
+    "printed twice, and there is nothing to pick."
 )
 
 _PROMPTS = {
