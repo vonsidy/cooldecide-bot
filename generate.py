@@ -97,8 +97,8 @@ _PROMPTS = {
             "(social media and clout, the group chat, school, friendships, gaming, a "
             "first job, independence, an innocent crush). Range across that whole span "
             "rather than settling into one corner of it",
-            '{"a":"<first option, 2-6 words>","a_emoji":"<one object emoji>","a_art":"<what to draw for option A>",'
-            '"b":"<second option, 2-6 words>","b_emoji":"<one object emoji>","b_art":"<what to draw for option B>"}'),
+            '{"a":"<one side of the dilemma, 2-6 words>","a_emoji":"<object emoji for it>","a_art":"<what to draw for it>",'
+            '"b":"<the OPPOSING side of the SAME dilemma, 2-6 words>","b_emoji":"<object emoji for it>","b_art":"<what to draw for it>"}'),
     "this_or_that": ("quick 'this or that' preferences (one word or short each)",
                      '{"a":"Pizza","a_emoji":"\\ud83c\\udf55","a_art":"a slice of pizza",'
                      '"b":"Burgers","b_emoji":"\\ud83c\\udf54","b_art":"a cheeseburger"}'),
@@ -165,10 +165,16 @@ _ART_RULE = (
     # This example leaked too: "never do homework again" was the ART rule's BAD case
     # and it aired as an option on 22 July. Even a negative example, anywhere in the
     # brief, is a phrase the model will reach for. Phrased as a rule now, not a pair.
-    "physically drawable — never an abstract phrase. Turn the idea into the MOMENT "
-    "you would photograph: who is in frame, what are they doing, what is around them. "
-    "If the option is already a thing you can draw (a dragon, pizza), just describe "
-    "that thing."
+    #
+    # The word cap replaces the worked example and does the same job without being
+    # echoable. Dropping the example alone was not enough: with only "short" to go on
+    # the descriptions ran to thirty-plus words of set dressing ("crowds of people
+    # walking past pointing at it"), which is a scene, not a sticker, and the art
+    # model has to fit it in a 500px square.
+    "physically drawable — never an abstract phrase. Name the ONE thing in frame and "
+    "what it is doing. AT MOST 12 WORDS, no set dressing, no camera directions, no "
+    "background crowds. If the option is already a thing you can draw (a dragon, "
+    "pizza), just describe that thing."
 )
 
 # The opening decides everything on Shorts: if the first card isn't instantly
@@ -332,6 +338,12 @@ def build_prompt(fmt: str, n: int, avoid: list[str] | None = None,
         f"angle brackets is a placeholder to replace. Never copy a value out of it, "
         f"and never reuse any example named anywhere above — those illustrate the "
         f"pattern, they are not questions to return.\n"
+        # Placeholders cost this: with real values in the example it was obvious both
+        # options belonged to one question, and with "<first option>"/"<second option>"
+        # the model read them as separate items and emitted {a…},{b…} as two objects.
+        # _rows_from_json needs both keys together, so 8 of 11 rows were dropped.
+        f"ONE object per item, holding ALL of its fields. Never split an item across "
+        f"two objects.\n"
         f'Return ONLY a JSON array of objects like: {example}'
     )
 
