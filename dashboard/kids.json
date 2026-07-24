@@ -1,7 +1,7 @@
 {
   "channel": {
     "title": "CoolDecide",
-    "subscribers": 10,
+    "subscribers": 11,
     "views": 4856,
     "videoCount": 15,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
@@ -18,8 +18,8 @@
       "privacy": "public",
       "local_time": "09:51 AM",
       "manual": false,
-      "views": 38,
-      "likes": 1,
+      "views": 244,
+      "likes": 7,
       "comments": 0,
       "clipcheck": {
         "reportId": "450c3bdb-5259-488b-8470-09ca783a9a12",
@@ -264,7 +264,7 @@
       "privacy": "public",
       "local_time": "07:02 PM",
       "manual": false,
-      "views": 1290,
+      "views": 1292,
       "likes": 18,
       "comments": 0,
       "clipcheck": {
@@ -387,8 +387,8 @@
       "privacy": "public",
       "local_time": "07:27 PM",
       "manual": false,
-      "views": 87,
-      "likes": 2,
+      "views": 91,
+      "likes": 3,
       "comments": 0,
       "clipcheck": {
         "reportId": "3bb18128-0e48-484a-950d-807210f27e67",
@@ -510,7 +510,7 @@
       "privacy": "public",
       "local_time": "10:47 AM",
       "manual": false,
-      "views": 114,
+      "views": 122,
       "likes": 3,
       "comments": 1,
       "clipcheck": {
@@ -1373,18 +1373,18 @@
   },
   "learning": {
     "ready": true,
-    "trained_on": 8,
+    "trained_on": 9,
     "needs": 4,
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Would You Rather": 0.6473779385171791,
-      "Who Would Win": 0.352622061482821
+      "Would You Rather": 0.6171967020023557,
+      "Who Would Win": 0.3828032979976443
     },
     "counts": {
       "theme": {
-        "Who Would Win": 2,
-        "Would You Rather": 6
+        "Would You Rather": 7,
+        "Who Would Win": 2
       }
     },
     "best_theme": "Would You Rather"
@@ -1440,13 +1440,13 @@
     },
     {
       "d": "2026-07-24",
-      "subs": 10,
+      "subs": 11,
       "views": 4856,
-      "likes": 66
+      "likes": 73
     }
   ],
   "started": null,
-  "updated": "2026-07-24T14:16:06+00:00",
+  "updated": "2026-07-24T15:16:10+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
