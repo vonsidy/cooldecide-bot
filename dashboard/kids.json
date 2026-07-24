@@ -1373,18 +1373,18 @@
   },
   "learning": {
     "ready": true,
-    "trained_on": 9,
+    "trained_on": 10,
     "needs": 4,
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Would You Rather": 0.6171967020023557,
-      "Who Would Win": 0.3828032979976443
+      "Would You Rather": 0.5990853658536585,
+      "Who Would Win": 0.40091463414634143
     },
     "counts": {
       "theme": {
-        "Would You Rather": 7,
-        "Who Would Win": 2
+        "Who Would Win": 3,
+        "Would You Rather": 7
       }
     },
     "best_theme": "Would You Rather"
@@ -1446,7 +1446,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-24T19:16:06+00:00",
+  "updated": "2026-07-24T20:16:11+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
