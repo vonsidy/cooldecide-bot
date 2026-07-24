@@ -2,7 +2,7 @@
   "channel": {
     "title": "CoolDecide",
     "subscribers": 10,
-    "views": 4848,
+    "views": 4856,
     "videoCount": 14,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
   },
@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "07:23 PM",
       "manual": false,
-      "views": 601,
+      "views": 971,
       "likes": 2,
       "comments": 1,
       "clipcheck": {
@@ -141,7 +141,7 @@
       "privacy": "public",
       "local_time": "07:02 PM",
       "manual": false,
-      "views": 992,
+      "views": 1272,
       "likes": 18,
       "comments": 0,
       "clipcheck": {
@@ -264,7 +264,7 @@
       "privacy": "public",
       "local_time": "07:27 PM",
       "manual": false,
-      "views": 71,
+      "views": 86,
       "likes": 2,
       "comments": 0,
       "clipcheck": {
@@ -387,7 +387,7 @@
       "privacy": "public",
       "local_time": "10:47 AM",
       "manual": false,
-      "views": 80,
+      "views": 110,
       "likes": 2,
       "comments": 1,
       "clipcheck": {
@@ -633,7 +633,7 @@
       "privacy": "public",
       "local_time": "10:39 AM",
       "manual": false,
-      "views": 86,
+      "views": 87,
       "likes": 1,
       "comments": 0,
       "clipcheck": {
@@ -1237,7 +1237,9 @@
       "2026-07-24T09:51:00-04:00",
       "2026-07-24T21:28:00-04:00",
       "2026-07-25T10:35:00-04:00",
-      "2026-07-25T15:35:00-04:00"
+      "2026-07-25T15:35:00-04:00",
+      "2026-07-26T11:08:00-04:00",
+      "2026-07-26T18:31:00-04:00"
     ],
     "max_per_day": 2
   },
@@ -1248,8 +1250,8 @@
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Would You Rather": 0.6470269293330924,
-      "Who Would Win": 0.35297307066690764
+      "Would You Rather": 0.6473779385171791,
+      "Who Would Win": 0.352622061482821
     },
     "counts": {
       "theme": {
@@ -1311,12 +1313,12 @@
     {
       "d": "2026-07-24",
       "subs": 10,
-      "views": 4848,
+      "views": 4856,
       "likes": 63
     }
   ],
   "started": null,
-  "updated": "2026-07-24T03:16:05+00:00",
+  "updated": "2026-07-24T07:56:36+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
