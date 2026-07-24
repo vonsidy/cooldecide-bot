@@ -1,7 +1,7 @@
 {
   "channel": {
     "title": "CoolDecide",
-    "subscribers": 9,
+    "subscribers": 10,
     "views": 4848,
     "videoCount": 14,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "07:23 PM",
       "manual": false,
-      "views": 115,
+      "views": 192,
       "likes": 1,
       "comments": 1,
       "clipcheck": {
@@ -141,8 +141,8 @@
       "privacy": "public",
       "local_time": "07:02 PM",
       "manual": false,
-      "views": 186,
-      "likes": 2,
+      "views": 600,
+      "likes": 5,
       "comments": 0,
       "clipcheck": {
         "reportId": "c0302c92-8722-4424-8961-29213bef72d9",
@@ -264,7 +264,7 @@
       "privacy": "public",
       "local_time": "07:27 PM",
       "manual": false,
-      "views": 69,
+      "views": 71,
       "likes": 2,
       "comments": 0,
       "clipcheck": {
@@ -387,7 +387,7 @@
       "privacy": "public",
       "local_time": "10:47 AM",
       "manual": false,
-      "views": 76,
+      "views": 80,
       "likes": 2,
       "comments": 1,
       "clipcheck": {
@@ -1243,17 +1243,18 @@
   },
   "learning": {
     "ready": true,
-    "trained_on": 7,
+    "trained_on": 8,
     "needs": 4,
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Would You Rather": 1.0
+      "Would You Rather": 0.6470269293330924,
+      "Who Would Win": 0.35297307066690764
     },
     "counts": {
       "theme": {
-        "Would You Rather": 6,
-        "Who Would Win": 1
+        "Who Would Win": 2,
+        "Would You Rather": 6
       }
     },
     "best_theme": "Would You Rather"
@@ -1309,13 +1310,13 @@
     },
     {
       "d": "2026-07-24",
-      "subs": 9,
+      "subs": 10,
       "views": 4848,
-      "likes": 53
+      "likes": 56
     }
   ],
   "started": null,
-  "updated": "2026-07-24T00:16:11+00:00",
+  "updated": "2026-07-24T01:16:17+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
