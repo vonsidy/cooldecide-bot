@@ -274,6 +274,93 @@ def _fight_check(rows: list[tuple], key: str) -> list[tuple]:
         return []
 
 
+# --- would-you-rather quality gate -------------------------------------------
+# rank has _fight_check; wyr had NOTHING, so a broken dilemma aired unchecked: "your
+# crush LIKES your post" (a gift) vs "your crush LEAVES YOU ON READ" (a loss). One
+# good option against one bad one is a free choice, not a dilemma — everyone picks
+# the gift, so the made-up "76% chose being left on read" is nonsense and the video
+# is dead. Two gates now, mirroring rank: a cheap deterministic pass for the obvious
+# gift-vs-loss mismatch, then an AI backstop for the subtler ones.
+
+# The mismatch is only detectable when we can read BOTH sides: a one-sided "this is
+# a loss" test wrongly drops a real loss-vs-loss pair ("lose all your followers" vs
+# "start your account over") because it can't tell the OTHER side is also a loss. So
+# the gate fires only when one side is a clear GIFT and the other a clear LOSS.
+_LOSS_MARKERS = [re.compile(p, re.I) for p in (
+    r"left on read", r"leaves? you on read", r"\bon read\b", r"left out",
+    r"ghosted", r"\bignored\b", r"no one (?:likes|texts|comments|shows)",
+    r"nobody (?:likes|texts|shows)", r"exposed", r"embarrassed", r"lose all your",
+)]
+_GIFT_MARKERS = [re.compile(p, re.I) for p in (
+    r"likes your post", r"crush (?:texts|likes|asks|notices)", r"date with (?:your )?crush",
+    r"go on a date", r"million followers", r"go viral", r"\bfamous\b", r"straight a",
+    r"win \$?\d", r"\bunlimited\b", r"get rich", r"wake up with",
+)]
+# "never left on read" is a GIFT, not a loss — a negator before the marker flips it.
+_NEGATOR = re.compile(r"\b(?:never|no|not|don'?t|avoid|without|stop)\b", re.I)
+
+
+def _is_loss(text: str) -> bool:
+    text = text or ""
+    for p in _LOSS_MARKERS:
+        m = p.search(text)
+        if m and not _NEGATOR.search(text[:m.start()]):
+            return True
+    return False
+
+
+def _is_gift(text: str) -> bool:
+    return any(p.search(text or "") for p in _GIFT_MARKERS)
+
+
+def _polarity_ok(a: str, b: str) -> bool:
+    """False only when one side is a clear GIFT and the other a clear LOSS.
+
+    Both-gift, both-loss, and anything the lexicons don't recognise all pass — the
+    AI backstop handles the subtler mismatches. This just kills the obvious ones
+    cheaply and without an API call.
+    """
+    return not ((_is_gift(a) and _is_loss(b)) or (_is_loss(a) and _is_gift(b)))
+
+
+_DILEMMA_JUDGE = (
+    "These are would-you-rather options for a teen channel. Each pair must be a REAL "
+    "dilemma: BOTH options desirable (dream vs dream) or BOTH undesirable (loss vs "
+    "loss) — never one good and one bad, which is a free choice nobody argues about.\n\n"
+    "For each numbered pair, answer true only if both sides point the SAME way. Answer "
+    "false if one is a clear gift and the other a clear loss (e.g. 'crush likes your "
+    "post' vs 'crush leaves you on read'). Be strict; when unsure, answer false.\n\n"
+    "Return ONLY a JSON array of booleans, one per pair, in order. Nothing else."
+)
+
+
+def _dilemma_check(rows: list[tuple], key: str) -> list[tuple]:
+    """Drop wyr pairs that aren't a real dilemma. Cheap deterministic pass, then AI.
+
+    Like _fight_check, the AI stage fails CLOSED (any error -> [] -> the caller falls
+    back to the hand-vetted pool), because airing an unchecked pair is the exact
+    failure this exists to prevent.
+    """
+    rows = [r for r in rows if _polarity_ok(r[0], r[1])]
+    if not rows:
+        return []
+    try:
+        import anthropic
+        listing = "\n".join(f"{i + 1}. {r[0]} vs {r[1]}" for i, r in enumerate(rows))
+        msg = anthropic.Anthropic(api_key=key, max_retries=0, timeout=30.0).messages.create(
+            model=MODEL, max_tokens=300, temperature=0,
+            messages=[{"role": "user", "content": f"{_DILEMMA_JUDGE}\n\n{listing}"}],
+        )
+        text = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
+        match = re.search(r"\[.*\]", text, re.DOTALL)
+        flags = json.loads(match.group(0)) if match else []
+        if len(flags) != len(rows):
+            return []
+        return [r for r, ok in zip(rows, flags) if ok is True]
+    except Exception:
+        return []
+
+
 def generate(fmt: str, n: int, avoid: list[str] | None = None,
              topic: str | None = None) -> list[tuple]:
     """Returns rows in the same shape as content.py's pools, or [] on any failure.
@@ -329,6 +416,8 @@ def generate(fmt: str, n: int, avoid: list[str] | None = None,
         rows = _rows_from_json(text, fmt)
         if fmt == "rank":
             rows = _fight_check(rows, key)
+        elif fmt == "wyr":
+            rows = _dilemma_check(rows, key)
         return rows
     except Exception:
         return []
