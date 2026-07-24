@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "09:51 AM",
       "manual": false,
-      "views": 852,
+      "views": 853,
       "likes": 16,
       "comments": 0,
       "clipcheck": {
@@ -141,7 +141,7 @@
       "privacy": "public",
       "local_time": "07:23 PM",
       "manual": false,
-      "views": 1040,
+      "views": 1046,
       "likes": 4,
       "comments": 1,
       "clipcheck": {
@@ -387,7 +387,7 @@
       "privacy": "public",
       "local_time": "07:27 PM",
       "manual": false,
-      "views": 92,
+      "views": 104,
       "likes": 3,
       "comments": 0,
       "clipcheck": {
@@ -633,7 +633,7 @@
       "privacy": "public",
       "local_time": "03:23 PM",
       "manual": false,
-      "views": 401,
+      "views": 402,
       "likes": 5,
       "comments": 1,
       "clipcheck": {
@@ -1442,11 +1442,11 @@
       "d": "2026-07-24",
       "subs": 13,
       "views": 7177,
-      "likes": 84
+      "likes": 81
     }
   ],
   "started": null,
-  "updated": "2026-07-24T17:16:10+00:00",
+  "updated": "2026-07-24T18:16:12+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
