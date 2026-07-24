@@ -71,7 +71,7 @@ _TITLES = {
     ],
     "trivia": [
         "Can you guess: {q}?",
-        "Only smart people get this: {q}",
+        "Only smart kids get this: {q}",
         "{q}? Bet you can't!",
         "Guess it: {q}",
         "Do you know? {q}",
@@ -91,11 +91,9 @@ _EMOJI = {
     "trivia": ["🧠", "🤓", "✅", "❓", "🎯", "😮"],
 }
 
-# No #kids: it signals "made for kids", which contradicts the 13-17 audience and can
-# flip the video to COPPA treatment that DISABLES comments — and comments are the
-# whole engagement play. No #shorts either: YouTube auto-detects Shorts by aspect
-# ratio and length now, so the tag is redundant.
-_HASHTAGS = ["#wouldyourather", "#quiz", "#fun", "#challenge"]
+# No #kids: it signals "made for kids", which risks the COPPA treatment that
+# disables comments — and comments are the whole engagement play.
+_HASHTAGS = ["#shorts", "#wouldyourather", "#quiz", "#fun", "#challenge"]
 
 # Description openers/closers also rotate — a fixed first line on every upload is
 # its own recycled-content tell.
@@ -198,11 +196,9 @@ def build(items: list[content.Item]) -> dict:
     description = "\n".join(lines)
 
     # tag pool: format + option words. Sampled (not fixed) so tags vary too.
-    # "kids games"/"family fun" dropped for the same reason as #kids — they signal a
-    # young/family audience that fights the teen positioning and the comments-on goal.
-    tag_pool = ["would you rather", "wyr", "quiz", "this or that",
+    tag_pool = ["would you rather", "wyr", "quiz", "kids games", "this or that",
                 "trivia", "challenge", "fun", "shorts", "who would win",
-                "pick one", "brain teaser", "teen", "guessing game"]
+                "pick one", "brain teaser", "family fun", "guessing game"]
     tags = rng.sample(tag_pool, min(12, len(tag_pool)))
 
     return {
