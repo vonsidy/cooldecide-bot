@@ -3,7 +3,7 @@
     "title": "CoolDecide",
     "subscribers": 10,
     "views": 4856,
-    "videoCount": 14,
+    "videoCount": 15,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
   },
   "videos": [
@@ -141,7 +141,7 @@
       "privacy": "public",
       "local_time": "07:23 PM",
       "manual": false,
-      "views": 1011,
+      "views": 1014,
       "likes": 3,
       "comments": 1,
       "clipcheck": {
@@ -1446,7 +1446,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-24T13:51:04+00:00",
+  "updated": "2026-07-24T13:51:24+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
