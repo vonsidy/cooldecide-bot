@@ -18,8 +18,8 @@
       "privacy": "public",
       "local_time": "10:35 AM",
       "manual": false,
-      "views": 44,
-      "likes": 1,
+      "views": 54,
+      "likes": 2,
       "comments": 0,
       "clipcheck": {
         "reportId": "421d6e90-e601-43c5-9680-785535218dc0",
@@ -1706,11 +1706,11 @@
       "d": "2026-07-25",
       "subs": 13,
       "views": 7352,
-      "likes": 83
+      "likes": 84
     }
   ],
   "started": null,
-  "updated": "2026-07-25T15:46:50+00:00",
+  "updated": "2026-07-25T16:16:05+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
