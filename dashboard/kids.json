@@ -18,9 +18,9 @@
       "privacy": "public",
       "local_time": "03:35 PM",
       "manual": false,
-      "views": 490,
-      "likes": 9,
-      "comments": 0,
+      "views": 614,
+      "likes": 10,
+      "comments": 2,
       "clipcheck": {
         "reportId": "f0592540-d418-495f-9cdc-924763b1c485",
         "botId": "kids",
@@ -264,7 +264,7 @@
       "privacy": "public",
       "local_time": "09:28 PM",
       "manual": false,
-      "views": 628,
+      "views": 639,
       "likes": 4,
       "comments": 0,
       "clipcheck": {
@@ -633,7 +633,7 @@
       "privacy": "public",
       "local_time": "07:02 PM",
       "manual": false,
-      "views": 1306,
+      "views": 1308,
       "likes": 18,
       "comments": 0,
       "clipcheck": {
@@ -1834,11 +1834,11 @@
       "d": "2026-07-25",
       "subs": 14,
       "views": 7476,
-      "likes": 95
+      "likes": 96
     }
   ],
   "started": null,
-  "updated": "2026-07-25T22:16:04+00:00",
+  "updated": "2026-07-25T23:16:33+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
