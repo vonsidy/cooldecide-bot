@@ -138,19 +138,28 @@ _PROMPTS = {
              "(Goku, Naruto, Luffy, Saitama), superheroes and villains "
              "(Spider-Man, Batman, Hulk, Venom, Thanos), video-game icons (Master "
              "Chief, Bowser, the Ender Dragon, Sonic), or famous giant "
-             "monsters (Godzilla, King Kong, a dragon, a T-rex). Those are the pool "
+             "monsters (Godzilla, King Kong, Smaug, the Balrog). Those are the pool "
              "to draw FROM — pair them yourself, and reach past them to others the "
              "same audience knows. Mix BOTH kinds of matchup: (1) straight 1-vs-1 "
-             "dream fights; and (2) 'numbers vs power' battles pitting many weaker "
-             "famous characters against a few strong ones (keep a count like 100 or "
-             "1,000 on the crowd side) — for "
-             "these keep the count in the option text and make the art show a CROWD vs "
-             "a SINGLE or FEW (image models can't draw an exact number). Both sides "
-             "must be FIGHTERS that can square up — never possessions, places, foods, "
-             "or wishes. Cross-universe matchups are great; use real, well-known "
-             "characters, never made-up ones",
+             "dream fights; and (2) 'numbers vs power' battles: a big count of a "
+             "RECOGNISABLE named group (1,000 Stormtroopers, 100 Minions) against one "
+             "or a few NAMED powerhouses (Smaug, Godzilla, Goku) — keep the count in "
+             "the option text and make the art show a CROWD vs a SINGLE or FEW (image "
+             "models can't draw an exact number).\n"
+             "EVERY side of EVERY matchup must be a SPECIFIC NAMED character or group "
+             "a scroller recognises in a blink. NEVER a generic fighter — 'elf "
+             "archers', 'a phoenix', 'soldiers', 'a dragon', 'a knight' — which nobody "
+             "has an opinion about, and which is exactly what kills these videos in "
+             "the first two seconds. If you can't picture the specific character, it "
+             "is too generic; pick one that is named.\n"
+             "Keep each side SHORT — the name (plus a count), no descriptive tail: "
+             "'Smaug', never 'one Phoenix rising from its own ashes'. A side a "
+             "scroller has to READ before they can react has already lost them.\n"
+             "Both sides must be FIGHTERS that can square up — never possessions, "
+             "places, foods, or wishes. Cross-universe matchups are great; use real, "
+             "well-known characters, never made-up ones",
              '{"a":"1,000 Stormtroopers","a_emoji":"🤖","a_art":"a huge crowd of white-armoured soldiers",'
-             '"b":"5 Jedi","b_emoji":"⚔️","b_art":"five robed warriors holding glowing swords"}'),
+             '"b":"Darth Vader","b_emoji":"🔴","b_art":"a tall dark-armoured warrior with a red lightsaber"}'),
     # Factual formats — a different JSON shape, because one answer is RIGHT.
     "trivia": ("fun general-knowledge quiz questions kids would enjoy guessing",
                '{"question":"Which planet is the biggest?","correct":"Jupiter",'
@@ -221,8 +230,12 @@ _HOOK_RULE = (
     "the video, but it is a weaker OPENER than a relatable one: it has to be "
     "explained before it can be felt. It must be a REAL near-50/50 "
     "split, totally clean, and never mean — no rage-bait, no fake claim. Save the "
-    "tamer or more niche ones for later. (For 'who would win', divisive means a "
-    "genuinely EVEN, argue-in-the-comments matchup — not a curbstomp.)"
+    "tamer or more niche ones for later. (For 'who would win', the OPENER must be "
+    "the most instantly-recognisable matchup you have — two NAMED icons a scroller "
+    "knows in a blink, like Harry Potter vs Elsa or Batman vs Spider-Man, NEVER a "
+    "generic or wordy one like 'elf archers vs a phoenix' that has to be read before "
+    "it can be felt. Divisive here means a genuinely EVEN, argue-in-the-comments "
+    "fight — not a curbstomp.)"
 )
 
 
