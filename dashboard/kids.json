@@ -1,12 +1,135 @@
 {
   "channel": {
     "title": "CoolDecide",
-    "subscribers": 11,
-    "views": 4856,
-    "videoCount": 15,
+    "subscribers": 13,
+    "views": 7352,
+    "videoCount": 16,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
   },
   "videos": [
+    {
+      "date": "2026-07-25T01:28:04+00:00",
+      "id": "WG5WoFivhjk",
+      "url": "https://youtube.com/shorts/WG5WoFivhjk",
+      "title": "Who would WIN? 10,000 Elf archers with enchanted bows vs 1 Phoenix rising from its own ashes \ud83d\udca5",
+      "format": "rank",
+      "theme": "Who Would Win",
+      "rounds": 2,
+      "privacy": "public",
+      "local_time": "09:28 PM",
+      "manual": false,
+      "views": 604,
+      "likes": 4,
+      "comments": 0,
+      "clipcheck": {
+        "reportId": "03974cf4-3de4-435c-bdc9-26f1af9e3770",
+        "botId": "kids",
+        "assetId": "531462a37d2b3317f173",
+        "platform": "youtube",
+        "decision": "pass",
+        "score": 100,
+        "createdAt": "2026-07-25T01:28:02+00:00",
+        "metadata": {
+          "filename": "short.mp4",
+          "width": 1080,
+          "height": 1920,
+          "durationSeconds": 19.89,
+          "hasAudio": true,
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "bytes": 3440276
+        },
+        "findings": [
+          {
+            "checkId": "file-intact",
+            "passed": true,
+            "severity": "error",
+            "message": "File size and bitrate look like a real render.",
+            "evidence": {
+              "bytes": 3440276,
+              "bitrateKbps": 1384,
+              "minBytes": 50000,
+              "minKbps": 60
+            }
+          },
+          {
+            "checkId": "audio-stream",
+            "passed": true,
+            "severity": "error",
+            "message": "An audio stream is present.",
+            "evidence": {
+              "hasAudio": true,
+              "audioCodec": "aac"
+            }
+          },
+          {
+            "checkId": "vertical-aspect-ratio",
+            "passed": true,
+            "severity": "error",
+            "message": "Video uses the expected vertical aspect ratio.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "aspectRatio": 0.5625
+            }
+          },
+          {
+            "checkId": "minimum-resolution",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video meets the configured minimum resolution.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "minimumWidth": 720,
+              "minimumHeight": 1280
+            }
+          },
+          {
+            "checkId": "duration",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video duration is inside the configured range.",
+            "evidence": {
+              "durationSeconds": 19.89,
+              "minimumSeconds": 1,
+              "maximumSeconds": 180
+            }
+          },
+          {
+            "checkId": "even-dimensions",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video dimensions are encoder-friendly even numbers.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920
+            }
+          },
+          {
+            "checkId": "audio-not-silent",
+            "passed": true,
+            "severity": "error",
+            "message": "Audio has real sound.",
+            "evidence": {
+              "meanVolumeDb": -14.4,
+              "silentThresholdDb": -50
+            }
+          },
+          {
+            "checkId": "not-mostly-black",
+            "passed": true,
+            "severity": "error",
+            "message": "Frames are drawing normally.",
+            "evidence": {
+              "blackSeconds": 0,
+              "blackFraction": 0.0,
+              "maxBlackFraction": 0.5
+            }
+          }
+        ]
+      }
+    },
     {
       "date": "2026-07-24T13:51:04+00:00",
       "id": "A9F_m1c0G5g",
@@ -18,8 +141,8 @@
       "privacy": "public",
       "local_time": "09:51 AM",
       "manual": false,
-      "views": 244,
-      "likes": 7,
+      "views": 1137,
+      "likes": 16,
       "comments": 0,
       "clipcheck": {
         "reportId": "450c3bdb-5259-488b-8470-09ca783a9a12",
@@ -141,8 +264,8 @@
       "privacy": "public",
       "local_time": "07:23 PM",
       "manual": false,
-      "views": 1014,
-      "likes": 3,
+      "views": 1146,
+      "likes": 4,
       "comments": 1,
       "clipcheck": {
         "reportId": "cbe87104-3848-4e6a-aeba-077504c49deb",
@@ -264,7 +387,7 @@
       "privacy": "public",
       "local_time": "07:02 PM",
       "manual": false,
-      "views": 1292,
+      "views": 1305,
       "likes": 18,
       "comments": 0,
       "clipcheck": {
@@ -387,8 +510,8 @@
       "privacy": "public",
       "local_time": "07:27 PM",
       "manual": false,
-      "views": 91,
-      "likes": 3,
+      "views": 167,
+      "likes": 4,
       "comments": 0,
       "clipcheck": {
         "reportId": "3bb18128-0e48-484a-950d-807210f27e67",
@@ -510,7 +633,7 @@
       "privacy": "public",
       "local_time": "10:47 AM",
       "manual": false,
-      "views": 122,
+      "views": 140,
       "likes": 3,
       "comments": 1,
       "clipcheck": {
@@ -633,7 +756,7 @@
       "privacy": "public",
       "local_time": "03:23 PM",
       "manual": false,
-      "views": 401,
+      "views": 402,
       "likes": 5,
       "comments": 1,
       "clipcheck": {
@@ -1223,6 +1346,12 @@
   "runs": [
     {
       "status": "posted",
+      "title": "Who would WIN? 10,000 Elf archers with enchanted bows vs 1 Phoenix rising from its own ashes \ud83d\udca5",
+      "manual": false,
+      "time": "2026-07-25T01:28:04+00:00"
+    },
+    {
+      "status": "posted",
       "title": "Impossible choice: Be super popular or Have 3 real best friends \ud83d\ude30",
       "manual": false,
       "time": "2026-07-24T13:51:04+00:00"
@@ -1363,28 +1492,29 @@
   ],
   "schedule": {
     "upcoming": [
-      "2026-07-24T21:28:00-04:00",
       "2026-07-25T10:35:00-04:00",
       "2026-07-25T15:35:00-04:00",
       "2026-07-26T11:08:00-04:00",
-      "2026-07-26T18:31:00-04:00"
+      "2026-07-26T18:31:00-04:00",
+      "2026-07-27T15:00:00-04:00",
+      "2026-07-27T19:14:00-04:00"
     ],
     "max_per_day": 2
   },
   "learning": {
     "ready": true,
-    "trained_on": 9,
+    "trained_on": 10,
     "needs": 4,
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Would You Rather": 0.6171967020023557,
-      "Who Would Win": 0.3828032979976443
+      "Would You Rather": 0.5993137628669463,
+      "Who Would Win": 0.4006862371330538
     },
     "counts": {
       "theme": {
-        "Would You Rather": 7,
-        "Who Would Win": 2
+        "Who Would Win": 3,
+        "Would You Rather": 7
       }
     },
     "best_theme": "Would You Rather"
@@ -1440,13 +1570,19 @@
     },
     {
       "d": "2026-07-24",
-      "subs": 11,
-      "views": 4856,
-      "likes": 73
+      "subs": 13,
+      "views": 7177,
+      "likes": 79
+    },
+    {
+      "d": "2026-07-25",
+      "subs": 13,
+      "views": 7352,
+      "likes": 82
     }
   ],
   "started": null,
-  "updated": "2026-07-24T15:16:10+00:00",
+  "updated": "2026-07-25T13:16:07+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
@@ -2421,25 +2557,133 @@
             }
           }
         ]
+      },
+      {
+        "reportId": "03974cf4-3de4-435c-bdc9-26f1af9e3770",
+        "botId": "kids",
+        "assetId": "531462a37d2b3317f173",
+        "platform": "youtube",
+        "decision": "pass",
+        "score": 100,
+        "createdAt": "2026-07-25T01:28:02+00:00",
+        "metadata": {
+          "filename": "short.mp4",
+          "width": 1080,
+          "height": 1920,
+          "durationSeconds": 19.89,
+          "hasAudio": true,
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "bytes": 3440276
+        },
+        "findings": [
+          {
+            "checkId": "file-intact",
+            "passed": true,
+            "severity": "error",
+            "message": "File size and bitrate look like a real render.",
+            "evidence": {
+              "bytes": 3440276,
+              "bitrateKbps": 1384,
+              "minBytes": 50000,
+              "minKbps": 60
+            }
+          },
+          {
+            "checkId": "audio-stream",
+            "passed": true,
+            "severity": "error",
+            "message": "An audio stream is present.",
+            "evidence": {
+              "hasAudio": true,
+              "audioCodec": "aac"
+            }
+          },
+          {
+            "checkId": "vertical-aspect-ratio",
+            "passed": true,
+            "severity": "error",
+            "message": "Video uses the expected vertical aspect ratio.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "aspectRatio": 0.5625
+            }
+          },
+          {
+            "checkId": "minimum-resolution",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video meets the configured minimum resolution.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "minimumWidth": 720,
+              "minimumHeight": 1280
+            }
+          },
+          {
+            "checkId": "duration",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video duration is inside the configured range.",
+            "evidence": {
+              "durationSeconds": 19.89,
+              "minimumSeconds": 1,
+              "maximumSeconds": 180
+            }
+          },
+          {
+            "checkId": "even-dimensions",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video dimensions are encoder-friendly even numbers.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920
+            }
+          },
+          {
+            "checkId": "audio-not-silent",
+            "passed": true,
+            "severity": "error",
+            "message": "Audio has real sound.",
+            "evidence": {
+              "meanVolumeDb": -14.4,
+              "silentThresholdDb": -50
+            }
+          },
+          {
+            "checkId": "not-mostly-black",
+            "passed": true,
+            "severity": "error",
+            "message": "Frames are drawing normally.",
+            "evidence": {
+              "blackSeconds": 0,
+              "blackFraction": 0.0,
+              "maxBlackFraction": 0.5
+            }
+          }
+        ]
       }
     ],
     "latest": {
-      "reportId": "450c3bdb-5259-488b-8470-09ca783a9a12",
+      "reportId": "03974cf4-3de4-435c-bdc9-26f1af9e3770",
       "botId": "kids",
-      "assetId": "8fa2da889304ac4b9117",
+      "assetId": "531462a37d2b3317f173",
       "platform": "youtube",
       "decision": "pass",
       "score": 100,
-      "createdAt": "2026-07-24T13:51:02+00:00",
+      "createdAt": "2026-07-25T01:28:02+00:00",
       "metadata": {
         "filename": "short.mp4",
         "width": 1080,
         "height": 1920,
-        "durationSeconds": 25.64,
+        "durationSeconds": 19.89,
         "hasAudio": true,
         "videoCodec": "h264",
         "audioCodec": "aac",
-        "bytes": 4706398
+        "bytes": 3440276
       },
       "findings": [
         {
@@ -2448,8 +2692,8 @@
           "severity": "error",
           "message": "File size and bitrate look like a real render.",
           "evidence": {
-            "bytes": 4706398,
-            "bitrateKbps": 1468,
+            "bytes": 3440276,
+            "bitrateKbps": 1384,
             "minBytes": 50000,
             "minKbps": 60
           }
@@ -2493,7 +2737,7 @@
           "severity": "warning",
           "message": "Video duration is inside the configured range.",
           "evidence": {
-            "durationSeconds": 25.64,
+            "durationSeconds": 19.89,
             "minimumSeconds": 1,
             "maximumSeconds": 180
           }
@@ -2514,7 +2758,7 @@
           "severity": "error",
           "message": "Audio has real sound.",
           "evidence": {
-            "meanVolumeDb": -14.9,
+            "meanVolumeDb": -14.4,
             "silentThresholdDb": -50
           }
         },
