@@ -18,8 +18,8 @@
       "privacy": "public",
       "local_time": "06:31 PM",
       "manual": false,
-      "views": 139,
-      "likes": 3,
+      "views": 184,
+      "likes": 5,
       "comments": 0,
       "clipcheck": {
         "reportId": "4f00081c-e3fd-4606-97a9-a15c16ea4aab",
@@ -141,7 +141,7 @@
       "privacy": "public",
       "local_time": "11:08 AM",
       "manual": false,
-      "views": 126,
+      "views": 139,
       "likes": 0,
       "comments": 0,
       "clipcheck": {
@@ -387,7 +387,7 @@
       "privacy": "public",
       "local_time": "10:35 AM",
       "manual": false,
-      "views": 435,
+      "views": 474,
       "likes": 7,
       "comments": 0,
       "clipcheck": {
@@ -510,7 +510,7 @@
       "privacy": "public",
       "local_time": "09:28 PM",
       "manual": false,
-      "views": 764,
+      "views": 773,
       "likes": 4,
       "comments": 0,
       "clipcheck": {
@@ -879,7 +879,7 @@
       "privacy": "public",
       "local_time": "07:02 PM",
       "manual": false,
-      "views": 1320,
+      "views": 1321,
       "likes": 18,
       "comments": 0,
       "clipcheck": {
@@ -2017,21 +2017,21 @@
   },
   "learning": {
     "ready": true,
-    "trained_on": 13,
+    "trained_on": 14,
     "needs": 4,
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Would You Rather": 0.6019542493561582,
-      "Who Would Win": 0.3980457506438419
+      "Who Would Win": 0.5090791180285343,
+      "Would You Rather": 0.49092088197146555
     },
     "counts": {
       "theme": {
-        "Would You Rather": 10,
-        "Who Would Win": 3
+        "Who Would Win": 4,
+        "Would You Rather": 10
       }
     },
-    "best_theme": "Would You Rather"
+    "best_theme": "Who Would Win"
   },
   "history": [
     {
@@ -2098,11 +2098,11 @@
       "d": "2026-07-26",
       "subs": 14,
       "views": 10452,
-      "likes": 101
+      "likes": 104
     }
   ],
   "started": null,
-  "updated": "2026-07-26T23:15:43+00:00",
+  "updated": "2026-07-26T23:46:12+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
