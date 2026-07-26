@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "03:35 PM",
       "manual": false,
-      "views": 626,
+      "views": 662,
       "likes": 10,
       "comments": 2,
       "clipcheck": {
@@ -1835,10 +1835,16 @@
       "subs": 14,
       "views": 7476,
       "likes": 96
+    },
+    {
+      "d": "2026-07-26",
+      "subs": 14,
+      "views": 7476,
+      "likes": 96
     }
   ],
   "started": null,
-  "updated": "2026-07-25T23:47:07+00:00",
+  "updated": "2026-07-26T00:16:13+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
