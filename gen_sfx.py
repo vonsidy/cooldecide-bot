@@ -28,10 +28,19 @@ def _tone(freq: float, dur: float, decay: float = 20.0, harmonics=(1.0,)) -> np.
     return wave_ * np.exp(-decay * t)
 
 
+def _chirp(f0: float, f1: float, dur: float, decay: float, curve: float = 1.0) -> np.ndarray:
+    """A pitch-bending tone (f0 -> f1), for pops and whooshes."""
+    t = np.linspace(0, dur, int(SR * dur), endpoint=False)
+    freq = f0 + (f1 - f0) * (t / dur) ** curve
+    phase = 2 * np.pi * np.cumsum(freq) / SR
+    return np.sin(phase) * np.exp(-decay * t)
+
+
 def make_tick() -> str:
-    # bright, short countdown blip
-    s = _tone(880, 0.12, decay=32, harmonics=(1.0, 0.25))
-    return _save("tick.wav", s * 0.6)
+    # CoolDecide's own countdown tick: a round, warm 'boop' (not DecideDeck's sharp
+    # click) — sine-based with a soft octave, quick decay. Bouncy, sticker-cartoon.
+    s = _tone(1046.5, 0.10, decay=30, harmonics=(1.0, 0.35, 0.12))
+    return _save("tick.wav", s * 0.55)
 
 
 def make_go() -> str:
@@ -52,8 +61,33 @@ def make_ding() -> str:
 
 
 def make_pop() -> str:
-    s = _tone(660, 0.07, decay=45, harmonics=(1.0,))
+    # A rising 'bloop' — pitch bends UP, which reads as playful rather than the flat
+    # blip DecideDeck uses. Fires when the result lands.
+    s = _chirp(420, 900, 0.11, decay=26, curve=0.6)
     return _save("pop.wav", s * 0.5)
+
+
+def make_whoosh() -> str:
+    # Filtered-noise swish for the reveal transition, CoolDecide's own: soft noise
+    # swelling then falling, no tonal component, so it never fights the fanfare.
+    dur = 0.42
+    n = int(SR * dur)
+    t = np.linspace(0, dur, n, endpoint=False)
+    rng = np.random.default_rng(7)                 # fixed seed -> reproducible asset
+    noise = rng.normal(0, 1, n)
+    # crude one-pole lowpass that opens then closes, giving the swish its motion
+    swell = np.sin(np.pi * t / dur) ** 1.6
+    out = np.zeros(n)
+    prev = 0.0
+    for i in range(n):
+        a = 0.02 + 0.35 * swell[i]                 # cutoff follows the swell
+        prev = prev + a * (noise[i] - prev)
+        out[i] = prev
+    out *= swell
+    peak = float(np.max(np.abs(out)))
+    if peak > 0:
+        out = out / peak * 0.5
+    return _save("whoosh.wav", out)
 
 
 def make_winner() -> str:
@@ -96,5 +130,6 @@ def make_winner() -> str:
 
 
 if __name__ == "__main__":
-    for f in (make_tick(), make_go(), make_ding(), make_pop(), make_winner()):
+    for f in (make_tick(), make_go(), make_ding(), make_pop(),
+              make_whoosh(), make_winner()):
         print("wrote", f)
