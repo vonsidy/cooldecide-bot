@@ -19,7 +19,7 @@ FPS = 30
 STEP = 0.55                 # seconds per 3-2-1 number (must match cd_anim.js STEP)
 CD = 3 * STEP               # countdown length (1.65s)
 REVEAL_HOLD = 2.05          # hold after the reveal lands
-MUSIC = os.path.join(ASSETS, "music_A.mp3")
+MUSIC = os.path.join(ASSETS, "music.mp3")   # CoolDecide's own bed (not DecideDeck's music_A)
 
 # header + sub per format, in CoolDecide's voice (all wyr in production).
 HEAD = {

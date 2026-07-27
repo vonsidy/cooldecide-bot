@@ -65,14 +65,14 @@ function build(Q) {
 .head{position:absolute;top:60px;left:50%;transform:translateX(-50%);text-align:center;z-index:8;width:1000px}
 .head .t{font-family:'Anton';font-size:112px;line-height:.92;color:#fff;letter-spacing:1px;-webkit-text-stroke:9px ${NAVY};paint-order:stroke fill}
 .head .badge{display:inline-block;margin-top:12px;background:${ACOL};border:6px solid #fff;border-radius:44px;padding:4px 40px 10px;font-family:'Anton';font-size:42px;letter-spacing:3px;color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.22)}
-.pc{position:absolute;left:96px;width:888px;height:560px;border:12px solid #fff;border-radius:46px;
-  display:flex;flex-direction:column;align-items:center;padding:22px 26px;transform-origin:50% 50%;
+.pc{position:absolute;left:96px;width:888px;height:560px;border:12px solid #fff;border-radius:46px;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;padding:24px 30px 30px;transform-origin:50% 50%;
   box-shadow:0 22px 40px rgba(0,0,0,.3);will-change:transform}
-.pcimg{width:300px;height:300px;border-radius:28px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.22);flex:none}
-.pclabel{font-family:'Anton';font-size:60px;color:#fff;text-align:center;line-height:1;letter-spacing:.5px;margin-top:14px;
+.pcimg{width:252px;height:252px;border-radius:28px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.22);flex:none}
+.pclabel{font-family:'Anton';font-size:52px;color:#fff;text-align:center;line-height:1.02;letter-spacing:.5px;margin-top:14px;
   text-shadow:0 5px 0 ${NAVY},0 7px 12px rgba(0,0,0,.28)}
-.pcrow{margin-top:auto;width:100%;display:flex;align-items:center;gap:20px;opacity:0}
-.pcpct{font-family:'Anton';font-size:80px;color:#fff;-webkit-text-stroke:5px ${NAVY};paint-order:stroke fill;min-width:190px;text-align:left}
+.pcrow{margin-top:auto;width:100%;display:flex;align-items:center;gap:18px;opacity:0}
+.pcpct{font-family:'Anton';font-size:62px;color:#fff;-webkit-text-stroke:4px ${NAVY};paint-order:stroke fill;min-width:148px;text-align:left}
 .pcbar{flex:1;height:34px;border-radius:24px;background:rgba(255,255,255,.55);overflow:hidden;border:4px solid #fff}
 .pcfill{height:100%;border-radius:24px;background:${GOLD};width:0%}
 .crown{position:absolute;top:-104px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:100px;z-index:9;filter:drop-shadow(0 8px 12px rgba(0,0,0,.35));opacity:0}
