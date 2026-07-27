@@ -56,6 +56,34 @@ def make_pop() -> str:
     return _save("pop.wav", s * 0.5)
 
 
+def make_winner() -> str:
+    """The crown sting — a triumphant ascending fanfare into a shimmering major
+    chord. Deliberately its OWN sound, not DecideDeck's two-note ding: a rising
+    arpeggio (C-E-G-C) that lands on a held C-major chord with sparkle on top."""
+    total = int(SR * 1.15)
+    out = np.zeros(total)
+    # ascending arpeggio, bell-ish, quick
+    arp = (523.25, 659.25, 783.99, 1046.50)          # C5 E5 G5 C6
+    step = int(SR * 0.082)
+    for i, f in enumerate(arp):
+        note = _tone(f, 0.5, decay=9, harmonics=(1.0, 0.5, 0.28, 0.14))
+        off = i * step
+        out[off: off + len(note)] += note[: total - off] * 0.7
+    # final sustained major chord, rings out
+    chord_off = 3 * step
+    for f in (1046.50, 1318.51, 1567.98):            # C6 E6 G6
+        c = _tone(f, 0.8, decay=4.2, harmonics=(1.0, 0.5, 0.25))
+        out[chord_off: chord_off + len(c)] += c[: total - chord_off] * 0.38
+    # sparkle: two high bells over the landing chord
+    for i, f in enumerate((2093.0, 2637.0)):         # C7, E7
+        s = _tone(f, 0.45, decay=11, harmonics=(1.0, 0.4))
+        off = chord_off + int(SR * (0.04 + i * 0.06))
+        out[off: off + len(s)] += s[: total - off] * 0.13
+    env = np.ones(total)
+    a = int(SR * 0.004); env[:a] = np.linspace(0, 1, a)  # de-click the attack
+    return _save("winner.wav", out * env * 0.6)
+
+
 if __name__ == "__main__":
-    for f in (make_tick(), make_go(), make_ding(), make_pop()):
+    for f in (make_tick(), make_go(), make_ding(), make_pop(), make_winner()):
         print("wrote", f)

@@ -142,7 +142,7 @@ def build(items, out_path: str, background: str | None = None) -> str:
 def _mux(frames, vcues, ticks, dings, whooshes, pops, ducks, total, out_path):
     cmd = ["ffmpeg", "-y", "-framerate", str(FPS), "-i", os.path.join(frames, "f%05d.png"),
            "-stream_loop", "-1", "-i", MUSIC,
-           "-i", os.path.join(ASSETS, "tick.wav"), "-i", os.path.join(ASSETS, "ding.wav"),
+           "-i", os.path.join(ASSETS, "tick.wav"), "-i", os.path.join(ASSETS, "winner.wav"),
            "-i", os.path.join(ASSETS, "whoosh.wav"), "-i", os.path.join(ASSETS, "pop.wav")]
     v0 = 6
     for wav, _ in vcues:
