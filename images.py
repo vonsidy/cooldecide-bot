@@ -93,11 +93,17 @@ def _slug(s: str) -> str:
 
 
 def query_for(option_text: str) -> str | None:
-    """The curated search for this option, or None if it isn't safely picturable."""
+    """The curated search for this option, or None if it isn't safely picturable.
+
+    Matches on WHOLE WORDS. A raw substring test put a lion on "Get 1 MILLION
+    TikTok followers" — "lion" is inside "million" — and aired it. Same class of
+    bug: "billion" -> lion, "scatter"/"catch" -> cat. The stock library is only
+    ever asked for a term the option genuinely contains.
+    """
     t = option_text.lower()
     # longest keyword first, so "ice cream" beats "cream"-ish partials
     for key in sorted(PICTURABLE, key=len, reverse=True):
-        if key in t:
+        if re.search(r"\b" + re.escape(key) + r"\b", t):
             return PICTURABLE[key]
     return None
 

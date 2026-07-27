@@ -93,7 +93,13 @@ def build(items, out_path: str, background: str | None = None) -> str:
         subprocess.run(["ffmpeg", "-y", "-i", mp3, "-ac", "1", "-ar", "44100", wav],
                        capture_output=True)
         d = _wav_dur(wav); durs.append(d); voices.append(wav)
-        vl = round(_clamp(d + 0.55, 1.6, 4.6), 2); vls.append(vl)
+        # The vote phase must OUTLAST the narration — the 3-2-1 starting while the
+        # question is still being read is the bug this replaces. The old upper clamp
+        # of 4.6s was DecideDeck's, tuned to its shorter lines; CoolDecide's
+        # questions run 4.9-5.5s, so every round got truncated and the countdown
+        # talked over the voice. Floor only now: never shorter than the voice + a
+        # beat to finish reading, with a high ceiling purely as a runaway guard.
+        vl = round(_clamp(d + 0.75, 1.6, 12.0), 2); vls.append(vl)
         head, sub = HEAD.get(it.fmt, HEAD["wyr"])
         rounds.append({
             "pal": pal, "head": head, "sub": sub,

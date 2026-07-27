@@ -495,8 +495,11 @@ REAL_FIRST = ("minecraft", "roblox", "fortnite", "playstation", "xbox", "tiktok"
 
 
 def _prefers_real(option_text: str) -> bool:
+    """Word-boundary matched, for the same reason as _image_for above: "dc" hides
+    inside "sandcastle" and "lego" inside "allegory", and a false hit here sends
+    the option down the stock-photo path instead of to cartoon art."""
     t = option_text.lower()
-    return any(k in t for k in REAL_FIRST)
+    return any(re.search(rf"(?<![a-z]){re.escape(k)}(?![a-z])", t) for k in REAL_FIRST)
 
 
 def photo_for(option_text: str, hint: str | None = None) -> str | None:
