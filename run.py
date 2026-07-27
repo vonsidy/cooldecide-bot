@@ -110,7 +110,18 @@ def main() -> None:
     print(f"  format: {fmt} | palette: {palette} | bg: {bg} | topic: {topic}{'' if themed else ' (mixed — no badge)'}")
     for i, it in enumerate(items, 1):
         print(f"  round {i} [{it.fmt}] {it.a} ({it.a_pct}%) vs {it.b} ({it.b_pct}%)")
-    assemble.build(items, args.out)
+    # Browser-rendered animation (cd_render) replaces the PIL renderer (assemble).
+    # Same signature and same 1080x1920 mp4 out; everything downstream is unchanged.
+    # Fallback: a live channel must keep posting. If the browser renderer fails for
+    # ANY reason (Chromium, a frame, ffmpeg), ship the old PIL look rather than
+    # going dark — a silent no-post is the worse failure on this channel.
+    try:
+        import cd_render
+        cd_render.build(items, args.out)
+    except Exception as _e:
+        print(f"  cd_render failed ({_e!r}); falling back to PIL assemble.build")
+        import assemble
+        assemble.build(items, args.out)
     print(f"built {args.out} ({os.path.getsize(args.out)//1024} KB) — {len(items)} rounds")
 
     if not (args.upload or config.UPLOAD):

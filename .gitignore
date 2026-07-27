@@ -24,3 +24,7 @@ yt_token.json.bak
 
 # Local virtualenv for running card.py / the tools on a laptop.
 .venv/
+
+node_modules/
+package.json
+package-lock.json
