@@ -158,6 +158,15 @@ jobs:
         if: steps.gate.outputs.post == 'true' && github.event.inputs.preview_questions != 'true'
         run: pip install -q -r requirements.txt
 
+      # cd_render draws each frame in headless Chromium, so the runner needs Node +
+      # Playwright's Chromium. Anton is embedded in the HTML by cd_anim.js, so no
+      # font install is needed here — only the emoji font (above) for 👑/👇.
+      - name: Install browser renderer (Node + Playwright)
+        if: steps.gate.outputs.post == 'true' && github.event.inputs.preview_questions != 'true'
+        run: |
+          npm install playwright@1.56.0
+          npx playwright install --with-deps chromium
+
       - name: Restore credentials
         # Not needed for a dry run — it never talks to YouTube.
         if: steps.gate.outputs.post == 'true' && github.event.inputs.dry_run != 'true' && github.event.inputs.preview_questions != 'true'
