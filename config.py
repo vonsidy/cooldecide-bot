@@ -63,7 +63,11 @@ ENABLE_VOICE = get("ENABLE_VOICE", "0") == "1"
 # the voice sets up the choice and then gets out of the way.
 ENABLE_QUESTION_VOICE = get("ENABLE_QUESTION_VOICE", "1") == "1"
 # Kids' Shorts are read fast; the default TTS pace drags badly against a 3s timer.
-EDGE_RATE = get("EDGE_RATE", "+25%")
+# +40% (was +25%) because the countdown now WAITS for the narration to finish, so
+# every extra second of speech is an extra second of video. At 3 questions that
+# compounds: +25% ran ~28s, which pushes completion down against a 0:17 average
+# view duration. Faster read gets the same 3 questions into ~24s.
+EDGE_RATE = get("EDGE_RATE", "+40%")
 # Ava: bright, young, natural female — fits a kids/teen channel and breaks from the
 # over-used Andrew that half of faceless AI channels run (sounding generically-AI is
 # its own small penalty). Override with EDGE_VOICE, e.g. en-US-AnaNeural (a younger

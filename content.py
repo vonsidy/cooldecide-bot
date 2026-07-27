@@ -826,7 +826,11 @@ FORMATS = {
 # _DILEMMA names as a failure). trivia and higher_lower are FACTUAL: one answer is
 # right, so there is nothing to argue about. To air one here, add it to this list —
 # but teen-frame its prompt first, or it drags the channel back to little kids.
-FORMAT_ROTATION = ["wyr", "wyr", "wyr", "rank"]
+# Owner's call, 27 July: wyr ONLY, for one format identity to optimise. rank is not
+# dead code and was not cut for underperforming — the named-icon fix landed it at
+# 811 views / 10 likes, the best like count of that week — so putting it back is
+# just adding "rank" to this list, and its prompt is already fixed and ready.
+FORMAT_ROTATION = ["wyr"]
 
 
 # Posts per day. Must match scheduler.MAX_PER_DAY. Deliberately a literal and not
