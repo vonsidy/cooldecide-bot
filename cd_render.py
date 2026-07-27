@@ -171,7 +171,10 @@ def _mux(frames, vcues, ticks, dings, whooshes, pops, ducks, total, out_path):
     fc.append(f"[1:a]volume='if(gt({duck},0),0.16,0.5)':eval=frame[mus]")
     mix = "[mus]" + "".join(f"[{l}]" for l in labels)
     fc.append(f"{mix}amix=inputs={len(labels)+1}:normalize=0[mx]")
-    fc.append(f"[mx]afade=t=out:st={total-0.4:.2f}:d=0.4[aout]")
+    # alimiter catches any moment where music + sting + voice sum past +/-1 — that
+    # overshoot is what turns into 'static' when the phone is loud.
+    fc.append(f"[mx]alimiter=limit=0.95[mxl]")
+    fc.append(f"[mxl]afade=t=out:st={total-0.4:.2f}:d=0.4[aout]")
 
     cmd += ["-filter_complex", ";".join(fc), "-map", "0:v", "-map", "[aout]",
             "-t", f"{total:.2f}", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(FPS),

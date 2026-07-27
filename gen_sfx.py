@@ -59,29 +59,40 @@ def make_pop() -> str:
 def make_winner() -> str:
     """The crown sting — a triumphant ascending fanfare into a shimmering major
     chord. Deliberately its OWN sound, not DecideDeck's two-note ding: a rising
-    arpeggio (C-E-G-C) that lands on a held C-major chord with sparkle on top."""
-    total = int(SR * 1.15)
+    arpeggio (C-E-G-C) that lands on a held C-major chord with sparkle on top.
+
+    NORMALIZED, not hard-clipped: the summed arpeggio + chord + sparkle used to
+    exceed +/-1 at the peak and get clipped, which reads as harsh 'static' when
+    played loud. Softer harmonics + a peak-normalize to 0.82 keep it clean at any
+    volume."""
+    total = int(SR * 1.2)
     out = np.zeros(total)
-    # ascending arpeggio, bell-ish, quick
+    # ascending arpeggio, bell-ish, quick (fewer/softer harmonics -> less harsh)
     arp = (523.25, 659.25, 783.99, 1046.50)          # C5 E5 G5 C6
     step = int(SR * 0.082)
     for i, f in enumerate(arp):
-        note = _tone(f, 0.5, decay=9, harmonics=(1.0, 0.5, 0.28, 0.14))
+        note = _tone(f, 0.5, decay=9, harmonics=(1.0, 0.42, 0.2))
         off = i * step
-        out[off: off + len(note)] += note[: total - off] * 0.7
+        out[off: off + len(note)] += note[: total - off] * 0.55
     # final sustained major chord, rings out
     chord_off = 3 * step
     for f in (1046.50, 1318.51, 1567.98):            # C6 E6 G6
-        c = _tone(f, 0.8, decay=4.2, harmonics=(1.0, 0.5, 0.25))
-        out[chord_off: chord_off + len(c)] += c[: total - chord_off] * 0.38
+        c = _tone(f, 0.85, decay=4.0, harmonics=(1.0, 0.42, 0.18))
+        out[chord_off: chord_off + len(c)] += c[: total - chord_off] * 0.3
     # sparkle: two high bells over the landing chord
     for i, f in enumerate((2093.0, 2637.0)):         # C7, E7
-        s = _tone(f, 0.45, decay=11, harmonics=(1.0, 0.4))
+        s = _tone(f, 0.45, decay=11, harmonics=(1.0, 0.32))
         off = chord_off + int(SR * (0.04 + i * 0.06))
-        out[off: off + len(s)] += s[: total - off] * 0.13
+        out[off: off + len(s)] += s[: total - off] * 0.09
+    # de-click the attack and fade the tail so it never clicks at either end
     env = np.ones(total)
-    a = int(SR * 0.004); env[:a] = np.linspace(0, 1, a)  # de-click the attack
-    return _save("winner.wav", out * env * 0.6)
+    a = int(SR * 0.004); env[:a] = np.linspace(0, 1, a)
+    fo = int(SR * 0.14); env[-fo:] = np.linspace(1, 0, fo)
+    out *= env
+    peak = float(np.max(np.abs(out)))
+    if peak > 0:
+        out = out / peak * 0.82                       # normalize -> guaranteed no clip
+    return _save("winner.wav", out)
 
 
 if __name__ == "__main__":
