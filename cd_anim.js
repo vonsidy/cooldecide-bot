@@ -40,14 +40,16 @@ function dotsBg() {
 
 // A stacked wide panel: art centred on top, label below, %+bar revealed at bottom.
 const panel = (id, img, label, accent, top, fit) => `
-  <div class="pc" id="${id}" style="top:${top}px;background:${accent}">
+  <div class="pc" id="${id}" style="top:${top}px">
     <div class="crown" id="${id}crown">👑</div>
     <div class="ribbon" id="${id}rib">WINNER</div>
-    <img class="pcimg" src="${img}" style="object-fit:${fit||'cover'};${fit==='contain'?'background:#fff;padding:16px;':''}">
-    <div class="pclabel">${esc(label)}</div>
-    <div class="pcrow" id="${id}row">
-      <div class="pcpct" id="${id}pct">0%</div>
-      <div class="pcbar"><div class="pcfill" id="${id}fill" style="width:0%"></div></div>
+    <div class="pcin" style="background:${accent}">
+      <img class="pcimg" src="${img}" style="object-fit:${fit||'cover'};${fit==='contain'?'background:#fff;padding:16px;':''}">
+      <div class="pclabel">${esc(label)}</div>
+      <div class="pcrow" id="${id}row">
+        <div class="pcpct" id="${id}pct">0%</div>
+        <div class="pcbar"><div class="pcfill" id="${id}fill" style="width:0%"></div></div>
+      </div>
     </div>
   </div>`;
 
@@ -65,15 +67,18 @@ function build(Q) {
 .head{position:absolute;top:60px;left:50%;transform:translateX(-50%);text-align:center;z-index:8;width:1000px}
 .head .t{font-family:'Anton';font-size:112px;line-height:.92;color:#fff;letter-spacing:1px;-webkit-text-stroke:9px ${NAVY};paint-order:stroke fill}
 .head .badge{display:inline-block;margin-top:12px;background:${ACOL};border:6px solid #fff;border-radius:44px;padding:4px 40px 10px;font-family:'Anton';font-size:42px;letter-spacing:3px;color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.22)}
-.pc{position:absolute;left:96px;width:888px;height:560px;border:12px solid #fff;border-radius:46px;overflow:hidden;
-  display:flex;flex-direction:column;align-items:center;padding:24px 30px 30px;transform-origin:50% 50%;
-  box-shadow:0 22px 40px rgba(0,0,0,.3);will-change:transform}
-.pcimg{width:252px;height:252px;border-radius:28px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.22);flex:none}
-.pclabel{font-family:'Anton';font-size:52px;color:#fff;text-align:center;line-height:1.02;letter-spacing:.5px;margin-top:14px;
+.pc{position:absolute;left:96px;width:888px;height:560px;border:12px solid #fff;border-radius:46px;
+  transform-origin:50% 50%;box-shadow:0 22px 40px rgba(0,0,0,.3);will-change:transform}
+/* the clip lives on the INNER wrapper so long labels get clipped but the crown
+   and WINNER pill (which overhang the top of the panel) never do */
+.pcin{position:absolute;inset:0;border-radius:34px;overflow:hidden;display:flex;flex-direction:column;
+  align-items:center;padding:24px 30px 30px}
+.pcimg{width:286px;height:286px;border-radius:28px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.22);flex:none}
+.pclabel{font-family:'Anton';font-size:58px;color:#fff;text-align:center;line-height:1.02;letter-spacing:.5px;margin-top:16px;
   text-shadow:0 5px 0 ${NAVY},0 7px 12px rgba(0,0,0,.28)}
-.pcrow{margin-top:auto;width:100%;display:flex;align-items:center;gap:18px;opacity:0}
-.pcpct{font-family:'Anton';font-size:62px;color:#fff;-webkit-text-stroke:4px ${NAVY};paint-order:stroke fill;min-width:148px;text-align:left}
-.pcbar{flex:1;height:34px;border-radius:24px;background:rgba(255,255,255,.55);overflow:hidden;border:4px solid #fff}
+.pcrow{margin-top:auto;width:100%;display:flex;align-items:center;gap:20px;opacity:0}
+.pcpct{font-family:'Anton';font-size:82px;color:#fff;-webkit-text-stroke:4px ${NAVY};paint-order:stroke fill;min-width:184px;text-align:left}
+.pcbar{flex:1;height:52px;border-radius:26px;background:rgba(255,255,255,.55);overflow:hidden;border:5px solid #fff}
 .pcfill{height:100%;border-radius:24px;background:${GOLD};width:0%}
 .crown{position:absolute;top:-104px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:100px;z-index:9;filter:drop-shadow(0 8px 12px rgba(0,0,0,.35));opacity:0}
 .ribbon{position:absolute;top:-28px;right:44px;transform:scale(.6);font-family:'Anton';font-size:38px;padding:8px 40px;border-radius:999px;letter-spacing:2px;background:${GOLD};color:${NAVY};box-shadow:0 8px 16px rgba(0,0,0,.3);z-index:7;white-space:nowrap;border:5px solid #fff;opacity:0}
