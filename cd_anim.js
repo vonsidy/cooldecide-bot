@@ -67,19 +67,19 @@ function build(Q) {
 .head{position:absolute;top:60px;left:50%;transform:translateX(-50%);text-align:center;z-index:8;width:1000px}
 .head .t{font-family:'Anton';font-size:112px;line-height:.92;color:#fff;letter-spacing:1px;-webkit-text-stroke:9px ${NAVY};paint-order:stroke fill}
 .head .badge{display:inline-block;margin-top:12px;background:${ACOL};border:6px solid #fff;border-radius:44px;padding:4px 40px 10px;font-family:'Anton';font-size:42px;letter-spacing:3px;color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.22)}
-/* 620 tall, filling the space the layout was wasting: panels used to stop at y1580
-   with the safe area running to y1660. Panel B now ends at y1650, just inside it. */
-.pc{position:absolute;left:96px;width:888px;height:620px;border:12px solid #fff;border-radius:46px;
+/* 640 tall, filling the space the layout was wasting: panels used to stop at y1580
+   with the safe area running to y1660. Panel B now ends at y1655, just inside it. */
+.pc{position:absolute;left:96px;width:888px;height:640px;border:12px solid #fff;border-radius:46px;
   transform-origin:50% 50%;box-shadow:0 22px 40px rgba(0,0,0,.3);will-change:transform}
 /* the clip lives on the INNER wrapper so long labels get clipped but the crown
    and WINNER pill (which overhang the top of the panel) never do */
 .pcin{position:absolute;inset:0;border-radius:34px;overflow:hidden;display:flex;flex-direction:column;
   align-items:center;padding:24px 30px 30px}
-/* Budget against the panel: 620 tall - 24 border = 596, minus 24/30 padding = 542
-   usable. art 250 + gap 8 + row ~78 leaves ~206 for the OPTION TEXT, which still
-   holds three lines at 64/1.05 (202). Art grew 220 -> 250 without costing the text
-   anything — the height came from the panel, not from the label. */
-.pcimg{width:250px;height:250px;border-radius:28px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.22);flex:none;margin-bottom:8px}
+/* Budget against the panel: 640 tall - 24 border = 616, minus 24/30 padding = 562
+   usable. art 270 + gap 8 + row ~78 leaves ~206 for the OPTION TEXT, which still
+   holds three lines at 64/1.05 (202). Art grew 220 -> 250 -> 270 without costing the
+   text anything — the height came from the panel, not from the label. */
+.pcimg{width:270px;height:270px;border-radius:28px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.22);flex:none;margin-bottom:8px}
 /* The label ABSORBS the leftover height and centres inside it (flex:1), instead of
    pushing the %/bar down with margin-top:auto. A two-line label used to shove the
    row into the panel's bottom edge while one-line panels sat correctly — the rows
@@ -93,15 +93,15 @@ function build(Q) {
 .pcfill{height:100%;border-radius:24px;background:${GOLD};width:0%}
 .crown{position:absolute;top:-104px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:100px;z-index:9;filter:drop-shadow(0 8px 12px rgba(0,0,0,.35));opacity:0}
 .ribbon{position:absolute;top:-28px;right:44px;transform:scale(.6);font-family:'Anton';font-size:38px;padding:8px 40px;border-radius:999px;letter-spacing:2px;background:${GOLD};color:${NAVY};box-shadow:0 8px 16px rgba(0,0,0,.3);z-index:7;white-space:nowrap;border:5px solid #fff;opacity:0}
-#count{position:absolute;top:977px;left:50%;transform:translate(-50%,-50%);width:196px;height:196px;border-radius:50%;background:rgba(255,255,255,.9);border:10px solid ${GOLD};display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;box-shadow:0 12px 26px rgba(0,0,0,.3)}
+#count{position:absolute;top:967px;left:50%;transform:translate(-50%,-50%);width:196px;height:196px;border-radius:50%;background:rgba(255,255,255,.9);border:10px solid ${GOLD};display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;box-shadow:0 12px 26px rgba(0,0,0,.3)}
 #count span{font-family:'Anton';font-size:150px;color:${NAVY};line-height:1}
 .foot{position:absolute;bottom:52px;width:100%;text-align:center;z-index:6}
 .foot span{font-family:'Anton';font-size:54px;color:#fff;letter-spacing:1px;text-shadow:0 5px 0 ${NAVY},0 7px 12px rgba(0,0,0,.28)}
 </style></head><body><div class="stage">
   ${dotsBg()}
   <div class="head"><div class="t">${esc(Q.head)}</div><div class="badge" id="sub">${esc(Q.sub)}</div></div>
-  ${panel('A', IA, Q.la, ACOL, 305, Q.fitA)}
-  ${panel('B', IB, Q.lb, BCOL, 1030, Q.fitB)}
+  ${panel('A', IA, Q.la, ACOL, 280, Q.fitA)}
+  ${panel('B', IB, Q.lb, BCOL, 1015, Q.fitB)}
   <div id="count"><span>3</span></div>
   <div class="foot"><span>COMMENT YOUR PICK 👇</span></div>
 </div>
