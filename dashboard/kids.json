@@ -3,7 +3,7 @@
     "title": "CoolDecide",
     "subscribers": 15,
     "views": 11851,
-    "videoCount": 22,
+    "videoCount": 23,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
   },
   "videos": [
@@ -2538,8 +2538,8 @@
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Who Would Win": 0.5148434322895485,
-      "Would You Rather": 0.4851565677104514
+      "Who Would Win": 0.5147776572668112,
+      "Would You Rather": 0.48522234273318865
     },
     "counts": {
       "theme": {
@@ -2626,11 +2626,11 @@
       "d": "2026-07-28",
       "subs": 15,
       "views": 11851,
-      "likes": 121
+      "likes": 120
     }
   ],
   "started": null,
-  "updated": "2026-07-28T21:41:04+00:00",
+  "updated": "2026-07-28T21:41:29+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
