@@ -73,16 +73,21 @@ function build(Q) {
    and WINNER pill (which overhang the top of the panel) never do */
 .pcin{position:absolute;inset:0;border-radius:34px;overflow:hidden;display:flex;flex-direction:column;
   align-items:center;padding:24px 30px 30px}
-.pcimg{width:268px;height:268px;border-radius:28px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.22);flex:none}
+/* Sizes are budgeted against the panel: 560 tall - 24 border = 536, minus 24/30
+   padding = 482 usable. art 232 + gap 8 + row ~83 leaves ~159 for the label, which
+   holds THREE lines at 52/1.05 (164) and two comfortably (109). The previous
+   budget left only ~4px of slack over a two-line label, so it overflowed upward
+   into the artwork. */
+.pcimg{width:232px;height:232px;border-radius:26px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.22);flex:none;margin-bottom:8px}
 /* The label ABSORBS the leftover height and centres inside it (flex:1), instead of
    pushing the %/bar down with margin-top:auto. A two-line label used to shove the
    row into the panel's bottom edge while one-line panels sat correctly — the rows
    are on a fixed baseline now, so both line counts line up. */
 .pclabel{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
-  font-family:'Anton';font-size:56px;color:#fff;text-align:center;line-height:1.04;letter-spacing:.5px;
+  font-family:'Anton';font-size:52px;color:#fff;text-align:center;line-height:1.05;letter-spacing:.5px;
   text-shadow:0 5px 0 ${NAVY},0 7px 12px rgba(0,0,0,.28)}
 .pcrow{flex:none;width:100%;display:flex;align-items:center;gap:20px;opacity:0}
-.pcpct{font-family:'Anton';font-size:82px;color:#fff;-webkit-text-stroke:4px ${NAVY};paint-order:stroke fill;min-width:184px;text-align:left}
+.pcpct{font-family:'Anton';font-size:72px;color:#fff;-webkit-text-stroke:4px ${NAVY};paint-order:stroke fill;min-width:162px;text-align:left}
 .pcbar{flex:1;height:52px;border-radius:26px;background:rgba(255,255,255,.55);overflow:hidden;border:5px solid #fff}
 .pcfill{height:100%;border-radius:24px;background:${GOLD};width:0%}
 .crown{position:absolute;top:-104px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:100px;z-index:9;filter:drop-shadow(0 8px 12px rgba(0,0,0,.35));opacity:0}
