@@ -67,20 +67,19 @@ function build(Q) {
 .head{position:absolute;top:60px;left:50%;transform:translateX(-50%);text-align:center;z-index:8;width:1000px}
 .head .t{font-family:'Anton';font-size:112px;line-height:.92;color:#fff;letter-spacing:1px;-webkit-text-stroke:9px ${NAVY};paint-order:stroke fill}
 .head .badge{display:inline-block;margin-top:12px;background:${ACOL};border:6px solid #fff;border-radius:44px;padding:4px 40px 10px;font-family:'Anton';font-size:42px;letter-spacing:3px;color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.22)}
-/* 600 tall (was 560), pulled into space the layout was wasting: the panels used to
-   stop at y1580 with the safe area running to y1660. The extra height all goes to
-   the question. */
-.pc{position:absolute;left:96px;width:888px;height:600px;border:12px solid #fff;border-radius:46px;
+/* 620 tall, filling the space the layout was wasting: panels used to stop at y1580
+   with the safe area running to y1660. Panel B now ends at y1650, just inside it. */
+.pc{position:absolute;left:96px;width:888px;height:620px;border:12px solid #fff;border-radius:46px;
   transform-origin:50% 50%;box-shadow:0 22px 40px rgba(0,0,0,.3);will-change:transform}
 /* the clip lives on the INNER wrapper so long labels get clipped but the crown
    and WINNER pill (which overhang the top of the panel) never do */
 .pcin{position:absolute;inset:0;border-radius:34px;overflow:hidden;display:flex;flex-direction:column;
   align-items:center;padding:24px 30px 30px}
-/* Budget against the panel: 600 tall - 24 border = 576, minus 24/30 padding = 522
-   usable. art 220 + gap 8 + row ~83 leaves ~211 for the OPTION TEXT, which holds
-   three lines at 64/1.05 (202) and two with room to spare (134). The option is the
-   thing being chosen, so it gets the space; the art is supporting. */
-.pcimg{width:220px;height:220px;border-radius:26px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.22);flex:none;margin-bottom:8px}
+/* Budget against the panel: 620 tall - 24 border = 596, minus 24/30 padding = 542
+   usable. art 250 + gap 8 + row ~78 leaves ~206 for the OPTION TEXT, which still
+   holds three lines at 64/1.05 (202). Art grew 220 -> 250 without costing the text
+   anything — the height came from the panel, not from the label. */
+.pcimg{width:250px;height:250px;border-radius:28px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.22);flex:none;margin-bottom:8px}
 /* The label ABSORBS the leftover height and centres inside it (flex:1), instead of
    pushing the %/bar down with margin-top:auto. A two-line label used to shove the
    row into the panel's bottom edge while one-line panels sat correctly — the rows
@@ -89,20 +88,20 @@ function build(Q) {
   font-family:'Anton';font-size:64px;color:#fff;text-align:center;line-height:1.05;letter-spacing:.5px;
   text-shadow:0 6px 0 ${NAVY},0 8px 14px rgba(0,0,0,.3)}
 .pcrow{flex:none;width:100%;display:flex;align-items:center;gap:20px;opacity:0}
-.pcpct{font-family:'Anton';font-size:72px;color:#fff;-webkit-text-stroke:4px ${NAVY};paint-order:stroke fill;min-width:162px;text-align:left}
+.pcpct{font-family:'Anton';font-size:68px;color:#fff;-webkit-text-stroke:4px ${NAVY};paint-order:stroke fill;min-width:154px;text-align:left}
 .pcbar{flex:1;height:52px;border-radius:26px;background:rgba(255,255,255,.55);overflow:hidden;border:5px solid #fff}
 .pcfill{height:100%;border-radius:24px;background:${GOLD};width:0%}
 .crown{position:absolute;top:-104px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:100px;z-index:9;filter:drop-shadow(0 8px 12px rgba(0,0,0,.35));opacity:0}
 .ribbon{position:absolute;top:-28px;right:44px;transform:scale(.6);font-family:'Anton';font-size:38px;padding:8px 40px;border-radius:999px;letter-spacing:2px;background:${GOLD};color:${NAVY};box-shadow:0 8px 16px rgba(0,0,0,.3);z-index:7;white-space:nowrap;border:5px solid #fff;opacity:0}
-#count{position:absolute;top:965px;left:50%;transform:translate(-50%,-50%);width:196px;height:196px;border-radius:50%;background:rgba(255,255,255,.9);border:10px solid ${GOLD};display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;box-shadow:0 12px 26px rgba(0,0,0,.3)}
+#count{position:absolute;top:977px;left:50%;transform:translate(-50%,-50%);width:196px;height:196px;border-radius:50%;background:rgba(255,255,255,.9);border:10px solid ${GOLD};display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;box-shadow:0 12px 26px rgba(0,0,0,.3)}
 #count span{font-family:'Anton';font-size:150px;color:${NAVY};line-height:1}
 .foot{position:absolute;bottom:52px;width:100%;text-align:center;z-index:6}
 .foot span{font-family:'Anton';font-size:54px;color:#fff;letter-spacing:1px;text-shadow:0 5px 0 ${NAVY},0 7px 12px rgba(0,0,0,.28)}
 </style></head><body><div class="stage">
   ${dotsBg()}
   <div class="head"><div class="t">${esc(Q.head)}</div><div class="badge" id="sub">${esc(Q.sub)}</div></div>
-  ${panel('A', IA, Q.la, ACOL, 310, Q.fitA)}
-  ${panel('B', IB, Q.lb, BCOL, 1020, Q.fitB)}
+  ${panel('A', IA, Q.la, ACOL, 305, Q.fitA)}
+  ${panel('B', IB, Q.lb, BCOL, 1030, Q.fitB)}
   <div id="count"><span>3</span></div>
   <div class="foot"><span>COMMENT YOUR PICK 👇</span></div>
 </div>
@@ -159,7 +158,10 @@ window.setT=function(t){
       const scY=(breathe*(1-riseP)+1.03*riseP)*(1+pk)*(1-0.028*jelly);
       p.card.style.transform='translate('+dx.toFixed(1)+'px,'+ty.toFixed(1)+'px) scale('+sc.toFixed(3)+','+scY.toFixed(3)+')';
       p.card.style.boxShadow=rv>0?BASE+','+GLOW[key]:BASE;
-      p.card.style.opacity='1'; p.card.style.zIndex=rv>0?5:3;
+      // 30 beats the header (8), footer (6) and countdown (10). The crown and
+      // WINNER pill live INSIDE this panel, so their own z-index is capped by the
+      // panel's — at 5 the header painted over the crown where they overlap.
+      p.card.style.opacity='1'; p.card.style.zIndex=rv>0?30:3;
       const cr=ease(clamp((t-REVEAL-0.05)/0.4,0,1));
       p.crown.style.opacity=cr.toFixed(3);
       p.crown.style.transform='translateX(-50%) rotate(-8deg) translateY('+((1-cr)*-24).toFixed(1)+'px)';
