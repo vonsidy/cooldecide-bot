@@ -113,6 +113,18 @@ const backOut=x=>{if(x<=0)return 0;if(x>=1)return 1;const c1=1.1,c3=c1+1;return 
 // per-beat punch impulse (a little scale kick when each countdown number lands)
 function punch(t){let s=0;for(const bt of beats){if(t>=bt){const sb=t-bt;s+=0.06*Math.exp(-sb/0.14)*Math.cos(2*Math.PI*sb/0.34);}}return s;}
 
+// ENTRANCE — panels spring in from the sides, ported from the PIL renderer's
+// _slide_in (config.PANEL_*). Dropping this was a real regression: the browser
+// version opened on a DEAD-STILL frame (the idle bob is 7px, invisible) for the
+// whole 5s read, and a Short is won or lost in its first two seconds. Same
+// constants as the old renderer so the entrance feels like the channel always did.
+const SLIDE_PX=680, STAGGER=0.09, SPRING=0.10, WOBBLE=0.42;
+function slideIn(t){
+  if(t<=0) return SLIDE_PX;
+  const off=SLIDE_PX*Math.exp(-t/SPRING)*Math.cos(2*Math.PI*t/WOBBLE);
+  return Math.abs(off)>1?off:0;
+}
+
 window.setT=function(t){
   const rv=easeOut(clamp((t-REVEAL)/0.55,0,1));
   const riseP=backOut(clamp((t-REVEAL)/0.6,0,1));
@@ -123,13 +135,17 @@ window.setT=function(t){
 
   for(const key of ['A','B']){
     const p=parts[key];
-    const bob=Math.sin(2*Math.PI*t/2.6 + p.ph)*7;                 // idle vertical breathe
-    const breathe=1+0.006*Math.sin(2*Math.PI*t/3.1 + p.ph);
+    // A springs in from the left, B from the right a beat later
+    const dx=(key==='A' ? -slideIn(t) : slideIn(t-STAGGER));
+    // Bigger than it was (7px / 0.6%): the read phase is ~5s and at the old values
+    // the frame was visually frozen the whole time, which reads as a still image.
+    const bob=Math.sin(2*Math.PI*t/2.6 + p.ph)*12;                // idle vertical breathe
+    const breathe=1+0.011*Math.sin(2*Math.PI*t/3.1 + p.ph);
     if(WIN===key){
       const ty=bob*(1-rv) + (-14)*riseP;                          // small LIFT, no collision
       const sc=(breathe*(1-riseP)+1.03*riseP)*(1+pk)*(1+0.028*jelly);
       const scY=(breathe*(1-riseP)+1.03*riseP)*(1+pk)*(1-0.028*jelly);
-      p.card.style.transform='translateY('+ty.toFixed(1)+'px) scale('+sc.toFixed(3)+','+scY.toFixed(3)+')';
+      p.card.style.transform='translate('+dx.toFixed(1)+'px,'+ty.toFixed(1)+'px) scale('+sc.toFixed(3)+','+scY.toFixed(3)+')';
       p.card.style.boxShadow=rv>0?BASE+','+GLOW[key]:BASE;
       p.card.style.opacity='1'; p.card.style.zIndex=rv>0?5:3;
       const cr=ease(clamp((t-REVEAL-0.05)/0.4,0,1));
@@ -140,7 +156,7 @@ window.setT=function(t){
       p.rib.style.transform='scale('+(0.6+0.4*rb+0.08*Math.sin(rb*Math.PI)).toFixed(3)+')';
     } else {
       const sc=breathe*(1+pk);
-      p.card.style.transform='translateY('+bob.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
+      p.card.style.transform='translate('+dx.toFixed(1)+'px,'+bob.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
       p.card.style.boxShadow=BASE; p.card.style.opacity=(1-0.14*rv).toFixed(3); p.card.style.zIndex=2;
       p.crown.style.opacity='0'; p.rib.style.opacity='0';
     }
