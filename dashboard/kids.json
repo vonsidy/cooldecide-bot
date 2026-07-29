@@ -2,7 +2,7 @@
   "channel": {
     "title": "CoolDecide",
     "subscribers": 15,
-    "views": 11851,
+    "views": 11911,
     "videoCount": 23,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
   },
@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "05:41 PM",
       "manual": false,
-      "views": 46,
+      "views": 56,
       "likes": 0,
       "comments": 0,
       "clipcheck": {
@@ -141,7 +141,7 @@
       "privacy": "public",
       "local_time": "10:22 AM",
       "manual": false,
-      "views": 94,
+      "views": 103,
       "likes": 2,
       "comments": 0,
       "clipcheck": {
@@ -264,7 +264,7 @@
       "privacy": "public",
       "local_time": "07:14 PM",
       "manual": false,
-      "views": 589,
+      "views": 591,
       "likes": 9,
       "comments": 0,
       "clipcheck": {
@@ -2527,7 +2527,9 @@
       "2026-07-29T08:28:00-04:00",
       "2026-07-29T18:35:00-04:00",
       "2026-07-30T10:23:00-04:00",
-      "2026-07-30T16:54:00-04:00"
+      "2026-07-30T16:54:00-04:00",
+      "2026-07-31T15:22:00-04:00",
+      "2026-07-31T19:34:00-04:00"
     ],
     "max_per_day": 2
   },
@@ -2631,12 +2633,12 @@
     {
       "d": "2026-07-29",
       "subs": 15,
-      "views": 11851,
+      "views": 11911,
       "likes": 121
     }
   ],
   "started": null,
-  "updated": "2026-07-29T03:15:42+00:00",
+  "updated": "2026-07-29T08:11:45+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
