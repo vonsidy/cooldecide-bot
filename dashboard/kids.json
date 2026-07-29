@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "05:41 PM",
       "manual": false,
-      "views": 38,
+      "views": 45,
       "likes": 0,
       "comments": 0,
       "clipcheck": {
@@ -141,7 +141,7 @@
       "privacy": "public",
       "local_time": "10:22 AM",
       "manual": false,
-      "views": 86,
+      "views": 94,
       "likes": 2,
       "comments": 0,
       "clipcheck": {
@@ -264,7 +264,7 @@
       "privacy": "public",
       "local_time": "07:14 PM",
       "manual": false,
-      "views": 587,
+      "views": 589,
       "likes": 9,
       "comments": 0,
       "clipcheck": {
@@ -756,7 +756,7 @@
       "privacy": "public",
       "local_time": "03:35 PM",
       "manual": false,
-      "views": 812,
+      "views": 813,
       "likes": 10,
       "comments": 2,
       "clipcheck": {
@@ -879,7 +879,7 @@
       "privacy": "public",
       "local_time": "10:35 AM",
       "manual": false,
-      "views": 665,
+      "views": 667,
       "likes": 7,
       "comments": 0,
       "clipcheck": {
@@ -2538,8 +2538,8 @@
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Who Would Win": 0.5148434322895485,
-      "Would You Rather": 0.4851565677104514
+      "Who Would Win": 0.514839409134029,
+      "Would You Rather": 0.485160590865971
     },
     "counts": {
       "theme": {
@@ -2636,7 +2636,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-29T01:15:41+00:00",
+  "updated": "2026-07-29T02:15:49+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
