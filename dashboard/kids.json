@@ -3,7 +3,7 @@
     "title": "CoolDecide",
     "subscribers": 15,
     "views": 11919,
-    "videoCount": 24,
+    "videoCount": 25,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
   },
   "videos": [
@@ -18,7 +18,7 @@
       "privacy": "public",
       "local_time": "06:35 PM",
       "manual": false,
-      "views": 0,
+      "views": 20,
       "likes": 0,
       "comments": 0,
       "clipcheck": {
@@ -141,7 +141,7 @@
       "privacy": "public",
       "local_time": "08:28 AM",
       "manual": false,
-      "views": 93,
+      "views": 94,
       "likes": 3,
       "comments": 0,
       "clipcheck": {
@@ -264,7 +264,7 @@
       "privacy": "public",
       "local_time": "05:41 PM",
       "manual": false,
-      "views": 92,
+      "views": 96,
       "likes": 1,
       "comments": 0,
       "clipcheck": {
@@ -387,7 +387,7 @@
       "privacy": "public",
       "local_time": "10:22 AM",
       "manual": false,
-      "views": 244,
+      "views": 246,
       "likes": 2,
       "comments": 0,
       "clipcheck": {
@@ -510,7 +510,7 @@
       "privacy": "public",
       "local_time": "07:14 PM",
       "manual": false,
-      "views": 650,
+      "views": 655,
       "likes": 10,
       "comments": 0,
       "clipcheck": {
@@ -756,7 +756,7 @@
       "privacy": "public",
       "local_time": "06:31 PM",
       "manual": false,
-      "views": 753,
+      "views": 754,
       "likes": 8,
       "comments": 0,
       "clipcheck": {
@@ -2796,8 +2796,8 @@
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Who Would Win": 0.5218816233613314,
-      "Would You Rather": 0.4781183766386687
+      "Who Would Win": 0.5218508997429305,
+      "Would You Rather": 0.47814910025706936
     },
     "counts": {
       "theme": {
@@ -2894,7 +2894,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-29T22:35:26+00:00",
+  "updated": "2026-07-29T23:15:38+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
