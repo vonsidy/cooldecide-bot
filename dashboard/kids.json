@@ -8,6 +8,129 @@
   },
   "videos": [
     {
+      "date": "2026-07-29T22:35:04+00:00",
+      "id": "cKvTSFxfwc4",
+      "url": "https://youtube.com/shorts/cKvTSFxfwc4",
+      "title": "Only 1% pick right: Live inside your favorite video game forever or Never lose an argument with you\u2026",
+      "format": "wyr",
+      "theme": "Would You Rather",
+      "rounds": 3,
+      "privacy": "public",
+      "local_time": "06:35 PM",
+      "manual": false,
+      "views": 0,
+      "likes": 0,
+      "comments": 0,
+      "clipcheck": {
+        "reportId": "49a63607-00b5-4122-af70-b353fcecc23e",
+        "botId": "kids",
+        "assetId": "d302b6a4acded50a12cc",
+        "platform": "youtube",
+        "decision": "pass",
+        "score": 100,
+        "createdAt": "2026-07-29T22:35:02+00:00",
+        "metadata": {
+          "filename": "short.mp4",
+          "width": 1080,
+          "height": 1920,
+          "durationSeconds": 27.233,
+          "hasAudio": true,
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "bytes": 4611384
+        },
+        "findings": [
+          {
+            "checkId": "file-intact",
+            "passed": true,
+            "severity": "error",
+            "message": "File size and bitrate look like a real render.",
+            "evidence": {
+              "bytes": 4611384,
+              "bitrateKbps": 1355,
+              "minBytes": 50000,
+              "minKbps": 60
+            }
+          },
+          {
+            "checkId": "audio-stream",
+            "passed": true,
+            "severity": "error",
+            "message": "An audio stream is present.",
+            "evidence": {
+              "hasAudio": true,
+              "audioCodec": "aac"
+            }
+          },
+          {
+            "checkId": "vertical-aspect-ratio",
+            "passed": true,
+            "severity": "error",
+            "message": "Video uses the expected vertical aspect ratio.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "aspectRatio": 0.5625
+            }
+          },
+          {
+            "checkId": "minimum-resolution",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video meets the configured minimum resolution.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "minimumWidth": 720,
+              "minimumHeight": 1280
+            }
+          },
+          {
+            "checkId": "duration",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video duration is inside the configured range.",
+            "evidence": {
+              "durationSeconds": 27.233,
+              "minimumSeconds": 1,
+              "maximumSeconds": 180
+            }
+          },
+          {
+            "checkId": "even-dimensions",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video dimensions are encoder-friendly even numbers.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920
+            }
+          },
+          {
+            "checkId": "audio-not-silent",
+            "passed": true,
+            "severity": "error",
+            "message": "Audio has real sound.",
+            "evidence": {
+              "meanVolumeDb": -17.2,
+              "silentThresholdDb": -50
+            }
+          },
+          {
+            "checkId": "not-mostly-black",
+            "passed": true,
+            "severity": "error",
+            "message": "Frames are drawing normally.",
+            "evidence": {
+              "blackSeconds": 0,
+              "blackFraction": 0.0,
+              "maxBlackFraction": 0.5
+            }
+          }
+        ]
+      }
+    },
+    {
       "date": "2026-07-29T12:28:05+00:00",
       "id": "zXpdMJpXNKQ",
       "url": "https://youtube.com/shorts/zXpdMJpXNKQ",
@@ -387,7 +510,7 @@
       "privacy": "public",
       "local_time": "07:14 PM",
       "manual": false,
-      "views": 643,
+      "views": 650,
       "likes": 10,
       "comments": 0,
       "clipcheck": {
@@ -2453,6 +2576,12 @@
   "runs": [
     {
       "status": "posted",
+      "title": "Only 1% pick right: Live inside your favorite video game forever or Never lose an argument with you\u2026",
+      "manual": false,
+      "time": "2026-07-29T22:35:04+00:00"
+    },
+    {
+      "status": "posted",
       "title": "Hardest WYR ever: a school bus that flies or a slide from bed to class \ud83e\udd72",
       "manual": false,
       "time": "2026-07-29T12:28:05+00:00"
@@ -2653,7 +2782,6 @@
   ],
   "schedule": {
     "upcoming": [
-      "2026-07-29T18:35:00-04:00",
       "2026-07-30T10:23:00-04:00",
       "2026-07-30T16:54:00-04:00",
       "2026-07-31T15:22:00-04:00",
@@ -2663,17 +2791,17 @@
   },
   "learning": {
     "ready": true,
-    "trained_on": 19,
+    "trained_on": 20,
     "needs": 4,
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Who Would Win": 0.5276670762327047,
-      "Would You Rather": 0.4723329237672952
+      "Who Would Win": 0.5218816233613314,
+      "Would You Rather": 0.4781183766386687
     },
     "counts": {
       "theme": {
-        "Would You Rather": 13,
+        "Would You Rather": 14,
         "Who Would Win": 6
       }
     },
@@ -2766,7 +2894,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-29T21:15:55+00:00",
+  "updated": "2026-07-29T22:35:05+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
@@ -4821,25 +4949,133 @@
             }
           }
         ]
+      },
+      {
+        "reportId": "49a63607-00b5-4122-af70-b353fcecc23e",
+        "botId": "kids",
+        "assetId": "d302b6a4acded50a12cc",
+        "platform": "youtube",
+        "decision": "pass",
+        "score": 100,
+        "createdAt": "2026-07-29T22:35:02+00:00",
+        "metadata": {
+          "filename": "short.mp4",
+          "width": 1080,
+          "height": 1920,
+          "durationSeconds": 27.233,
+          "hasAudio": true,
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "bytes": 4611384
+        },
+        "findings": [
+          {
+            "checkId": "file-intact",
+            "passed": true,
+            "severity": "error",
+            "message": "File size and bitrate look like a real render.",
+            "evidence": {
+              "bytes": 4611384,
+              "bitrateKbps": 1355,
+              "minBytes": 50000,
+              "minKbps": 60
+            }
+          },
+          {
+            "checkId": "audio-stream",
+            "passed": true,
+            "severity": "error",
+            "message": "An audio stream is present.",
+            "evidence": {
+              "hasAudio": true,
+              "audioCodec": "aac"
+            }
+          },
+          {
+            "checkId": "vertical-aspect-ratio",
+            "passed": true,
+            "severity": "error",
+            "message": "Video uses the expected vertical aspect ratio.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "aspectRatio": 0.5625
+            }
+          },
+          {
+            "checkId": "minimum-resolution",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video meets the configured minimum resolution.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "minimumWidth": 720,
+              "minimumHeight": 1280
+            }
+          },
+          {
+            "checkId": "duration",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video duration is inside the configured range.",
+            "evidence": {
+              "durationSeconds": 27.233,
+              "minimumSeconds": 1,
+              "maximumSeconds": 180
+            }
+          },
+          {
+            "checkId": "even-dimensions",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video dimensions are encoder-friendly even numbers.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920
+            }
+          },
+          {
+            "checkId": "audio-not-silent",
+            "passed": true,
+            "severity": "error",
+            "message": "Audio has real sound.",
+            "evidence": {
+              "meanVolumeDb": -17.2,
+              "silentThresholdDb": -50
+            }
+          },
+          {
+            "checkId": "not-mostly-black",
+            "passed": true,
+            "severity": "error",
+            "message": "Frames are drawing normally.",
+            "evidence": {
+              "blackSeconds": 0,
+              "blackFraction": 0.0,
+              "maxBlackFraction": 0.5
+            }
+          }
+        ]
       }
     ],
     "latest": {
-      "reportId": "4dd81144-62c0-4729-8b77-7038b867bc79",
+      "reportId": "49a63607-00b5-4122-af70-b353fcecc23e",
       "botId": "kids",
-      "assetId": "7351e11a3390f3097925",
+      "assetId": "d302b6a4acded50a12cc",
       "platform": "youtube",
       "decision": "pass",
       "score": 100,
-      "createdAt": "2026-07-29T12:28:03+00:00",
+      "createdAt": "2026-07-29T22:35:02+00:00",
       "metadata": {
         "filename": "short.mp4",
         "width": 1080,
         "height": 1920,
-        "durationSeconds": 23.77,
+        "durationSeconds": 27.233,
         "hasAudio": true,
         "videoCodec": "h264",
         "audioCodec": "aac",
-        "bytes": 3815579
+        "bytes": 4611384
       },
       "findings": [
         {
@@ -4848,8 +5084,8 @@
           "severity": "error",
           "message": "File size and bitrate look like a real render.",
           "evidence": {
-            "bytes": 3815579,
-            "bitrateKbps": 1284,
+            "bytes": 4611384,
+            "bitrateKbps": 1355,
             "minBytes": 50000,
             "minKbps": 60
           }
@@ -4893,7 +5129,7 @@
           "severity": "warning",
           "message": "Video duration is inside the configured range.",
           "evidence": {
-            "durationSeconds": 23.77,
+            "durationSeconds": 27.233,
             "minimumSeconds": 1,
             "maximumSeconds": 180
           }
@@ -4914,7 +5150,7 @@
           "severity": "error",
           "message": "Audio has real sound.",
           "evidence": {
-            "meanVolumeDb": -18.0,
+            "meanVolumeDb": -17.2,
             "silentThresholdDb": -50
           }
         },
