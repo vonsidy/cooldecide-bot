@@ -1,8 +1,8 @@
 {
   "channel": {
     "title": "CoolDecide",
-    "subscribers": 15,
-    "views": 11918,
+    "subscribers": 16,
+    "views": 13039,
     "videoCount": 26,
     "thumbnail": "https://yt3.ggpht.com/DbdD2QgJDsdZMKlC8Xot-FAfzrx97Ia_LRjKaHCUCu6SVNJO0chdZaZER_3VFOHo-4c9ikj05Q=s88-c-k-c0x00ffffff-no-rj"
   },
@@ -18,8 +18,8 @@
       "privacy": "public",
       "local_time": "10:23 AM",
       "manual": false,
-      "views": 132,
-      "likes": 1,
+      "views": 336,
+      "likes": 6,
       "comments": 0,
       "clipcheck": {
         "reportId": "f982bd9e-7334-411a-a1ef-95aa1faef253",
@@ -2926,8 +2926,8 @@
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Who Would Win": 0.5219207909139058,
-      "Would You Rather": 0.47807920908609436
+      "Who Would Win": 0.521951506591337,
+      "Would You Rather": 0.47804849340866284
     },
     "counts": {
       "theme": {
@@ -3024,13 +3024,13 @@
     },
     {
       "d": "2026-07-30",
-      "subs": 15,
-      "views": 11918,
-      "likes": 130
+      "subs": 16,
+      "views": 13039,
+      "likes": 135
     }
   ],
   "started": null,
-  "updated": "2026-07-30T15:15:37+00:00",
+  "updated": "2026-07-30T16:15:44+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
