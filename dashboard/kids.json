@@ -2796,8 +2796,8 @@
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Who Would Win": 0.5218816233613314,
-      "Would You Rather": 0.4781183766386687
+      "Who Would Win": 0.5218508997429305,
+      "Would You Rather": 0.47814910025706936
     },
     "counts": {
       "theme": {
@@ -2900,7 +2900,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-30T00:15:37+00:00",
+  "updated": "2026-07-30T01:15:44+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
