@@ -8,6 +8,129 @@
   },
   "videos": [
     {
+      "date": "2026-07-30T14:23:37+00:00",
+      "id": "fUZt6hDYnzU",
+      "url": "https://youtube.com/shorts/fUZt6hDYnzU",
+      "title": "Be honest: Be super popular or Have 3 real best friends? \ud83d\ude30",
+      "format": "wyr",
+      "theme": "Would You Rather",
+      "rounds": 3,
+      "privacy": "public",
+      "local_time": "10:23 AM",
+      "manual": false,
+      "views": 0,
+      "likes": 0,
+      "comments": 0,
+      "clipcheck": {
+        "reportId": "f982bd9e-7334-411a-a1ef-95aa1faef253",
+        "botId": "kids",
+        "assetId": "f17b35b2756cfdd835a0",
+        "platform": "youtube",
+        "decision": "pass",
+        "score": 100,
+        "createdAt": "2026-07-30T14:23:35+00:00",
+        "metadata": {
+          "filename": "short.mp4",
+          "width": 1080,
+          "height": 1920,
+          "durationSeconds": 23.233,
+          "hasAudio": true,
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "bytes": 4228908
+        },
+        "findings": [
+          {
+            "checkId": "file-intact",
+            "passed": true,
+            "severity": "error",
+            "message": "File size and bitrate look like a real render.",
+            "evidence": {
+              "bytes": 4228908,
+              "bitrateKbps": 1456,
+              "minBytes": 50000,
+              "minKbps": 60
+            }
+          },
+          {
+            "checkId": "audio-stream",
+            "passed": true,
+            "severity": "error",
+            "message": "An audio stream is present.",
+            "evidence": {
+              "hasAudio": true,
+              "audioCodec": "aac"
+            }
+          },
+          {
+            "checkId": "vertical-aspect-ratio",
+            "passed": true,
+            "severity": "error",
+            "message": "Video uses the expected vertical aspect ratio.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "aspectRatio": 0.5625
+            }
+          },
+          {
+            "checkId": "minimum-resolution",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video meets the configured minimum resolution.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "minimumWidth": 720,
+              "minimumHeight": 1280
+            }
+          },
+          {
+            "checkId": "duration",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video duration is inside the configured range.",
+            "evidence": {
+              "durationSeconds": 23.233,
+              "minimumSeconds": 1,
+              "maximumSeconds": 180
+            }
+          },
+          {
+            "checkId": "even-dimensions",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video dimensions are encoder-friendly even numbers.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920
+            }
+          },
+          {
+            "checkId": "audio-not-silent",
+            "passed": true,
+            "severity": "error",
+            "message": "Audio has real sound.",
+            "evidence": {
+              "meanVolumeDb": -15.2,
+              "silentThresholdDb": -50
+            }
+          },
+          {
+            "checkId": "not-mostly-black",
+            "passed": true,
+            "severity": "error",
+            "message": "Frames are drawing normally.",
+            "evidence": {
+              "blackSeconds": 0,
+              "blackFraction": 0.0,
+              "maxBlackFraction": 0.5
+            }
+          }
+        ]
+      }
+    },
+    {
       "date": "2026-07-29T22:35:04+00:00",
       "id": "cKvTSFxfwc4",
       "url": "https://youtube.com/shorts/cKvTSFxfwc4",
@@ -18,7 +141,7 @@
       "privacy": "public",
       "local_time": "06:35 PM",
       "manual": false,
-      "views": 142,
+      "views": 144,
       "likes": 2,
       "comments": 0,
       "clipcheck": {
@@ -2576,6 +2699,12 @@
   "runs": [
     {
       "status": "posted",
+      "title": "Be honest: Be super popular or Have 3 real best friends? \ud83d\ude30",
+      "manual": false,
+      "time": "2026-07-30T14:23:37+00:00"
+    },
+    {
+      "status": "posted",
       "title": "Only 1% pick right: Live inside your favorite video game forever or Never lose an argument with you\u2026",
       "manual": false,
       "time": "2026-07-29T22:35:04+00:00"
@@ -2782,7 +2911,6 @@
   ],
   "schedule": {
     "upcoming": [
-      "2026-07-30T10:23:00-04:00",
       "2026-07-30T16:54:00-04:00",
       "2026-07-31T15:22:00-04:00",
       "2026-07-31T19:34:00-04:00",
@@ -2902,7 +3030,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-30T13:15:38+00:00",
+  "updated": "2026-07-30T14:23:37+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
@@ -5065,25 +5193,133 @@
             }
           }
         ]
+      },
+      {
+        "reportId": "f982bd9e-7334-411a-a1ef-95aa1faef253",
+        "botId": "kids",
+        "assetId": "f17b35b2756cfdd835a0",
+        "platform": "youtube",
+        "decision": "pass",
+        "score": 100,
+        "createdAt": "2026-07-30T14:23:35+00:00",
+        "metadata": {
+          "filename": "short.mp4",
+          "width": 1080,
+          "height": 1920,
+          "durationSeconds": 23.233,
+          "hasAudio": true,
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "bytes": 4228908
+        },
+        "findings": [
+          {
+            "checkId": "file-intact",
+            "passed": true,
+            "severity": "error",
+            "message": "File size and bitrate look like a real render.",
+            "evidence": {
+              "bytes": 4228908,
+              "bitrateKbps": 1456,
+              "minBytes": 50000,
+              "minKbps": 60
+            }
+          },
+          {
+            "checkId": "audio-stream",
+            "passed": true,
+            "severity": "error",
+            "message": "An audio stream is present.",
+            "evidence": {
+              "hasAudio": true,
+              "audioCodec": "aac"
+            }
+          },
+          {
+            "checkId": "vertical-aspect-ratio",
+            "passed": true,
+            "severity": "error",
+            "message": "Video uses the expected vertical aspect ratio.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "aspectRatio": 0.5625
+            }
+          },
+          {
+            "checkId": "minimum-resolution",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video meets the configured minimum resolution.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "minimumWidth": 720,
+              "minimumHeight": 1280
+            }
+          },
+          {
+            "checkId": "duration",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video duration is inside the configured range.",
+            "evidence": {
+              "durationSeconds": 23.233,
+              "minimumSeconds": 1,
+              "maximumSeconds": 180
+            }
+          },
+          {
+            "checkId": "even-dimensions",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video dimensions are encoder-friendly even numbers.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920
+            }
+          },
+          {
+            "checkId": "audio-not-silent",
+            "passed": true,
+            "severity": "error",
+            "message": "Audio has real sound.",
+            "evidence": {
+              "meanVolumeDb": -15.2,
+              "silentThresholdDb": -50
+            }
+          },
+          {
+            "checkId": "not-mostly-black",
+            "passed": true,
+            "severity": "error",
+            "message": "Frames are drawing normally.",
+            "evidence": {
+              "blackSeconds": 0,
+              "blackFraction": 0.0,
+              "maxBlackFraction": 0.5
+            }
+          }
+        ]
       }
     ],
     "latest": {
-      "reportId": "49a63607-00b5-4122-af70-b353fcecc23e",
+      "reportId": "f982bd9e-7334-411a-a1ef-95aa1faef253",
       "botId": "kids",
-      "assetId": "d302b6a4acded50a12cc",
+      "assetId": "f17b35b2756cfdd835a0",
       "platform": "youtube",
       "decision": "pass",
       "score": 100,
-      "createdAt": "2026-07-29T22:35:02+00:00",
+      "createdAt": "2026-07-30T14:23:35+00:00",
       "metadata": {
         "filename": "short.mp4",
         "width": 1080,
         "height": 1920,
-        "durationSeconds": 27.233,
+        "durationSeconds": 23.233,
         "hasAudio": true,
         "videoCodec": "h264",
         "audioCodec": "aac",
-        "bytes": 4611384
+        "bytes": 4228908
       },
       "findings": [
         {
@@ -5092,8 +5328,8 @@
           "severity": "error",
           "message": "File size and bitrate look like a real render.",
           "evidence": {
-            "bytes": 4611384,
-            "bitrateKbps": 1355,
+            "bytes": 4228908,
+            "bitrateKbps": 1456,
             "minBytes": 50000,
             "minKbps": 60
           }
@@ -5137,7 +5373,7 @@
           "severity": "warning",
           "message": "Video duration is inside the configured range.",
           "evidence": {
-            "durationSeconds": 27.233,
+            "durationSeconds": 23.233,
             "minimumSeconds": 1,
             "maximumSeconds": 180
           }
@@ -5158,7 +5394,7 @@
           "severity": "error",
           "message": "Audio has real sound.",
           "evidence": {
-            "meanVolumeDb": -17.2,
+            "meanVolumeDb": -15.2,
             "silentThresholdDb": -50
           }
         },
