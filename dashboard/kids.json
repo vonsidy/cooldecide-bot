@@ -8,6 +8,129 @@
   },
   "videos": [
     {
+      "date": "2026-07-30T20:54:04+00:00",
+      "id": "Ay9AGTKRbmU",
+      "url": "https://youtube.com/shorts/Ay9AGTKRbmU",
+      "title": "Would You Rather: Give up TikTok forever or Give up Instagram forever? \ud83e\udd2f",
+      "format": "wyr",
+      "theme": "Would You Rather",
+      "rounds": 3,
+      "privacy": "public",
+      "local_time": "04:54 PM",
+      "manual": false,
+      "views": 0,
+      "likes": 0,
+      "comments": 0,
+      "clipcheck": {
+        "reportId": "56d73153-0710-49f8-b62d-d027943c5825",
+        "botId": "kids",
+        "assetId": "3c681bdbb0e9acf08762",
+        "platform": "youtube",
+        "decision": "pass",
+        "score": 100,
+        "createdAt": "2026-07-30T20:54:02+00:00",
+        "metadata": {
+          "filename": "short.mp4",
+          "width": 1080,
+          "height": 1920,
+          "durationSeconds": 24.833,
+          "hasAudio": true,
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "bytes": 3917841
+        },
+        "findings": [
+          {
+            "checkId": "file-intact",
+            "passed": true,
+            "severity": "error",
+            "message": "File size and bitrate look like a real render.",
+            "evidence": {
+              "bytes": 3917841,
+              "bitrateKbps": 1262,
+              "minBytes": 50000,
+              "minKbps": 60
+            }
+          },
+          {
+            "checkId": "audio-stream",
+            "passed": true,
+            "severity": "error",
+            "message": "An audio stream is present.",
+            "evidence": {
+              "hasAudio": true,
+              "audioCodec": "aac"
+            }
+          },
+          {
+            "checkId": "vertical-aspect-ratio",
+            "passed": true,
+            "severity": "error",
+            "message": "Video uses the expected vertical aspect ratio.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "aspectRatio": 0.5625
+            }
+          },
+          {
+            "checkId": "minimum-resolution",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video meets the configured minimum resolution.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "minimumWidth": 720,
+              "minimumHeight": 1280
+            }
+          },
+          {
+            "checkId": "duration",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video duration is inside the configured range.",
+            "evidence": {
+              "durationSeconds": 24.833,
+              "minimumSeconds": 1,
+              "maximumSeconds": 180
+            }
+          },
+          {
+            "checkId": "even-dimensions",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video dimensions are encoder-friendly even numbers.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920
+            }
+          },
+          {
+            "checkId": "audio-not-silent",
+            "passed": true,
+            "severity": "error",
+            "message": "Audio has real sound.",
+            "evidence": {
+              "meanVolumeDb": -17.6,
+              "silentThresholdDb": -50
+            }
+          },
+          {
+            "checkId": "not-mostly-black",
+            "passed": true,
+            "severity": "error",
+            "message": "Frames are drawing normally.",
+            "evidence": {
+              "blackSeconds": 0,
+              "blackFraction": 0.0,
+              "maxBlackFraction": 0.5
+            }
+          }
+        ]
+      }
+    },
+    {
       "date": "2026-07-30T14:23:37+00:00",
       "id": "fUZt6hDYnzU",
       "url": "https://youtube.com/shorts/fUZt6hDYnzU",
@@ -18,7 +141,7 @@
       "privacy": "public",
       "local_time": "10:23 AM",
       "manual": false,
-      "views": 741,
+      "views": 742,
       "likes": 11,
       "comments": 0,
       "clipcheck": {
@@ -141,7 +264,7 @@
       "privacy": "public",
       "local_time": "06:35 PM",
       "manual": false,
-      "views": 148,
+      "views": 150,
       "likes": 3,
       "comments": 0,
       "clipcheck": {
@@ -633,7 +756,7 @@
       "privacy": "public",
       "local_time": "07:14 PM",
       "manual": false,
-      "views": 660,
+      "views": 661,
       "likes": 10,
       "comments": 0,
       "clipcheck": {
@@ -1002,7 +1125,7 @@
       "privacy": "public",
       "local_time": "11:08 AM",
       "manual": false,
-      "views": 208,
+      "views": 210,
       "likes": 2,
       "comments": 0,
       "clipcheck": {
@@ -1125,7 +1248,7 @@
       "privacy": "public",
       "local_time": "03:35 PM",
       "manual": false,
-      "views": 815,
+      "views": 817,
       "likes": 10,
       "comments": 2,
       "clipcheck": {
@@ -1248,7 +1371,7 @@
       "privacy": "public",
       "local_time": "10:35 AM",
       "manual": false,
-      "views": 667,
+      "views": 669,
       "likes": 7,
       "comments": 0,
       "clipcheck": {
@@ -2699,6 +2822,12 @@
   "runs": [
     {
       "status": "posted",
+      "title": "Would You Rather: Give up TikTok forever or Give up Instagram forever? \ud83e\udd2f",
+      "manual": false,
+      "time": "2026-07-30T20:54:04+00:00"
+    },
+    {
+      "status": "posted",
       "title": "Be honest: Be super popular or Have 3 real best friends? \ud83d\ude30",
       "manual": false,
       "time": "2026-07-30T14:23:37+00:00"
@@ -2911,7 +3040,6 @@
   ],
   "schedule": {
     "upcoming": [
-      "2026-07-30T16:54:00-04:00",
       "2026-07-31T15:22:00-04:00",
       "2026-07-31T19:34:00-04:00",
       "2026-08-01T09:40:00-04:00",
@@ -2926,8 +3054,8 @@
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Who Would Win": 0.521951506591337,
-      "Would You Rather": 0.47804849340866284
+      "Who Would Win": 0.521959923140269,
+      "Would You Rather": 0.47804007685973093
     },
     "counts": {
       "theme": {
@@ -3026,11 +3154,11 @@
       "d": "2026-07-30",
       "subs": 15,
       "views": 13039,
-      "likes": 136
+      "likes": 137
     }
   ],
   "started": null,
-  "updated": "2026-07-30T20:15:39+00:00",
+  "updated": "2026-07-30T20:54:04+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
@@ -5301,25 +5429,133 @@
             }
           }
         ]
+      },
+      {
+        "reportId": "56d73153-0710-49f8-b62d-d027943c5825",
+        "botId": "kids",
+        "assetId": "3c681bdbb0e9acf08762",
+        "platform": "youtube",
+        "decision": "pass",
+        "score": 100,
+        "createdAt": "2026-07-30T20:54:02+00:00",
+        "metadata": {
+          "filename": "short.mp4",
+          "width": 1080,
+          "height": 1920,
+          "durationSeconds": 24.833,
+          "hasAudio": true,
+          "videoCodec": "h264",
+          "audioCodec": "aac",
+          "bytes": 3917841
+        },
+        "findings": [
+          {
+            "checkId": "file-intact",
+            "passed": true,
+            "severity": "error",
+            "message": "File size and bitrate look like a real render.",
+            "evidence": {
+              "bytes": 3917841,
+              "bitrateKbps": 1262,
+              "minBytes": 50000,
+              "minKbps": 60
+            }
+          },
+          {
+            "checkId": "audio-stream",
+            "passed": true,
+            "severity": "error",
+            "message": "An audio stream is present.",
+            "evidence": {
+              "hasAudio": true,
+              "audioCodec": "aac"
+            }
+          },
+          {
+            "checkId": "vertical-aspect-ratio",
+            "passed": true,
+            "severity": "error",
+            "message": "Video uses the expected vertical aspect ratio.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "aspectRatio": 0.5625
+            }
+          },
+          {
+            "checkId": "minimum-resolution",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video meets the configured minimum resolution.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920,
+              "minimumWidth": 720,
+              "minimumHeight": 1280
+            }
+          },
+          {
+            "checkId": "duration",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video duration is inside the configured range.",
+            "evidence": {
+              "durationSeconds": 24.833,
+              "minimumSeconds": 1,
+              "maximumSeconds": 180
+            }
+          },
+          {
+            "checkId": "even-dimensions",
+            "passed": true,
+            "severity": "warning",
+            "message": "Video dimensions are encoder-friendly even numbers.",
+            "evidence": {
+              "width": 1080,
+              "height": 1920
+            }
+          },
+          {
+            "checkId": "audio-not-silent",
+            "passed": true,
+            "severity": "error",
+            "message": "Audio has real sound.",
+            "evidence": {
+              "meanVolumeDb": -17.6,
+              "silentThresholdDb": -50
+            }
+          },
+          {
+            "checkId": "not-mostly-black",
+            "passed": true,
+            "severity": "error",
+            "message": "Frames are drawing normally.",
+            "evidence": {
+              "blackSeconds": 0,
+              "blackFraction": 0.0,
+              "maxBlackFraction": 0.5
+            }
+          }
+        ]
       }
     ],
     "latest": {
-      "reportId": "f982bd9e-7334-411a-a1ef-95aa1faef253",
+      "reportId": "56d73153-0710-49f8-b62d-d027943c5825",
       "botId": "kids",
-      "assetId": "f17b35b2756cfdd835a0",
+      "assetId": "3c681bdbb0e9acf08762",
       "platform": "youtube",
       "decision": "pass",
       "score": 100,
-      "createdAt": "2026-07-30T14:23:35+00:00",
+      "createdAt": "2026-07-30T20:54:02+00:00",
       "metadata": {
         "filename": "short.mp4",
         "width": 1080,
         "height": 1920,
-        "durationSeconds": 23.233,
+        "durationSeconds": 24.833,
         "hasAudio": true,
         "videoCodec": "h264",
         "audioCodec": "aac",
-        "bytes": 4228908
+        "bytes": 3917841
       },
       "findings": [
         {
@@ -5328,8 +5564,8 @@
           "severity": "error",
           "message": "File size and bitrate look like a real render.",
           "evidence": {
-            "bytes": 4228908,
-            "bitrateKbps": 1456,
+            "bytes": 3917841,
+            "bitrateKbps": 1262,
             "minBytes": 50000,
             "minKbps": 60
           }
@@ -5373,7 +5609,7 @@
           "severity": "warning",
           "message": "Video duration is inside the configured range.",
           "evidence": {
-            "durationSeconds": 23.233,
+            "durationSeconds": 24.833,
             "minimumSeconds": 1,
             "maximumSeconds": 180
           }
@@ -5394,7 +5630,7 @@
           "severity": "error",
           "message": "Audio has real sound.",
           "evidence": {
-            "meanVolumeDb": -15.2,
+            "meanVolumeDb": -17.6,
             "silentThresholdDb": -50
           }
         },
