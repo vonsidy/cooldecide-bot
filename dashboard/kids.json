@@ -141,8 +141,8 @@
       "privacy": "public",
       "local_time": "06:35 PM",
       "manual": false,
-      "views": 144,
-      "likes": 2,
+      "views": 148,
+      "likes": 3,
       "comments": 0,
       "clipcheck": {
         "reportId": "49a63607-00b5-4122-af70-b353fcecc23e",
@@ -2926,8 +2926,8 @@
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Who Would Win": 0.521951506591337,
-      "Would You Rather": 0.47804849340866284
+      "Who Would Win": 0.5219207909139058,
+      "Would You Rather": 0.47807920908609436
     },
     "counts": {
       "theme": {
@@ -3026,11 +3026,11 @@
       "d": "2026-07-30",
       "subs": 16,
       "views": 13039,
-      "likes": 140
+      "likes": 141
     }
   ],
   "started": null,
-  "updated": "2026-07-30T17:09:57+00:00",
+  "updated": "2026-07-30T17:15:41+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
