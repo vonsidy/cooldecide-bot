@@ -434,6 +434,10 @@ IMAGES = os.path.join(os.path.dirname(__file__), "assets", "images")
 IMAGE_KEYS = [
     ("minecraft", "minecraft"), ("roblox", "roblox"), ("fortnite", "fortnite"),
     ("v-bucks", "vbucks"), ("robux", "robux"), ("youtube", "youtube"), ("tiktok", "tiktok"),
+    # instagram/snapchat were missing entirely, so a question about them could never
+    # use a logo even if one were dropped in. Drop instagram.png / snapchat.png /
+    # tiktok.png into assets/images/ and they take precedence over generated art.
+    ("instagram", "instagram"), ("snapchat", "snapchat"),
     ("playstation", "playstation"), ("xbox", "xbox"), ("marvel", "marvel"),
     ("lego", "lego"), ("nerf", "nerf"),
     # "dc" last, and it's a 2-letter string that appears inside ordinary words —

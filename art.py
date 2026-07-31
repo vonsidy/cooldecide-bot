@@ -351,9 +351,46 @@ def _slug(s: str) -> str:
     return f"{base}_{hashlib.sha1(s.lower().encode()).hexdigest()[:6]}"
 
 
+# Named apps and platforms draw as THE APP, not as a person holding a phone. Left to
+# the generated hint, "give up TikTok forever" and "give up Instagram forever" both
+# came back as the same sad kid with a phone — two near-identical pictures for a
+# question whose whole point is telling the two apps apart. These win over the hint
+# because a brand is the most recognisable thing on the card, and recognition in a
+# blink is what the artwork is for. Word-boundary matched, so "insta" inside another
+# word can't fire (see the 'million' -> lion bug in images.query_for).
+BRAND_VISUALS = {
+    "tiktok": ("a smartphone standing upright showing a vertical dancing video, "
+               "one big turquoise and pink music note floating out of the screen"),
+    "instagram": ("a smartphone standing upright showing a grid of square photos, "
+                  "a purple-pink-orange gradient camera outline glowing above it"),
+    "snapchat": ("a smartphone standing upright showing a bright yellow chat app "
+                 "with a white ghost shape and a fire streak emoji"),
+    "youtube": ("a smartphone standing upright showing a video player with a big "
+                "red play button, red and white"),
+    "spotify": ("a smartphone standing upright showing a music player with green "
+                "sound waves and album art"),
+    "netflix": ("a television screen showing a streaming menu of show thumbnails, "
+                "deep red and black"),
+    "discord": ("a laptop screen showing a chat app with speech bubbles, blurple"),
+    "roblox": "a stack of bright red-and-white toy building blocks",
+    "minecraft": "a green and brown pixel-art grass block",
+}
+_BRAND_RE = {k: re.compile(rf"(?<![a-z]){re.escape(k)}(?![a-z])", re.I) for k in BRAND_VISUALS}
+
+
+def brand_visual(option_text: str) -> str | None:
+    """The app/platform this option is about, drawn as the app itself."""
+    t = (option_text or "").lower()
+    for key, rx in _BRAND_RE.items():
+        if rx.search(t):
+            return BRAND_VISUALS[key]
+    return None
+
+
 def visual_for(option_text: str, hint: str | None = None) -> str:
     """The concrete thing to draw for this option."""
-    return hint or ART_HINTS.get(option_text.strip().lower()) or option_text
+    return (brand_visual(option_text) or hint
+            or ART_HINTS.get(option_text.strip().lower()) or option_text)
 
 
 
