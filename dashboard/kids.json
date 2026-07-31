@@ -3051,17 +3051,17 @@
   },
   "learning": {
     "ready": true,
-    "trained_on": 23,
+    "trained_on": 24,
     "needs": 4,
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Who Would Win": 0.5510659120888474,
-      "Would You Rather": 0.4489340879111527
+      "Who Would Win": 0.5579317416141789,
+      "Would You Rather": 0.4420682583858209
     },
     "counts": {
       "theme": {
-        "Would You Rather": 17,
+        "Would You Rather": 18,
         "Who Would Win": 6
       }
     },
@@ -3160,7 +3160,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-07-31T14:16:22+00:00",
+  "updated": "2026-07-31T15:16:19+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
