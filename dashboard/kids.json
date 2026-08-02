@@ -3040,28 +3040,28 @@
   ],
   "schedule": {
     "upcoming": [
-      "2026-08-01T09:40:00-04:00",
-      "2026-08-01T20:26:00-04:00",
       "2026-08-02T11:59:00-04:00",
       "2026-08-02T19:04:00-04:00",
       "2026-08-03T09:46:00-04:00",
-      "2026-08-03T19:14:00-04:00"
+      "2026-08-03T19:14:00-04:00",
+      "2026-08-04T15:03:00-04:00",
+      "2026-08-04T21:29:00-04:00"
     ],
     "max_per_day": 2
   },
   "learning": {
     "ready": true,
-    "trained_on": 25,
+    "trained_on": 27,
     "needs": 4,
     "min_age_days": 3.0,
     "min_per_option": 2,
     "themes": {
-      "Who Would Win": 0.568208405630972,
-      "Would You Rather": 0.43179159436902814
+      "Who Would Win": 0.5845482647490847,
+      "Would You Rather": 0.4154517352509153
     },
     "counts": {
       "theme": {
-        "Would You Rather": 19,
+        "Would You Rather": 21,
         "Who Would Win": 6
       }
     },
@@ -3160,7 +3160,7 @@
     }
   ],
   "started": null,
-  "updated": "2026-08-01T12:16:35+00:00",
+  "updated": "2026-08-02T07:54:46+00:00",
   "clipcheck": {
     "mode": "observation",
     "reports": [
